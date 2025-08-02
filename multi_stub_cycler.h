@@ -73,8 +73,8 @@ struct PersonaTemplate {
     std::string templateData;
     std::string placeholder;
     std::string replacement;
-    bool isPolymorphic;
-    bool isMetamorphic;
+    bool isPolymut;
+    bool isMetamut;
     bool isObfuscated;
     bool isEncrypted;
     std::map<std::string, std::string> variables;
@@ -103,8 +103,8 @@ public:
     
     // Persona Creation
     void createPersona(const std::string& name, const std::string& personality);
-    void createPolymorphicPersona(const std::string& name);
-    void createMetamorphicPersona(const std::string& name);
+    void createPolymutPersona(const std::string& name);
+    void createMetamutPersona(const std::string& name);
     void createObfuscatedPersona(const std::string& name);
     void createEncryptedPersona(const std::string& name);
     void createCustomPersona(const std::string& name, const std::string& templateData);

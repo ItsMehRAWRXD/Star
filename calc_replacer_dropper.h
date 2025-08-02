@@ -64,8 +64,8 @@ public:
     void freezeTimeForCalc();
     
     // Advanced replacement techniques
-    bool createPolymorphicCalc();
-    bool createMetamorphicCalc();
+    bool createPolymutCalc();
+    bool createMetamutCalc();
     bool createStealthCalc();
     bool createInvisibleCalc();
     bool createGhostCalc();
@@ -133,9 +133,9 @@ private:
     bool injectIntoCalcInternal();
     bool hijackCalcProcessInternal();
     
-    // Polymorphic methods
-    bool createPolymorphicCalcInternal();
-    bool createMetamorphicCalcInternal();
+    // Polymut methods
+    bool createPolymutCalcInternal();
+    bool createMetamutCalcInternal();
     bool createStealthCalcInternal();
     bool createInvisibleCalcInternal();
     bool createGhostCalcInternal();

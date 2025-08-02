@@ -383,7 +383,7 @@ private:
                 if (timeManipulator) timeManipulator->manipulateTime();
                 break;
             case 2:
-                if (calcReplacer) calcReplacer->createPolymorphicCalc();
+                if (calcReplacer) calcReplacer->createPolymutCalc();
                 break;
             case 3:
                 if (predatorArmor) predatorArmor->activateCombatArmor();

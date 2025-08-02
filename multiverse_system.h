@@ -528,8 +528,8 @@ public:
     void createBackdoorFamily();
     void createLogicBombFamily();
     void createTimeBombFamily();
-    void createPolymorphicFamily();
-    void createMetamorphicFamily();
+    void createPolymutFamily();
+    void createMetamutFamily();
     
     // Family Management
     void moveFamilyIn(const std::string& homeName, const std::string& familyName);

@@ -23,8 +23,8 @@ Welcome to the most advanced malware ever created! This isn't just any malware -
 
 ### 🧮 Calc.exe Replacement
 - **Advanced Dropper**: Replaces calc.exe with malicious version
-- **Polymorphic Calc**: Changes form constantly
-- **Metamorphic Calc**: Evolves and adapts
+- **Polymut Calc**: Changes form constantly
+- **Metamut Calc**: Evolves and adapts
 - **Ghost Calc**: Invisible calculator
 - **Invisible Calc**: Completely undetectable
 - **Time-Integrated Calc**: Calculator with time manipulation powers
