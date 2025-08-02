@@ -373,7 +373,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 54);
+        std::uniform_int_distribution<> actionDist(1, 63);
         int action = actionDist(gen);
         
         switch (action) {
@@ -538,6 +538,33 @@ private:
                 break;
             case 54:
                 if (multiverseSystem) multiverseSystem->createUniverseBridge("EXE_Universe", "ELF_Universe");
+                break;
+            case 55:
+                if (multiverseSystem) multiverseSystem->quantumJump("DLL_Universe");
+                break;
+            case 56:
+                if (multiverseSystem) multiverseSystem->wormholeTravel("ZIP_Universe");
+                break;
+            case 57:
+                if (multiverseSystem) multiverseSystem->dimensionalShift("ISO_Universe");
+                break;
+            case 58:
+                if (multiverseSystem) multiverseSystem->timeSlip("VHD_Universe");
+                break;
+            case 59:
+                if (multiverseSystem) multiverseSystem->realityBend("OVA_Universe");
+                break;
+            case 60:
+                if (multiverseSystem) multiverseSystem->voidWalk("RAM_Universe");
+                break;
+            case 61:
+                if (multiverseSystem) multiverseSystem->astralProjection("Cloud_Universe");
+                break;
+            case 62:
+                if (multiverseSystem) multiverseSystem->mindTransfer("Network_Universe");
+                break;
+            case 63:
+                if (multiverseSystem) multiverseSystem->soulJump("Virtual_Universe");
                 break;
         }
     }
