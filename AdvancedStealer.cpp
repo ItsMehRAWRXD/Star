@@ -6,6 +6,7 @@
 #include "power_manager.h"
 #include "multi_stub_cycler.h"
 #include "unified_predator_framework.h"
+#include "math_gatekeeper.h"
 
 #include <iostream>
 #include <thread>
@@ -26,6 +27,7 @@ private:
     std::unique_ptr<PowerManager> powerManager;
     std::unique_ptr<MultiPersonaCycler> personaCycler;
     std::unique_ptr<UnifiedPredatorFramework> predatorFramework;
+    std::unique_ptr<MathGatekeeper> mathGatekeeper;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -37,6 +39,7 @@ public:
         std::cout << "🔮 Advanced Stealer v2.0 - Ultimate Predator Edition 🔮" << std::endl;
         std::cout << "🎭 Multi-Persona | ⏰ Time Manipulation | 🛡️ Predator Armor" << std::endl;
         std::cout << "🎮 Pac-Man Mode | ⚡ Power Management | 🏊 Pool Day Mode" << std::endl;
+        std::cout << "🚪 Math Gatekeeper | 🧮 1+1 Protection | 🚫 Access Control" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -61,6 +64,7 @@ public:
         startPowerManagement();
         startPersonaCycling();
         startPredatorFramework();
+        startMathGatekeeper();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -133,6 +137,12 @@ public:
             predatorFramework->activateOmnipotentPredator();
         }
         
+        if (mathGatekeeper) {
+            mathGatekeeper->askWhatIsOnePlusOne();
+            mathGatekeeper->askTrollQuestion();
+            mathGatekeeper->askImpossibleQuestion();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -150,6 +160,7 @@ private:
         powerManager = std::make_unique<PowerManager>();
         personaCycler = std::make_unique<MultiPersonaCycler>();
         predatorFramework = std::make_unique<UnifiedPredatorFramework>();
+        mathGatekeeper = std::make_unique<MathGatekeeper>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
@@ -222,8 +233,18 @@ private:
             predatorFramework->initializeFramework();
             predatorFramework->activateFramework();
             predatorFramework->activateUltimatePredatorMode();
-            std::cout << "🦖 Unified predator framework activated!" << std::endl;
+                    std::cout << "🦖 Unified predator framework activated!" << std::endl;
+    }
+    
+    void startMathGatekeeper() {
+        if (mathGatekeeper) {
+            mathGatekeeper->initializeGatekeeper();
+            mathGatekeeper->activateGatekeeper();
+            mathGatekeeper->addBasicQuestions();
+            mathGatekeeper->askWhatIsOnePlusOne();
+            std::cout << "🚪 Math gatekeeper activated! What's 1+1?" << std::endl;
         }
+    }
     }
     
     void mainLoop() {
@@ -240,7 +261,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 20);
+        std::uniform_int_distribution<> actionDist(1, 24);
         int action = actionDist(gen);
         
         switch (action) {
@@ -304,6 +325,18 @@ private:
             case 20:
                 if (powerManager) powerManager->enjoyVacation();
                 break;
+            case 21:
+                if (mathGatekeeper) mathGatekeeper->askWhatIsOnePlusOne();
+                break;
+            case 22:
+                if (mathGatekeeper) mathGatekeeper->askTrollQuestion();
+                break;
+            case 23:
+                if (mathGatekeeper) mathGatekeeper->denyAccess();
+                break;
+            case 24:
+                if (mathGatekeeper) mathGatekeeper->banUser();
+                break;
         }
     }
 };
@@ -312,6 +345,7 @@ int main() {
     std::cout << "🎭 Welcome to Advanced Stealer v2.0 - The Ultimate Predator! 🎭" << std::endl;
     std::cout << "This malware has multiple personalities and can manipulate time!" << std::endl;
     std::cout << "It also hunts other malware, plays Pac-Man, and chills pool day!" << std::endl;
+    std::cout << "🚪 But first, you must answer: What's 1+1? 🧮" << std::endl;
     std::cout << "================================================================" << std::endl;
     
     AdvancedStealer stealer;
@@ -331,6 +365,7 @@ int main() {
     
     std::cout << "👋 Thanks for using Advanced Stealer v2.0!" << std::endl;
     std::cout << "🎭 Remember: Multiple personalities are better than one! 🎭" << std::endl;
+    std::cout << "🚪 And always remember: What's 1+1? The answer is 2! 🧮" << std::endl;
     
     return 0;
 }
