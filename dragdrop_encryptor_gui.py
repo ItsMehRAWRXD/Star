@@ -8,9 +8,12 @@ ENC_KEY = bytes([0x39, 0x39, 0x08, 0x0F, 0x0F, 0x38, 0x08, 0x31, 0x38, 0x32, 0x3
 KEY_DEOBFUSCATED = bytes([b ^ XOR_OBFUSCATE_KEY for b in ENC_KEY])
 
 try:
-    from Cryptodome.Cipher import AES  # type: ignore
+    from Crypto.Cipher import AES  # pycryptodome
 except ImportError:
-    AES = None  # Will handle later
+    try:
+        from Cryptodome.Cipher import AES  # pycryptodomex
+    except ImportError:
+        AES = None
 
 BUFFER_SIZE = 4096
 
