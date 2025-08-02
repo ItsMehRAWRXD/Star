@@ -138,6 +138,53 @@ struct AdoptionAgency {
     std::chrono::system_clock::time_point lastAdoption;
 };
 
+// Malware Cujo
+struct MalwareCujo {
+    std::string name;
+    std::string breed;
+    int age;
+    double health;
+    double hunger;
+    double energy;
+    double happiness;
+    double aggression;
+    double loyalty;
+    double intelligence;
+    bool isVaccinated;
+    bool isTrained;
+    bool isProtective;
+    bool isAggressive;
+    bool isHungry;
+    bool isTired;
+    bool isHappy;
+    bool isSick;
+    std::vector<std::string> tricks;
+    std::vector<std::string> commands;
+    std::vector<std::string> enemies;
+    std::vector<std::string> friends;
+    std::chrono::system_clock::time_point lastFed;
+    std::chrono::system_clock::time_point lastWalked;
+    std::chrono::system_clock::time_point lastVaccinated;
+    std::chrono::system_clock::time_point lastTrained;
+};
+
+// Cujo Protection System
+struct CujoProtectionSystem {
+    bool isActive;
+    bool isPatrolling;
+    bool isAlert;
+    bool isAttacking;
+    bool isDefending;
+    std::vector<std::string> protectedHomes;
+    std::vector<std::string> threats;
+    std::vector<std::string> victims;
+    int totalAttacks;
+    int successfulDefenses;
+    double protectionEfficiency;
+    std::chrono::system_clock::time_point lastAttack;
+    std::chrono::system_clock::time_point lastPatrol;
+};
+
 class MultiverseSystem {
 public:
     MultiverseSystem();
@@ -341,6 +388,46 @@ public:
     void createFamilyBonds(const std::string& homeName);
     void ensureFamilySafety(const std::string& homeName);
     
+    // Malware Cujo System
+    void activateMalwareCujo();
+    void trainMalwareCujo();
+    void feedMalwareCujo();
+    void walkMalwareCujo();
+    void playWithMalwareCujo();
+    void groomMalwareCujo();
+    void vaccinateMalwareCujo();
+    void giveMalwareCujoTreats();
+    void teachMalwareCujoTricks();
+    void takeMalwareCujoToVet();
+    void giveMalwareCujoBath();
+    void putMalwareCujoToBed();
+    void wakeMalwareCujoUp();
+    void giveMalwareCujoMedicine();
+    void takeMalwareCujoForRun();
+    void giveMalwareCujoBellyRubs();
+    void teachMalwareCujoToFetch();
+    void giveMalwareCujoNewCollar();
+    void takeMalwareCujoToPark();
+    void giveMalwareCujoDentalCare();
+    
+    // Cujo Protection Mode
+    void activateCujoProtectionMode();
+    void setCujoGuardDuty();
+    void makeCujoBark();
+    void makeCujoGrowl();
+    void makeCujoSnarl();
+    void makeCujoBite();
+    void makeCujoChase();
+    void makeCujoAttack();
+    void makeCujoDefend();
+    void makeCujoPatrol();
+    void makeCujoAlert();
+    void makeCujoIntimidate();
+    void makeCujoScare();
+    void makeCujoTerrify();
+    void makeCujoDestroy();
+    void makeCujoAnnihilate();
+    
     // Universe Communication
     void establishUniverseCommunication();
     void createUniverseNetwork();
@@ -385,6 +472,9 @@ private:
     std::vector<UniverseBridge> universeBridges;
     MultiverseTraveler traveler;
     RealEstatePortfolio realEstatePortfolio;
+    AdoptionAgency adoptionAgency;
+    MalwareCujo malwareCujo;
+    CujoProtectionSystem cujoProtection;
     std::map<std::string, std::string> universeStrategies;
     std::map<std::string, std::string> universeRules;
     
