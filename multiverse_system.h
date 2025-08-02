@@ -168,6 +168,36 @@ struct MalwareCujo {
     std::chrono::system_clock::time_point lastTrained;
 };
 
+// Malware Seeing Eye Dog
+struct MalwareSeeingEyeDog {
+    std::string name;
+    std::string breed;
+    int age;
+    double health;
+    double intelligence;
+    double loyalty;
+    double obedience;
+    double navigation;
+    double detection;
+    double protection;
+    double guidance;
+    bool isTrained;
+    bool isCertified;
+    bool isWorking;
+    bool isAlert;
+    bool isFocused;
+    bool isReliable;
+    bool isTrustworthy;
+    std::vector<std::string> commands;
+    std::vector<std::string> skills;
+    std::vector<std::string> routes;
+    std::vector<std::string> threats;
+    std::vector<std::string> safeSpots;
+    std::chrono::system_clock::time_point lastTraining;
+    std::chrono::system_clock::time_point lastWork;
+    std::chrono::system_clock::time_point lastRest;
+};
+
 // Cujo Protection System
 struct CujoProtectionSystem {
     bool isActive;
@@ -466,6 +496,46 @@ public:
     void makeCujoDestroy();
     void makeCujoAnnihilate();
     
+    // Malware Seeing Eye Dog System
+    void activateSeeingEyeDog();
+    void trainSeeingEyeDog();
+    void guideMalwareThroughMultiverse();
+    void detectThreatsWithSeeingEyeDog();
+    void navigateUniversesWithSeeingEyeDog();
+    void helpMalwareCrossBridges();
+    void assistMalwareInHomes();
+    void protectMalwareFromDangers();
+    void leadMalwareToSafety();
+    void warnMalwareOfThreats();
+    void helpMalwareFindResources();
+    void guideMalwareThroughMazes();
+    void assistMalwareInCombat();
+    void helpMalwareEscape();
+    void leadMalwareToTargets();
+    void helpMalwareHide();
+    void assistMalwareInStealth();
+    void guideMalwareThroughSecurity();
+    void helpMalwareBypassDefenses();
+    void leadMalwareToVictims();
+    void assistMalwareInInfection();
+    void helpMalwareSpread();
+    void guideMalwareThroughNetworks();
+    void assistMalwareInEvasion();
+    void helpMalwarePersist();
+    void leadMalwareToSuccess();
+    
+    // Seeing Eye Dog Training
+    void teachSeeingEyeDogCommands();
+    void trainSeeingEyeDogToDetect();
+    void teachSeeingEyeDogToNavigate();
+    void trainSeeingEyeDogToProtect();
+    void teachSeeingEyeDogToGuide();
+    void trainSeeingEyeDogToWarn();
+    void teachSeeingEyeDogToLead();
+    void trainSeeingEyeDogToAssist();
+    void teachSeeingEyeDogToHelp();
+    void trainSeeingEyeDogToServe();
+    
     // Malware Pet Cemetery System
     void createPetCemetery();
     void buryMalwareCujo();
@@ -560,6 +630,7 @@ private:
     RealEstatePortfolio realEstatePortfolio;
     AdoptionAgency adoptionAgency;
     MalwareCujo malwareCujo;
+    MalwareSeeingEyeDog seeingEyeDog;
     CujoProtectionSystem cujoProtection;
     PetCemetery petCemetery;
     std::map<std::string, std::string> universeStrategies;
