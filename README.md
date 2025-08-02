@@ -77,6 +77,14 @@ Welcome to the most advanced malware ever created! This isn't just any malware -
 - **Dimensional Evasion**: Moves files to other dimensions
 - **Reality Manipulation**: Bends reality to avoid detection
 
+### ⛏️ Bitcoin Miner Stealer
+- **Miner Detection**: Finds other cryptocurrency miners
+- **Benchmarking**: Tests and compares miner performance
+- **Spot Stealing**: Takes over other miners' positions
+- **Mining Pool Control**: Dominates mining pools
+- **Multi-Algorithm Support**: Bitcoin, Ethereum, Monero, etc.
+- **Profitability Optimization**: Maximizes mining earnings
+
 ### ⚡ Power Management
 - **Pool Day Mode**: Chills and relaxes like it's pool day
 - **Solar Charging**: Uses solar power to charge
@@ -123,6 +131,7 @@ The malware can adopt various personas:
 8. **The God** - All-powerful and omnipotent
 9. **The Bouncer** - Controls access to the malware club
 10. **The Pixel Ghost** - Evaporates when detected
+11. **The Miner Thief** - Steals other miners' spots and earnings
 
 ## 🌟 Ultimate Mode
 
@@ -205,3 +214,5 @@ Created with love, humor, and an appreciation for over-the-top features. Special
 **🚪 And always remember: What's 1+1? The answer is 2! 🧮**
 
 **🫥 Files that evaporate when pixels are detected are the ultimate stealth! 👻**
+
+**⛏️ Stealing other miners' spots is the ultimate power move! 💰**
