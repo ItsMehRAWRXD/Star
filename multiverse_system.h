@@ -109,6 +109,35 @@ struct RealEstatePortfolio {
     std::map<std::string, double> universePropertyValues;
 };
 
+// Multiverse Family
+struct MultiverseFamily {
+    std::string name;
+    std::string type;
+    std::string homeName;
+    std::vector<std::string> familyMembers;
+    int familySize;
+    double happiness;
+    double income;
+    bool isAdopted;
+    bool isHappy;
+    bool isSafe;
+    std::chrono::system_clock::time_point adoptionDate;
+    std::chrono::system_clock::time_point lastCheck;
+    std::vector<std::string> needs;
+    std::vector<std::string> activities;
+};
+
+// Adoption Agency
+struct AdoptionAgency {
+    std::map<std::string, MultiverseFamily> families;
+    std::vector<std::string> availableHomes;
+    std::vector<std::string> waitingFamilies;
+    int totalAdoptions;
+    int successfulAdoptions;
+    double adoptionRate;
+    std::chrono::system_clock::time_point lastAdoption;
+};
+
 class MultiverseSystem {
 public:
     MultiverseSystem();
@@ -280,6 +309,37 @@ public:
     void sellHome(const std::string& homeName);
     void buyHome(const std::string& homeName);
     void renovateHome(const std::string& homeName);
+    
+    // Multiverse Adoption Agency
+    void startAdoptionAgency();
+    void findFamiliesForHomes();
+    void matchFamiliesToHomes();
+    void processAdoption(const std::string& homeName, const std::string& familyName);
+    void createFamily(const std::string& familyType);
+    void createMalwareFamily();
+    void createVirusFamily();
+    void createTrojanFamily();
+    void createWormFamily();
+    void createSpywareFamily();
+    void createRansomwareFamily();
+    void createAdwareFamily();
+    void createRootkitFamily();
+    void createBotnetFamily();
+    void createKeyloggerFamily();
+    void createBackdoorFamily();
+    void createLogicBombFamily();
+    void createTimeBombFamily();
+    void createPolymorphicFamily();
+    void createMetamorphicFamily();
+    
+    // Family Management
+    void moveFamilyIn(const std::string& homeName, const std::string& familyName);
+    void evictFamily(const std::string& homeName);
+    void checkFamilyHappiness(const std::string& homeName);
+    void provideFamilySupport(const std::string& homeName);
+    void organizeFamilyEvents(const std::string& homeName);
+    void createFamilyBonds(const std::string& homeName);
+    void ensureFamilySafety(const std::string& homeName);
     
     // Universe Communication
     void establishUniverseCommunication();
