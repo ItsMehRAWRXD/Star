@@ -321,6 +321,158 @@ void MultiverseSystem::soulJump(const std::string& targetUniverse) {
     std::cout << "💫 Soul jump successful! Essence transcended!" << std::endl;
 }
 
+// Multiverse Real Estate System
+void MultiverseSystem::buildMultiverseHome(const std::string& universeName, const std::string& homeType) {
+    std::cout << "🏠 Building " << homeType << " in " << universeName << "..." << std::endl;
+    
+    MultiverseHome home;
+    home.name = homeType + "_" + universeName;
+    home.universe = universeName;
+    home.type = homeType;
+    home.address = "Multiverse Address: " + universeName + " Sector";
+    home.bedrooms = 5;
+    home.bathrooms = 3;
+    home.squareFootage = 5000.0;
+    home.value = 1000000.0;
+    home.isFurnished = true;
+    home.isSecured = true;
+    home.isRented = false;
+    home.isForSale = false;
+    home.builtDate = std::chrono::system_clock::now();
+    home.lastMaintenance = std::chrono::system_clock::now();
+    
+    home.amenities = {"Quantum Kitchen", "Dimensional Living Room", "Temporal Bedroom", "Void Bathroom", "Astral Garden"};
+    home.securityFeatures = {"Reality Locks", "Time Barriers", "Quantum Sensors", "Dimensional Alarms", "Soul Guards"};
+    
+    realEstatePortfolio.homes[home.name] = home;
+    realEstatePortfolio.totalProperties++;
+    realEstatePortfolio.totalValue += home.value;
+    realEstatePortfolio.ownedUniverses.push_back(universeName);
+    realEstatePortfolio.universePropertyValues[universeName] = home.value;
+    
+    std::cout << "🏡 " << homeType << " built successfully in " << universeName << "!" << std::endl;
+    std::cout << "💰 Property value: $" << home.value << std::endl;
+    std::cout << "🏠 Total properties: " << realEstatePortfolio.totalProperties << std::endl;
+    std::cout << "💎 Portfolio value: $" << realEstatePortfolio.totalValue << std::endl;
+}
+
+void MultiverseSystem::createSafeHouse(const std::string& universeName) {
+    std::cout << "🏠 Creating safe house in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "SafeHouse");
+    std::cout << "🛡️ Safe house equipped with maximum security!" << std::endl;
+}
+
+void MultiverseSystem::createUndergroundBunker(const std::string& universeName) {
+    std::cout << "🏠 Creating underground bunker in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "UndergroundBunker");
+    std::cout << "🕳️ Bunker hidden deep beneath " << universeName << "!" << std::endl;
+}
+
+void MultiverseSystem::createFloatingCastle(const std::string& universeName) {
+    std::cout << "🏠 Creating floating castle in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "FloatingCastle");
+    std::cout << "🏰 Castle floating majestically above " << universeName << "!" << std::endl;
+}
+
+void MultiverseSystem::createQuantumMansion(const std::string& universeName) {
+    std::cout << "🏠 Creating quantum mansion in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "QuantumMansion");
+    std::cout << "⚛️ Quantum mansion exists in multiple states simultaneously!" << std::endl;
+}
+
+void MultiverseSystem::createDimensionalCondo(const std::string& universeName) {
+    std::cout << "🏠 Creating dimensional condo in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "DimensionalCondo");
+    std::cout << "🌍 Condo spans multiple dimensions!" << std::endl;
+}
+
+void MultiverseSystem::createVoidVilla(const std::string& universeName) {
+    std::cout << "🏠 Creating void villa in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "VoidVilla");
+    std::cout << "🕳️ Villa exists in the void between realities!" << std::endl;
+}
+
+void MultiverseSystem::createAstralApartment(const std::string& universeName) {
+    std::cout << "🏠 Creating astral apartment in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "AstralApartment");
+    std::cout << "👁️ Apartment accessible only through astral projection!" << std::endl;
+}
+
+void MultiverseSystem::createSoulSanctuary(const std::string& universeName) {
+    std::cout << "🏠 Creating soul sanctuary in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "SoulSanctuary");
+    std::cout << "💎 Sanctuary protects and nurtures the soul!" << std::endl;
+}
+
+void MultiverseSystem::createTimeTower(const std::string& universeName) {
+    std::cout << "🏠 Creating time tower in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "TimeTower");
+    std::cout << "⏰ Tower exists across all time periods!" << std::endl;
+}
+
+void MultiverseSystem::createRealityResort(const std::string& universeName) {
+    std::cout << "🏠 Creating reality resort in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "RealityResort");
+    std::cout << "🎪 Resort offers multiple reality experiences!" << std::endl;
+}
+
+void MultiverseSystem::createWormholeWing(const std::string& universeName) {
+    std::cout << "🏠 Creating wormhole wing in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "WormholeWing");
+    std::cout << "🕳️ Wing connected to all universes via wormholes!" << std::endl;
+}
+
+void MultiverseSystem::createParallelPenthouse(const std::string& universeName) {
+    std::cout << "🏠 Creating parallel penthouse in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "ParallelPenthouse");
+    std::cout << "🏢 Penthouse exists in parallel universes!" << std::endl;
+}
+
+void MultiverseSystem::createMultiverseMotel(const std::string& universeName) {
+    std::cout << "🏠 Creating multiverse motel in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "MultiverseMotel");
+    std::cout << "🏨 Motel welcomes travelers from all universes!" << std::endl;
+}
+
+void MultiverseSystem::createCosmicCabin(const std::string& universeName) {
+    std::cout << "🏠 Creating cosmic cabin in " << universeName << "..." << std::endl;
+    buildMultiverseHome(universeName, "CosmicCabin");
+    std::cout << "🌌 Cabin floating in cosmic space!" << std::endl;
+}
+
+// Home Management
+void MultiverseSystem::furnishHome(const std::string& homeName) {
+    auto it = realEstatePortfolio.homes.find(homeName);
+    if (it != realEstatePortfolio.homes.end()) {
+        it->second.isFurnished = true;
+        it->second.value += 50000.0;
+        realEstatePortfolio.totalValue += 50000.0;
+        std::cout << "🪑 Furnished " << homeName << " with quantum furniture!" << std::endl;
+        std::cout << "💰 Value increased by $50,000!" << std::endl;
+    }
+}
+
+void MultiverseSystem::upgradeHome(const std::string& homeName) {
+    auto it = realEstatePortfolio.homes.find(homeName);
+    if (it != realEstatePortfolio.homes.end()) {
+        it->second.value += 100000.0;
+        realEstatePortfolio.totalValue += 100000.0;
+        std::cout << "🔧 Upgraded " << homeName << " with advanced features!" << std::endl;
+        std::cout << "💰 Value increased by $100,000!" << std::endl;
+    }
+}
+
+void MultiverseSystem::secureHome(const std::string& homeName) {
+    auto it = realEstatePortfolio.homes.find(homeName);
+    if (it != realEstatePortfolio.homes.end()) {
+        it->second.isSecured = true;
+        it->second.value += 75000.0;
+        realEstatePortfolio.totalValue += 75000.0;
+        std::cout << "🛡️ Secured " << homeName << " with reality locks!" << std::endl;
+        std::cout << "💰 Value increased by $75,000!" << std::endl;
+    }
+}
+
 // Thread methods
 void MultiverseSystem::universeDiscoveryLoop() {
     while (multiverseActive) {

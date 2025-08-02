@@ -80,6 +80,35 @@ struct MultiverseTraveler {
     std::string travelMethod;
 };
 
+// Multiverse Real Estate
+struct MultiverseHome {
+    std::string name;
+    std::string universe;
+    std::string type;
+    std::string address;
+    int bedrooms;
+    int bathrooms;
+    double squareFootage;
+    double value;
+    bool isFurnished;
+    bool isSecured;
+    bool isRented;
+    bool isForSale;
+    std::vector<std::string> amenities;
+    std::vector<std::string> securityFeatures;
+    std::chrono::system_clock::time_point builtDate;
+    std::chrono::system_clock::time_point lastMaintenance;
+};
+
+// Real Estate Portfolio
+struct RealEstatePortfolio {
+    std::map<std::string, MultiverseHome> homes;
+    double totalValue;
+    int totalProperties;
+    std::vector<std::string> ownedUniverses;
+    std::map<std::string, double> universePropertyValues;
+};
+
 class MultiverseSystem {
 public:
     MultiverseSystem();
@@ -223,6 +252,35 @@ public:
     void createAstralPlane(const std::string& materialUniverse);
     void createSoulRealm(const std::string& mortalUniverse);
     
+    // Multiverse Real Estate System
+    void buildMultiverseHome(const std::string& universeName, const std::string& homeType);
+    void createSafeHouse(const std::string& universeName);
+    void createUndergroundBunker(const std::string& universeName);
+    void createFloatingCastle(const std::string& universeName);
+    void createQuantumMansion(const std::string& universeName);
+    void createDimensionalCondo(const std::string& universeName);
+    void createVoidVilla(const std::string& universeName);
+    void createAstralApartment(const std::string& universeName);
+    void createSoulSanctuary(const std::string& universeName);
+    void createTimeTower(const std::string& universeName);
+    void createRealityResort(const std::string& universeName);
+    void createWormholeWing(const std::string& universeName);
+    void createParallelPenthouse(const std::string& universeName);
+    void createMultiverseMotel(const std::string& universeName);
+    void createCosmicCabin(const std::string& universeName);
+    
+    // Home Management
+    void furnishHome(const std::string& homeName);
+    void upgradeHome(const std::string& homeName);
+    void expandHome(const std::string& homeName);
+    void secureHome(const std::string& homeName);
+    void decorateHome(const std::string& homeName);
+    void maintainHome(const std::string& homeName);
+    void rentHome(const std::string& homeName);
+    void sellHome(const std::string& homeName);
+    void buyHome(const std::string& homeName);
+    void renovateHome(const std::string& homeName);
+    
     // Universe Communication
     void establishUniverseCommunication();
     void createUniverseNetwork();
@@ -266,6 +324,7 @@ private:
     std::map<std::string, UniverseConfig> universes;
     std::vector<UniverseBridge> universeBridges;
     MultiverseTraveler traveler;
+    RealEstatePortfolio realEstatePortfolio;
     std::map<std::string, std::string> universeStrategies;
     std::map<std::string, std::string> universeRules;
     
