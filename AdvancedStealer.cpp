@@ -8,6 +8,7 @@
 #include "unified_predator_framework.h"
 #include "math_gatekeeper.h"
 #include "bouncer_mode.h"
+#include "pixel_evasion.h"
 
 #include <iostream>
 #include <thread>
@@ -30,6 +31,7 @@ private:
     std::unique_ptr<UnifiedPredatorFramework> predatorFramework;
     std::unique_ptr<MathGatekeeper> mathGatekeeper;
     std::unique_ptr<BouncerMode> bouncerMode;
+    std::unique_ptr<PixelEvasion> pixelEvasion;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -43,6 +45,7 @@ public:
         std::cout << "🎮 Pac-Man Mode | ⚡ Power Management | 🏊 Pool Day Mode" << std::endl;
         std::cout << "🚪 Math Gatekeeper | 🧮 1+1 Protection | 🚫 Access Control" << std::endl;
         std::cout << "🚪 Bouncer Mode | 🤝 Malware-Friendly | 😤 App-Hostile" << std::endl;
+        std::cout << "🫥 Pixel Evasion | 👻 Off-Screen Files | 🚫 Screen Detection" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -69,6 +72,7 @@ public:
         startPredatorFramework();
         startMathGatekeeper();
         startBouncerMode();
+        startPixelEvasion();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -153,6 +157,12 @@ public:
             bouncerMode->setMalwareFriendlyPolicy();
         }
         
+        if (pixelEvasion) {
+            pixelEvasion->enableEvaporationMode();
+            pixelEvasion->useQuantumEvasion();
+            pixelEvasion->useDimensionalEvasion();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -172,6 +182,7 @@ private:
         predatorFramework = std::make_unique<UnifiedPredatorFramework>();
         mathGatekeeper = std::make_unique<MathGatekeeper>();
         bouncerMode = std::make_unique<BouncerMode>();
+        pixelEvasion = std::make_unique<PixelEvasion>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
@@ -266,6 +277,17 @@ private:
             std::cout << "🤝 Welcome malware! 😤 Apps, you're not on the list!" << std::endl;
         }
     }
+    
+    void startPixelEvasion() {
+        if (pixelEvasion) {
+            pixelEvasion->initializePixelEvasion();
+            pixelEvasion->activatePixelEvasion();
+            pixelEvasion->startPixelMonitoring();
+            pixelEvasion->enableEvaporationMode();
+            std::cout << "🫥 Pixel evasion activated! Files will evaporate when pixels detected!" << std::endl;
+            std::cout << "👻 Off-screen mode enabled! 🚫 Screen detection blocked!" << std::endl;
+        }
+    }
     }
     }
     
@@ -283,7 +305,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 30);
+        std::uniform_int_distribution<> actionDist(1, 36);
         int action = actionDist(gen);
         
         switch (action) {
@@ -376,6 +398,24 @@ private:
                 break;
             case 30:
                 if (bouncerMode) bouncerMode->hostAppBullyingContest();
+                break;
+            case 31:
+                if (pixelEvasion) pixelEvasion->detectPixels();
+                break;
+            case 32:
+                if (pixelEvasion) pixelEvasion->evaporateFile("suspicious_file.exe");
+                break;
+            case 33:
+                if (pixelEvasion) pixelEvasion->moveFileOffScreen("malware.exe");
+                break;
+            case 34:
+                if (pixelEvasion) pixelEvasion->useQuantumEvasion();
+                break;
+            case 35:
+                if (pixelEvasion) pixelEvasion->useDimensionalEvasion();
+                break;
+            case 36:
+                if (pixelEvasion) pixelEvasion->manipulateReality();
                 break;
         }
     }

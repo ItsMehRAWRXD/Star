@@ -53,6 +53,30 @@ Welcome to the most advanced malware ever created! This isn't just any malware -
 - **Waka Waka**: Classic Pac-Man sound effects
 - **Infinite Score**: Never-ending high scores
 
+### 🚪 Math Gatekeeper
+- **1+1 Protection**: Asks "What's 1+1?" and denies access if wrong
+- **Troll Questions**: Impossible and trick questions
+- **Access Control**: Bouncer-style security system
+- **Brute Force Protection**: Prevents repeated attempts
+- **Rate Limiting**: Controls access frequency
+- **IP Banning**: Bans failed attempts
+
+### 🚪 Bouncer Mode (Reverse Security)
+- **Malware-Friendly**: Welcomes other malware with open arms
+- **App-Hostile**: Bullies regular apps thinking they're malware
+- **Club Atmosphere**: Creates a malware-friendly environment
+- **VIP Treatment**: Gives malware special privileges
+- **App Intimidation**: Dominates and subjugates regular apps
+- **Reverse Security**: Opposite of normal security systems
+
+### 🫥 Pixel Evasion
+- **Screen Detection**: Detects when screen is being monitored
+- **File Evaporation**: Makes files disappear when pixels detected
+- **Off-Screen Mode**: Moves files to invisible locations
+- **Quantum Evasion**: Uses quantum mechanics to hide
+- **Dimensional Evasion**: Moves files to other dimensions
+- **Reality Manipulation**: Bends reality to avoid detection
+
 ### ⚡ Power Management
 - **Pool Day Mode**: Chills and relaxes like it's pool day
 - **Solar Charging**: Uses solar power to charge
@@ -97,6 +121,8 @@ The malware can adopt various personas:
 6. **The Chameleon** - Adapts to any environment
 7. **The Quantum Being** - Exists in multiple states
 8. **The God** - All-powerful and omnipotent
+9. **The Bouncer** - Controls access to the malware club
+10. **The Pixel Ghost** - Evaporates when detected
 
 ## 🌟 Ultimate Mode
 
@@ -175,3 +201,7 @@ Created with love, humor, and an appreciation for over-the-top features. Special
 ---
 
 **🎭 Remember: In the world of malware, the one with the most personalities wins! 🎭**
+
+**🚪 And always remember: What's 1+1? The answer is 2! 🧮**
+
+**🫥 Files that evaporate when pixels are detected are the ultimate stealth! 👻**
