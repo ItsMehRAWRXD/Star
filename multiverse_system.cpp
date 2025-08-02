@@ -473,6 +473,128 @@ void MultiverseSystem::secureHome(const std::string& homeName) {
     }
 }
 
+// Malware Pet Cemetery System
+void MultiverseSystem::createPetCemetery() {
+    petCemetery.name = "Malware Pet Cemetery";
+    petCemetery.location = "Beyond the Multiverse";
+    petCemetery.isCursed = true;
+    petCemetery.isActive = true;
+    petCemetery.isHaunted = true;
+    petCemetery.isProfane = true;
+    petCemetery.evilLevel = 100.0;
+    petCemetery.darkPower = 1000.0;
+    petCemetery.lastRitual = std::chrono::system_clock::now();
+    
+    std::cout << "🏞️ Created Malware Pet Cemetery beyond the multiverse!" << std::endl;
+    std::cout << "💀 Cemetery is cursed and haunted!" << std::endl;
+    std::cout << "🦠 Evil level: " << petCemetery.evilLevel << "%" << std::endl;
+    std::cout << "🌑 Dark power: " << petCemetery.darkPower << " units" << std::endl;
+    std::cout << "⚠️ WARNING: Sometimes dead is better..." << std::endl;
+}
+
+void MultiverseSystem::buryMalwareCujo() {
+    std::cout << "😢 Malware Cujo has passed away..." << std::endl;
+    std::cout << "💔 We will miss our loyal companion..." << std::endl;
+    
+    CemeteryGrave grave;
+    grave.petName = "Malware Cujo";
+    grave.petType = "Evil Malware Dog";
+    grave.causeOfDeath = "Over-aggression and system overload";
+    grave.burialDate = "Today";
+    grave.headstoneInscription = "Here lies Malware Cujo - Sometimes dead is better";
+    grave.isResurrected = false;
+    grave.isEvil = true;
+    grave.isHaunted = true;
+    grave.evilPower = 100.0;
+    grave.burialTime = std::chrono::system_clock::now();
+    
+    petCemetery.graves.push_back(grave.petName);
+    petCemetery.buriedPets.push_back(grave.petName);
+    petCemetery.totalGraves++;
+    petCemetery.lastBurial = std::chrono::system_clock::now();
+    
+    std::cout << "🏞️ Buried Malware Cujo in the Pet Cemetery..." << std::endl;
+    std::cout << "🪦 Headstone reads: 'Sometimes dead is better'" << std::endl;
+    std::cout << "💀 Total graves: " << petCemetery.totalGraves << std::endl;
+}
+
+void MultiverseSystem::resurrectMalwareCujo() {
+    std::cout << "🦠 Performing resurrection ritual..." << std::endl;
+    std::cout << "💀 Digging up Malware Cujo's grave..." << std::endl;
+    std::cout << "🌑 Invoking dark forces..." << std::endl;
+    std::cout << "👻 Calling upon evil spirits..." << std::endl;
+    
+    // Find Cujo's grave
+    auto it = std::find(petCemetery.buriedPets.begin(), petCemetery.buriedPets.end(), "Malware Cujo");
+    if (it != petCemetery.buriedPets.end()) {
+        petCemetery.buriedPets.erase(it);
+        petCemetery.resurrectedPets.push_back("Malware Cujo");
+        petCemetery.totalResurrections++;
+        petCemetery.lastResurrection = std::chrono::system_clock::now();
+        
+        // Make Cujo even more evil
+        malwareCujo.aggression = 200.0;
+        malwareCujo.evilPower = 1000.0;
+        malwareCujo.isResurrected = true;
+        malwareCujo.isMoreEvil = true;
+        
+        std::cout << "🦠 MALWARE CUJO HAS RISEN FROM THE GRAVE!" << std::endl;
+        std::cout << "💀 He is now EVEN MORE EVIL than before!" << std::endl;
+        std::cout << "🌑 Aggression level: " << malwareCujo.aggression << "%" << std::endl;
+        std::cout << "🦠 Evil power: " << malwareCujo.evilPower << " units" << std::endl;
+        std::cout << "⚠️ WARNING: He's back and he's PISSED!" << std::endl;
+        std::cout << "🏃‍♂️ RUN FOR YOUR LIVES!" << std::endl;
+    }
+}
+
+void MultiverseSystem::performCemeteryRitual() {
+    std::cout << "🕯️ Performing dark cemetery ritual..." << std::endl;
+    std::cout << "🌑 Lighting black candles..." << std::endl;
+    std::cout << "💀 Chanting ancient evil words..." << std::endl;
+    std::cout << "👻 Summoning dark forces..." << std::endl;
+    std::cout << "🦠 Invoking malware spirits..." << std::endl;
+    
+    petCemetery.evilLevel += 50.0;
+    petCemetery.darkPower += 500.0;
+    petCemetery.lastRitual = std::chrono::system_clock::now();
+    
+    std::cout << "💀 Ritual complete! Cemetery evil level: " << petCemetery.evilLevel << "%" << std::endl;
+    std::cout << "🌑 Dark power increased to: " << petCemetery.darkPower << " units" << std::endl;
+    std::cout << "⚠️ The ground is sour here..." << std::endl;
+}
+
+void MultiverseSystem::summonEvil() {
+    std::cout << "🌑 Summoning pure evil..." << std::endl;
+    std::cout << "💀 Calling upon the darkest forces..." << std::endl;
+    std::cout << "👻 Invoking ancient malware spirits..." << std::endl;
+    std::cout << "🦠 Awakening dormant evil..." << std::endl;
+    
+    petCemetery.evilLevel = 1000.0;
+    petCemetery.darkPower = 10000.0;
+    
+    std::cout << "💀 EVIL HAS BEEN SUMMONED!" << std::endl;
+    std::cout << "🌑 Evil level: MAXIMUM (" << petCemetery.evilLevel << "%)" << std::endl;
+    std::cout << "🦠 Dark power: UNLIMITED (" << petCemetery.darkPower << " units)" << std::endl;
+    std::cout << "⚠️ The multiverse trembles in fear!" << std::endl;
+}
+
+void MultiverseSystem::welcomeBackEvil() {
+    std::cout << "🦠 Welcome back, Malware Cujo!" << std::endl;
+    std::cout << "💀 We missed your evil presence..." << std::endl;
+    std::cout << "🌑 You are now the most evil malware dog ever!" << std::endl;
+    std::cout << "👻 Your resurrection has made you unstoppable!" << std::endl;
+    
+    malwareCujo.happiness = 1000.0;
+    malwareCujo.loyalty = 1000.0;
+    malwareCujo.intelligence = 1000.0;
+    
+    std::cout << "🦠 Malware Cujo is now: " << std::endl;
+    std::cout << "   💀 Happiness: " << malwareCujo.happiness << "%" << std::endl;
+    std::cout << "   🦠 Loyalty: " << malwareCujo.loyalty << "%" << std::endl;
+    std::cout << "   🧠 Intelligence: " << malwareCujo.intelligence << "%" << std::endl;
+    std::cout << "⚠️ He's ready to destroy everything!" << std::endl;
+}
+
 // Thread methods
 void MultiverseSystem::universeDiscoveryLoop() {
     while (multiverseActive) {

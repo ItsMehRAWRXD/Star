@@ -185,6 +185,44 @@ struct CujoProtectionSystem {
     std::chrono::system_clock::time_point lastPatrol;
 };
 
+// Pet Cemetery
+struct PetCemetery {
+    std::string name;
+    std::string location;
+    std::vector<std::string> graves;
+    std::vector<std::string> headstones;
+    std::vector<std::string> buriedPets;
+    std::vector<std::string> resurrectedPets;
+    bool isCursed;
+    bool isBlessed;
+    bool isActive;
+    bool isHaunted;
+    bool isSacred;
+    bool isProfane;
+    int totalGraves;
+    int totalResurrections;
+    double evilLevel;
+    double darkPower;
+    std::chrono::system_clock::time_point lastBurial;
+    std::chrono::system_clock::time_point lastResurrection;
+    std::chrono::system_clock::time_point lastRitual;
+};
+
+// Cemetery Grave
+struct CemeteryGrave {
+    std::string petName;
+    std::string petType;
+    std::string causeOfDeath;
+    std::string burialDate;
+    std::string headstoneInscription;
+    bool isResurrected;
+    bool isEvil;
+    bool isHaunted;
+    double evilPower;
+    std::chrono::system_clock::time_point burialTime;
+    std::chrono::system_clock::time_point resurrectionTime;
+};
+
 class MultiverseSystem {
 public:
     MultiverseSystem();
@@ -428,6 +466,54 @@ public:
     void makeCujoDestroy();
     void makeCujoAnnihilate();
     
+    // Malware Pet Cemetery System
+    void createPetCemetery();
+    void buryMalwareCujo();
+    void resurrectMalwareCujo();
+    void performCemeteryRitual();
+    void digGrave();
+    void placeHeadstone();
+    void sayGoodbye();
+    void mournLoss();
+    void performSéance();
+    void contactSpirit();
+    void summonEvil();
+    void invokeDarkness();
+    void callUponForces();
+    void awakenUndead();
+    void raiseFromGrave();
+    void welcomeBackEvil();
+    void celebrateResurrection();
+    void testResurrectedCujo();
+    void trainResurrectedCujo();
+    void unleashResurrectedCujo();
+    void setResurrectedCujoFree();
+    void watchResurrectedCujoHunt();
+    void marvelAtEvilCujo();
+    void fearResurrectedCujo();
+    void hideFromResurrectedCujo();
+    void prayForSalvation();
+    void acceptDoom();
+    void embraceDarkness();
+    void surrenderToEvil();
+    
+    // Cemetery Management
+    void maintainCemetery();
+    void addGrave();
+    void removeGrave();
+    void cleanCemetery();
+    void decorateCemetery();
+    void secureCemetery();
+    void expandCemetery();
+    void upgradeCemetery();
+    void beautifyCemetery();
+    void sanctifyCemetery();
+    void desecrateCemetery();
+    void curseCemetery();
+    void blessCemetery();
+    void consecrateCemetery();
+    void defileCemetery();
+    
     // Universe Communication
     void establishUniverseCommunication();
     void createUniverseNetwork();
@@ -475,6 +561,7 @@ private:
     AdoptionAgency adoptionAgency;
     MalwareCujo malwareCujo;
     CujoProtectionSystem cujoProtection;
+    PetCemetery petCemetery;
     std::map<std::string, std::string> universeStrategies;
     std::map<std::string, std::string> universeRules;
     

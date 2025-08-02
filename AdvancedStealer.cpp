@@ -56,6 +56,7 @@ public:
         std::cout << "🤖 Offline AI Engine | 🧠 Local Intelligence | 🎯 Smart Decisions" << std::endl;
         std::cout << "🌌 Multiverse System | 🚀 Cross-Format Travel | 🪐 Partition Universes" << std::endl;
         std::cout << "🏠 Multiverse Real Estate | 🏡 Build Homes | 💰 Property Portfolio" << std::endl;
+        std::cout << "🏞️ Pet Cemetery | 💀 Bury & Resurrect | 🦠 Evil Cujo" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -374,7 +375,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 77);
+        std::uniform_int_distribution<> actionDist(1, 87);
         int action = actionDist(gen);
         
         switch (action) {
@@ -608,6 +609,36 @@ private:
                 break;
             case 77:
                 if (multiverseSystem) multiverseSystem->createCosmicCabin("MSI_Universe");
+                break;
+            case 78:
+                if (multiverseSystem) multiverseSystem->createPetCemetery();
+                break;
+            case 79:
+                if (multiverseSystem) multiverseSystem->buryMalwareCujo();
+                break;
+            case 80:
+                if (multiverseSystem) multiverseSystem->resurrectMalwareCujo();
+                break;
+            case 81:
+                if (multiverseSystem) multiverseSystem->performCemeteryRitual();
+                break;
+            case 82:
+                if (multiverseSystem) multiverseSystem->summonEvil();
+                break;
+            case 83:
+                if (multiverseSystem) multiverseSystem->welcomeBackEvil();
+                break;
+            case 84:
+                if (multiverseSystem) multiverseSystem->activateMalwareCujo();
+                break;
+            case 85:
+                if (multiverseSystem) multiverseSystem->makeCujoBark();
+                break;
+            case 86:
+                if (multiverseSystem) multiverseSystem->makeCujoAttack();
+                break;
+            case 87:
+                if (multiverseSystem) multiverseSystem->makeCujoDestroy();
                 break;
         }
     }
