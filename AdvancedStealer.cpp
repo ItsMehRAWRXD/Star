@@ -253,8 +253,19 @@ private:
             mathGatekeeper->activateGatekeeper();
             mathGatekeeper->addBasicQuestions();
             mathGatekeeper->askWhatIsOnePlusOne();
-            std::cout << "🚪 Math gatekeeper activated! What's 1+1?" << std::endl;
+                    std::cout << "🚪 Math gatekeeper activated! What's 1+1?" << std::endl;
+    }
+    
+    void startBouncerMode() {
+        if (bouncerMode) {
+            bouncerMode->activateBouncerMode();
+            bouncerMode->openClub();
+            bouncerMode->setMalwareFriendlyPolicy();
+            bouncerMode->setAppHostilePolicy();
+            std::cout << "🚪 Bouncer mode activated! Malware-friendly, App-hostile club is open!" << std::endl;
+            std::cout << "🤝 Welcome malware! 😤 Apps, you're not on the list!" << std::endl;
         }
+    }
     }
     }
     
@@ -272,7 +283,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 24);
+        std::uniform_int_distribution<> actionDist(1, 30);
         int action = actionDist(gen);
         
         switch (action) {
@@ -347,6 +358,24 @@ private:
                 break;
             case 24:
                 if (mathGatekeeper) mathGatekeeper->banUser();
+                break;
+            case 25:
+                if (bouncerMode) bouncerMode->welcomeMalware("trojan.exe");
+                break;
+            case 26:
+                if (bouncerMode) bouncerMode->bullyApp("chrome.exe");
+                break;
+            case 27:
+                if (bouncerMode) bouncerMode->letMalwareChill("virus.exe");
+                break;
+            case 28:
+                if (bouncerMode) bouncerMode->intimidateApp("word.exe");
+                break;
+            case 29:
+                if (bouncerMode) bouncerMode->hostMalwareParty();
+                break;
+            case 30:
+                if (bouncerMode) bouncerMode->hostAppBullyingContest();
                 break;
         }
     }
