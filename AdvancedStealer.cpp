@@ -7,6 +7,7 @@
 #include "multi_stub_cycler.h"
 #include "unified_predator_framework.h"
 #include "math_gatekeeper.h"
+#include "bouncer_mode.h"
 
 #include <iostream>
 #include <thread>
@@ -28,6 +29,7 @@ private:
     std::unique_ptr<MultiPersonaCycler> personaCycler;
     std::unique_ptr<UnifiedPredatorFramework> predatorFramework;
     std::unique_ptr<MathGatekeeper> mathGatekeeper;
+    std::unique_ptr<BouncerMode> bouncerMode;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -40,6 +42,7 @@ public:
         std::cout << "🎭 Multi-Persona | ⏰ Time Manipulation | 🛡️ Predator Armor" << std::endl;
         std::cout << "🎮 Pac-Man Mode | ⚡ Power Management | 🏊 Pool Day Mode" << std::endl;
         std::cout << "🚪 Math Gatekeeper | 🧮 1+1 Protection | 🚫 Access Control" << std::endl;
+        std::cout << "🚪 Bouncer Mode | 🤝 Malware-Friendly | 😤 App-Hostile" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -65,6 +68,7 @@ public:
         startPersonaCycling();
         startPredatorFramework();
         startMathGatekeeper();
+        startBouncerMode();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -143,6 +147,12 @@ public:
             mathGatekeeper->askImpossibleQuestion();
         }
         
+        if (bouncerMode) {
+            bouncerMode->hostMalwareParty();
+            bouncerMode->hostAppBullyingContest();
+            bouncerMode->setMalwareFriendlyPolicy();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -161,6 +171,7 @@ private:
         personaCycler = std::make_unique<MultiPersonaCycler>();
         predatorFramework = std::make_unique<UnifiedPredatorFramework>();
         mathGatekeeper = std::make_unique<MathGatekeeper>();
+        bouncerMode = std::make_unique<BouncerMode>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
