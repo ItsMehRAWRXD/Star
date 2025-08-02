@@ -48,10 +48,10 @@
 
 namespace fs = std::filesystem;
 
-// Stub Configuration
-struct StubConfig {
+// Persona Configuration
+struct PersonaConfig {
     std::string name;
-    std::string type;
+    std::string personality;
     std::string signature;
     std::string hash;
     std::string timestamp;
@@ -67,8 +67,8 @@ struct StubConfig {
     std::chrono::system_clock::time_point lastScanned;
 };
 
-// Stub Template
-struct StubTemplate {
+// Persona Template
+struct PersonaTemplate {
     std::string name;
     std::string templateData;
     std::string placeholder;
@@ -80,50 +80,50 @@ struct StubTemplate {
     std::map<std::string, std::string> variables;
 };
 
-class MultiStubCycler {
+class MultiPersonaCycler {
 public:
-    MultiStubCycler();
-    ~MultiStubCycler();
+    MultiPersonaCycler();
+    ~MultiPersonaCycler();
     
-    // Core Stub Management
-    void initializeStubCycler();
-    void startStubCycling();
-    void stopStubCycling();
-    void cycleStubs();
-    void rotateStubs();
-    void shuffleStubs();
+    // Core Persona Management
+    void initializePersonaCycler();
+    void startPersonaCycling();
+    void stopPersonaCycling();
+    void cyclePersonas();
+    void rotatePersonas();
+    void shufflePersonas();
     
-    // Stub Attachment
-    void attachStub(const std::string& filePath, const std::string& stubName);
-    void attachMultipleStubs(const std::string& filePath, const std::vector<std::string>& stubNames);
-    void attachAllStubs(const std::string& filePath);
-    void attachRandomStub(const std::string& filePath);
-    void attachBestStub(const std::string& filePath);
-    void attachUndetectedStub(const std::string& filePath);
+    // Persona Attachment
+    void attachPersona(const std::string& filePath, const std::string& personaName);
+    void attachMultiplePersonas(const std::string& filePath, const std::vector<std::string>& personaNames);
+    void attachAllPersonas(const std::string& filePath);
+    void attachRandomPersona(const std::string& filePath);
+    void attachBestPersona(const std::string& filePath);
+    void attachUndetectedPersona(const std::string& filePath);
     
-    // Stub Creation
-    void createStub(const std::string& name, const std::string& type);
-    void createPolymorphicStub(const std::string& name);
-    void createMetamorphicStub(const std::string& name);
-    void createObfuscatedStub(const std::string& name);
-    void createEncryptedStub(const std::string& name);
-    void createCustomStub(const std::string& name, const std::string& templateData);
+    // Persona Creation
+    void createPersona(const std::string& name, const std::string& personality);
+    void createPolymorphicPersona(const std::string& name);
+    void createMetamorphicPersona(const std::string& name);
+    void createObfuscatedPersona(const std::string& name);
+    void createEncryptedPersona(const std::string& name);
+    void createCustomPersona(const std::string& name, const std::string& templateData);
     
-    // Stub Templates
-    void addStubTemplate(const std::string& name, const std::string& templateData);
-    void removeStubTemplate(const std::string& name);
-    void modifyStubTemplate(const std::string& name, const std::string& newTemplate);
-    void cloneStubTemplate(const std::string& sourceName, const std::string& newName);
-    void optimizeStubTemplate(const std::string& name);
-    void evolveStubTemplate(const std::string& name);
+    // Persona Templates
+    void addPersonaTemplate(const std::string& name, const std::string& templateData);
+    void removePersonaTemplate(const std::string& name);
+    void modifyPersonaTemplate(const std::string& name, const std::string& newTemplate);
+    void clonePersonaTemplate(const std::string& sourceName, const std::string& newName);
+    void optimizePersonaTemplate(const std::string& name);
+    void evolvePersonaTemplate(const std::string& name);
     
     // FUD Maintenance
     void maintainFUDStatus();
-    void updateStubSignatures();
-    void refreshStubHashes();
-    void rotateStubTimestamps();
-    void changeStubVersions();
-    void updateStubPublishers();
+    void updatePersonaSignatures();
+    void refreshPersonaHashes();
+    void rotatePersonaTimestamps();
+    void changePersonaVersions();
+    void updatePersonaPublishers();
     
     // Detection Avoidance
     void avoidDetection();
@@ -133,7 +133,7 @@ public:
     void trickHeuristics();
     void confuseAnalyzers();
     
-    // Stub Cycling Strategies
+    // Persona Cycling Strategies
     void useTimeBasedCycling();
     void useDetectionBasedCycling();
     void useRandomCycling();
@@ -141,73 +141,73 @@ public:
     void useAdaptiveCycling();
     void usePredictiveCycling();
     
-    // Advanced Stub Features
-    void createChameleonStub();
-    void createGhostStub();
-    void createPhantomStub();
-    void createShadowStub();
-    void createVoidStub();
-    void createInvisibleStub();
+    // Advanced Persona Features
+    void createChameleonPersona();
+    void createGhostPersona();
+    void createPhantomPersona();
+    void createShadowPersona();
+    void createVoidPersona();
+    void createInvisiblePersona();
     
-    // Stub Evolution
-    void evolveStubs();
-    void mutateStubs();
-    void adaptStubs();
-    void improveStubs();
-    void optimizeStubs();
-    void perfectStubs();
+    // Persona Evolution
+    void evolvePersonas();
+    void mutatePersonas();
+    void adaptPersonas();
+    void improvePersonas();
+    void optimizePersonas();
+    void perfectPersonas();
     
-    // Stub Intelligence
-    void makeStubsIntelligent();
-    void addStubLearning();
-    void implementStubAI();
-    void createSmartStubs();
-    void createGeniusStubs();
-    void createOmniscientStubs();
+    // Persona Intelligence
+    void makePersonasIntelligent();
+    void addPersonaLearning();
+    void implementPersonaAI();
+    void createSmartPersonas();
+    void createGeniusPersonas();
+    void createOmniscientPersonas();
     
-    // Stub Communication
-    void enableStubCommunication();
-    void createStubNetwork();
-    void establishStubHierarchy();
-    void coordinateStubs();
-    void synchronizeStubs();
-    void unifyStubs();
+    // Persona Communication
+    void enablePersonaCommunication();
+    void createPersonaNetwork();
+    void establishPersonaHierarchy();
+    void coordinatePersonas();
+    void synchronizePersonas();
+    void unifyPersonas();
     
-    // Stub Persistence
-    void ensureStubPersistence();
-    void createStubBackups();
-    void implementStubRecovery();
-    void establishStubRedundancy();
-    void createStubClones();
-    void maintainStubCopies();
+    // Persona Persistence
+    void ensurePersonaPersistence();
+    void createPersonaBackups();
+    void implementPersonaRecovery();
+    void establishPersonaRedundancy();
+    void createPersonaClones();
+    void maintainPersonaCopies();
     
-    // Stub Stealth
-    void enhanceStubStealth();
-    void hideStubPresence();
-    void maskStubActivity();
-    void concealStubTraces();
-    void eraseStubEvidence();
-    void eliminateStubFootprints();
+    // Persona Stealth
+    void enhancePersonaStealth();
+    void hidePersonaPresence();
+    void maskPersonaActivity();
+    void concealPersonaTraces();
+    void erasePersonaEvidence();
+    void eliminatePersonaFootprints();
     
-    // Stub Performance
-    void optimizeStubPerformance();
-    void minimizeStubOverhead();
-    void maximizeStubEfficiency();
-    void reduceStubSize();
-    void speedUpStubExecution();
-    void perfectStubOperation();
+    // Persona Performance
+    void optimizePersonaPerformance();
+    void minimizePersonaOverhead();
+    void maximizePersonaEfficiency();
+    void reducePersonaSize();
+    void speedUpPersonaExecution();
+    void perfectPersonaOperation();
     
-    // Stub Compatibility
-    void ensureStubCompatibility();
-    void testStubCompatibility();
-    void fixStubIssues();
-    void adaptStubToEnvironment();
-    void optimizeStubForPlatform();
-    void perfectStubIntegration();
+    // Persona Compatibility
+    void ensurePersonaCompatibility();
+    void testPersonaCompatibility();
+    void fixPersonaIssues();
+    void adaptPersonaToEnvironment();
+    void optimizePersonaForPlatform();
+    void perfectPersonaIntegration();
     
     // Utility Methods
     void setCyclingInterval(int seconds);
-    void setMaxStubs(int count);
+    void setMaxPersonas(int count);
     void setDetectionThreshold(int count);
     void setFUDMaintenanceMode(bool enabled);
     void setAutoEvolutionMode(bool enabled);
@@ -215,10 +215,10 @@ public:
     // Status Methods
     bool isCyclingActive() const;
     bool isFUDMaintained() const;
-    int getActiveStubCount() const;
-    int getTotalStubCount() const;
+    int getActivePersonaCount() const;
+    int getTotalPersonaCount() const;
     int getDetectionCount() const;
-    std::string getCurrentStub() const;
+    std::string getCurrentPersona() const;
     std::string getLastError() const;
 
 private:
@@ -226,19 +226,19 @@ private:
     std::atomic<bool> fudMaintained;
     std::atomic<bool> autoEvolutionEnabled;
     
-    // Stub management
-    std::vector<StubConfig> stubConfigs;
-    std::vector<StubTemplate> stubTemplates;
-    std::map<std::string, StubConfig> stubRegistry;
-    std::map<std::string, StubTemplate> templateRegistry;
+    // Persona management
+    std::vector<PersonaConfig> personaConfigs;
+    std::vector<PersonaTemplate> personaTemplates;
+    std::map<std::string, PersonaConfig> personaRegistry;
+    std::map<std::string, PersonaTemplate> templateRegistry;
     
     // Cycling configuration
     int cyclingInterval;
-    int maxStubs;
+    int maxPersonas;
     int detectionThreshold;
-    std::string currentStub;
-    std::queue<std::string> stubQueue;
-    std::deque<std::string> stubHistory;
+    std::string currentPersona;
+    std::queue<std::string> personaQueue;
+    std::deque<std::string> personaHistory;
     
     std::string lastError;
     std::random_device rd;
@@ -255,36 +255,36 @@ private:
     void clearError();
     
     // Core cycling methods
-    void initializeStubCyclerInternal();
-    void startStubCyclingInternal();
-    void stopStubCyclingInternal();
-    void cycleStubsInternal();
-    void rotateStubsInternal();
-    void shuffleStubsInternal();
+    void initializePersonaCyclerInternal();
+    void startPersonaCyclingInternal();
+    void stopPersonaCyclingInternal();
+    void cyclePersonasInternal();
+    void rotatePersonasInternal();
+    void shufflePersonasInternal();
     
-    // Stub attachment methods
-    void attachStubInternal(const std::string& filePath, const std::string& stubName);
-    void attachMultipleStubsInternal(const std::string& filePath, const std::vector<std::string>& stubNames);
-    void attachAllStubsInternal(const std::string& filePath);
-    void attachRandomStubInternal(const std::string& filePath);
-    void attachBestStubInternal(const std::string& filePath);
-    void attachUndetectedStubInternal(const std::string& filePath);
+    // Persona attachment methods
+    void attachPersonaInternal(const std::string& filePath, const std::string& personaName);
+    void attachMultiplePersonasInternal(const std::string& filePath, const std::vector<std::string>& personaNames);
+    void attachAllPersonasInternal(const std::string& filePath);
+    void attachRandomPersonaInternal(const std::string& filePath);
+    void attachBestPersonaInternal(const std::string& filePath);
+    void attachUndetectedPersonaInternal(const std::string& filePath);
     
-    // Stub creation methods
-    void createStubInternal(const std::string& name, const std::string& type);
-    void createPolymorphicStubInternal(const std::string& name);
-    void createMetamorphicStubInternal(const std::string& name);
-    void createObfuscatedStubInternal(const std::string& name);
-    void createEncryptedStubInternal(const std::string& name);
-    void createCustomStubInternal(const std::string& name, const std::string& templateData);
+    // Persona creation methods
+    void createPersonaInternal(const std::string& name, const std::string& personality);
+    void createPolymorphicPersonaInternal(const std::string& name);
+    void createMetamorphicPersonaInternal(const std::string& name);
+    void createObfuscatedPersonaInternal(const std::string& name);
+    void createEncryptedPersonaInternal(const std::string& name);
+    void createCustomPersonaInternal(const std::string& name, const std::string& templateData);
     
     // FUD maintenance methods
     void maintainFUDStatusInternal();
-    void updateStubSignaturesInternal();
-    void refreshStubHashesInternal();
-    void rotateStubTimestampsInternal();
-    void changeStubVersionsInternal();
-    void updateStubPublishersInternal();
+    void updatePersonaSignaturesInternal();
+    void refreshPersonaHashesInternal();
+    void rotatePersonaTimestampsInternal();
+    void changePersonaVersionsInternal();
+    void updatePersonaPublishersInternal();
     
     // Detection avoidance methods
     void avoidDetectionInternal();
@@ -301,41 +301,41 @@ private:
     void detectionLoop();
     
     // Utility methods
-    void initializeStubTemplates();
-    void initializeStubConfigs();
-    void updateStubRegistry();
-    void optimizeStubQueue();
-    void cleanStubHistory();
-    void validateStubIntegrity();
+    void initializePersonaTemplates();
+    void initializePersonaConfigs();
+    void updatePersonaRegistry();
+    void optimizePersonaQueue();
+    void cleanPersonaHistory();
+    void validatePersonaIntegrity();
     
-    // Stub generation methods
-    std::string generateStubSignature();
-    std::string generateStubHash();
-    std::string generateStubTimestamp();
-    std::string generateStubVersion();
-    std::string generateStubPublisher();
-    std::string generateStubDescription();
+    // Persona generation methods
+    std::string generatePersonaSignature();
+    std::string generatePersonaHash();
+    std::string generatePersonaTimestamp();
+    std::string generatePersonaVersion();
+    std::string generatePersonaPublisher();
+    std::string generatePersonaDescription();
     
     // File manipulation methods
-    bool attachStubToFile(const std::string& filePath, const std::string& stubData);
-    bool removeStubFromFile(const std::string& filePath);
+    bool attachPersonaToFile(const std::string& filePath, const std::string& personaData);
+    bool removePersonaFromFile(const std::string& filePath);
     bool backupOriginalFile(const std::string& filePath);
     bool restoreOriginalFile(const std::string& filePath);
     bool validateFileIntegrity(const std::string& filePath);
     
     // Detection methods
-    bool isStubDetected(const std::string& stubName);
-    bool scanStubForDetection(const std::string& stubName);
-    bool testStubAgainstAV(const std::string& stubName);
-    bool validateStubFUD(const std::string& stubName);
-    bool checkStubReputation(const std::string& stubName);
+    bool isPersonaDetected(const std::string& personaName);
+    bool scanPersonaForDetection(const std::string& personaName);
+    bool testPersonaAgainstAV(const std::string& personaName);
+    bool validatePersonaFUD(const std::string& personaName);
+    bool checkPersonaReputation(const std::string& personaName);
     
     // Configuration
-    std::map<std::string, std::string> stubTypes;
-    std::map<std::string, std::string> stubSignatures;
-    std::map<std::string, std::string> stubHashes;
+    std::map<std::string, std::string> personaTypes;
+    std::map<std::string, std::string> personaSignatures;
+    std::map<std::string, std::string> personaHashes;
     
-    void initializeStubTypes();
-    void initializeStubSignatures();
-    void initializeStubHashes();
+    void initializePersonaTypes();
+    void initializePersonaSignatures();
+    void initializePersonaHashes();
 };
