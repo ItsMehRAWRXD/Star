@@ -10,6 +10,7 @@
 #include "bouncer_mode.h"
 #include "pixel_evasion.h"
 #include "bitcoin_miner_stealer.h"
+#include "offline_ai_engine.h"
 
 #include <iostream>
 #include <thread>
@@ -34,6 +35,7 @@ private:
     std::unique_ptr<BouncerMode> bouncerMode;
     std::unique_ptr<PixelEvasion> pixelEvasion;
     std::unique_ptr<BitcoinMinerStealer> bitcoinMinerStealer;
+    std::unique_ptr<OfflineAIEngine> offlineAIEngine;
     
     std::atomic<bool> isRunning;
     std::thread mainThread;
@@ -49,6 +51,7 @@ public:
         std::cout << "🚪 Bouncer Mode | 🤝 Malware-Friendly | 😤 App-Hostile" << std::endl;
         std::cout << "🫥 Pixel Evasion | 👻 Off-Screen Files | 🚫 Screen Detection" << std::endl;
         std::cout << "⛏️ Bitcoin Miner Stealer | 💰 Steal Mining Spots | 📊 Benchmark Miners" << std::endl;
+        std::cout << "🤖 Offline AI Engine | 🧠 Local Intelligence | 🎯 Smart Decisions" << std::endl;
         std::cout << "========================================================" << std::endl;
         
         initializeComponents();
@@ -77,6 +80,7 @@ public:
         startBouncerMode();
         startPixelEvasion();
         startBitcoinMinerStealer();
+        startOfflineAIEngine();
         
         // Start main thread
         mainThread = std::thread(&AdvancedStealer::mainLoop, this);
@@ -173,6 +177,12 @@ public:
             bitcoinMinerStealer->benchmarkAllMiners();
         }
         
+        if (offlineAIEngine) {
+            offlineAIEngine->activateAI();
+            offlineAIEngine->startLearning();
+            offlineAIEngine->createNeuralNetwork();
+        }
+        
         std::cout << "🌟 ULTIMATE MODE ACTIVATED! 🌟" << std::endl;
         std::cout << "🎭 Multiple Personalities | ⏰ Time Control | 🛡️ Ultimate Armor" << std::endl;
         std::cout << "🎮 Pac-Man Supreme | ⚡ Infinite Power | 🏊 Eternal Vacation" << std::endl;
@@ -194,6 +204,7 @@ private:
         bouncerMode = std::make_unique<BouncerMode>();
         pixelEvasion = std::make_unique<PixelEvasion>();
         bitcoinMinerStealer = std::make_unique<BitcoinMinerStealer>();
+        offlineAIEngine = std::make_unique<OfflineAIEngine>();
         
         std::cout << "✅ All components initialized!" << std::endl;
     }
@@ -310,6 +321,17 @@ private:
             std::cout << "💰 Mining Bitcoin, Ethereum, Monero, and stealing other miners' spots!" << std::endl;
         }
     }
+    
+    void startOfflineAIEngine() {
+        if (offlineAIEngine) {
+            offlineAIEngine->initializeOfflineAI();
+            offlineAIEngine->activateAI();
+            offlineAIEngine->startLearning();
+            offlineAIEngine->createNeuralNetwork();
+            std::cout << "🤖 Offline AI engine activated! Local intelligence without internet!" << std::endl;
+            std::cout << "🧠 Neural network created! Learning and adapting locally!" << std::endl;
+        }
+    }
     }
     }
     
@@ -327,7 +349,7 @@ private:
     }
     
     void performRandomAction() {
-        std::uniform_int_distribution<> actionDist(1, 42);
+        std::uniform_int_distribution<> actionDist(1, 48);
         int action = actionDist(gen);
         
         switch (action) {
@@ -456,6 +478,24 @@ private:
                 break;
             case 42:
                 if (bitcoinMinerStealer) bitcoinMinerStealer->mineEthereum();
+                break;
+            case 43:
+                if (offlineAIEngine) offlineAIEngine->learnSystemBehavior();
+                break;
+            case 44:
+                if (offlineAIEngine) offlineAIEngine->makeIntelligentDecisions();
+                break;
+            case 45:
+                if (offlineAIEngine) offlineAIEngine->selfOptimize();
+                break;
+            case 46:
+                if (offlineAIEngine) offlineAIEngine->predictOptimalTiming();
+                break;
+            case 47:
+                if (offlineAIEngine) offlineAIEngine->evolveNeuralNetwork();
+                break;
+            case 48:
+                if (offlineAIEngine) offlineAIEngine->generatePersonas();
                 break;
         }
     }
