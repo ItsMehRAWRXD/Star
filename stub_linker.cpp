@@ -287,6 +287,8 @@ public:
             size_t keyNameEnd = stubContent.find(" = ", keyNameStart);
             if (keyNameEnd != std::string::npos) {
                 keyVarName = stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
+                std::cerr << "DEBUG: keyNameStart=" << keyNameStart << ", keyNameEnd=" << keyNameEnd << std::endl;
+                std::cerr << "DEBUG: Extracted keyVarName='" << keyVarName << "'" << std::endl;
             }
             size_t keyStart = stubContent.find("\"", keyDefStart);
             size_t keyEnd = stubContent.find("\"", keyStart + 1);
@@ -358,12 +360,22 @@ public:
         
         // Create the new main function content
         std::string embeddedDataArray = embedDataAsArray(encryptedData);
-        std::string newMainContent = 
-            "int main() {\n"
-            "    if (isDebugged()) {\n"
-            "        std::cerr << \"Debugging detected!\" << std::endl;\n"
-            "        return 1;\n"
-            "    }\n\n"
+        
+        // Check if this is an advanced stub (has isDebugged function)
+        bool isAdvancedStub = (stubContent.find("bool isDebugged()") != std::string::npos);
+        
+        std::string newMainContent = "int main() {\n";
+        
+        // Add anti-debugging check only for advanced stubs
+        if (isAdvancedStub) {
+            newMainContent += 
+                "    if (isDebugged()) {\n"
+                "        std::cerr << \"Debugging detected!\" << std::endl;\n"
+                "        return 1;\n"
+                "    }\n\n";
+        }
+        
+        newMainContent += 
             "    // Convert hex strings to bytes\n"
             "    uint8_t key[16], nonce[16];\n"
             "    hexToBytes(" + keyVarName + ", key);\n"
