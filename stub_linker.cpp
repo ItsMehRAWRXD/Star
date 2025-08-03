@@ -323,7 +323,7 @@ public:
         std::vector<uint8_t> encryptedData = exeData;
         aesCtrCrypt(encryptedData.data(), encryptedData.size(), key, nonce);
         
-        // Find the start of the main function and replace the entire logic
+        // Simple approach: Find the main function and replace everything after the opening brace
         size_t mainStart = stubContent.find("int main() {");
         if (mainStart == std::string::npos) {
             std::cerr << "Error: Could not find main function in stub" << std::endl;
@@ -337,25 +337,11 @@ public:
             return;
         }
         
-        // Find the closing brace of main
-        size_t braceCount = 1;
-        size_t mainBraceEnd = mainBraceStart + 1;
-        while (braceCount > 0 && mainBraceEnd < stubContent.length()) {
-            if (stubContent[mainBraceEnd] == '{') braceCount++;
-            else if (stubContent[mainBraceEnd] == '}') braceCount--;
-            mainBraceEnd++;
-        }
-        
-        if (braceCount > 0) {
+        // Find the last closing brace of the file (end of main function)
+        size_t lastBrace = stubContent.rfind("}");
+        if (lastBrace == std::string::npos) {
             std::cerr << "Error: Could not find main function closing brace" << std::endl;
             return;
-        }
-        
-        // Find the end of the main function (after the closing brace)
-        while (mainBraceEnd < stubContent.length() && 
-               (stubContent[mainBraceEnd] == ' ' || stubContent[mainBraceEnd] == '\n' || 
-                stubContent[mainBraceEnd] == '\r' || stubContent[mainBraceEnd] == '\t')) {
-            mainBraceEnd++;
         }
         
         // Create the new main function content
@@ -388,8 +374,8 @@ public:
             "    return 0;\n"
             "}";
         
-        // Replace the entire main function
-        stubContent.replace(mainStart, mainBraceEnd - mainStart, newMainContent);
+        // Replace everything from the opening brace to the end of the file
+        stubContent.replace(mainBraceStart + 1, lastBrace - mainBraceStart, newMainContent.substr(newMainContent.find("{") + 1, newMainContent.rfind("}") - newMainContent.find("{") - 1));
         
 
         
