@@ -229,14 +229,8 @@ private:
         code << "// Random name generator for auto-rename\n";
         code << "std::string generateRandomBotName() {\n";
         code << "    static std::mt19937 rng(std::time(nullptr));\n";
-        code << "    std::vector<std::string> prefixes = {\"Star\", \"Bot\", \"IRC\", \"Net\", \"Chat\", \"Link\", \"Node\", \"Core\", \"Hub\", \"Relay\"};\n";
-        code << "    std::vector<std::string> suffixes = {\"Bot\", \"Node\", \"Link\", \"Hub\", \"Relay\", \"Core\", \"Net\", \"Chat\", \"IRC\", \"Star\"};\n";
-        code << "    \n";
-        code << "    std::string prefix = prefixes[rng() % prefixes.size()];\n";
-        code << "    std::string suffix = suffixes[rng() % suffixes.size()];\n";
-        code << "    int number = (rng() % 999) + 1;\n";
-        code << "    \n";
-        code << "    return prefix + suffix + std::to_string(number);\n";
+        code << "    int number = (rng() % 9999) + 1;\n";
+        code << "    return \"rawr\" + std::to_string(number);\n";
         code << "}\n\n";
         code << "class MircBot {\n";
         code << "private:\n";
@@ -346,6 +340,12 @@ private:
         code << "            std::string response = line.substr(6);\n";
         code << "            sendCommand(\"PONG :\" + response);\n";
         code << "            log(\"Responded to PING\");\n";
+        code << "        }\n";
+        code << "        else if (line.find(\"433\") != std::string::npos) {\n";
+        code << "            // Nickname already taken, generate new random name\n";
+        code << "            std::string newName = generateRandomBotName();\n";
+        code << "            log(\"Nickname taken, trying: \" + newName);\n";
+        code << "            sendCommand(\"NICK \" + newName);\n";
         code << "        }\n";
         code << "        else if (line.find(\"PRIVMSG\") != std::string::npos) {\n";
         code << "            size_t pos1 = line.find('!');\n";
@@ -498,6 +498,8 @@ int main() {
     while (true) {
         builder.showMenu();
         std::getline(std::cin, choice);
+        
+
         
         if (choice == "1") {
             builder.setBotName();
