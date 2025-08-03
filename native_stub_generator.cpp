@@ -1734,15 +1734,18 @@ public:
     }
     
     void showHelp() {
-        std::cout << "Native Stub Generator - Unlimited stub creation for packing" << std::endl;
-        std::cout << "=============================================================" << std::endl;
+        std::cout << "=== Universal Native Stub Generator - Unlimited Stub Creation ===" << std::endl;
+        std::cout << "=================================================================" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Universal file support: Works with ANY file type (executables, documents, images, etc.)" << std::endl;
+        std::cout << "Random key generation: Each stub uses unique random AES-128-CTR keys" << std::endl;
         std::cout << std::endl;
         std::cout << "Usage:" << std::endl;
         std::cout << "  ./native_stub_generator <input_file> <output_stub.cpp> [stub_type] [use_random_key]" << std::endl;
         std::cout << "  ./native_stub_generator --standalone <output_stub.cpp> [stub_type] [use_random_key]" << std::endl;
         std::cout << std::endl;
         std::cout << "Arguments:" << std::endl;
-        std::cout << "  input_file      - File to embed in stub" << std::endl;
+        std::cout << "  input_file      - ANY file to embed in stub (exe, pdf, jpg, etc.)" << std::endl;
         std::cout << "  output_stub.cpp - Generated C++ stub file" << std::endl;
         std::cout << "  stub_type       - Type of stub (basic, advanced, minimal) [default: basic]" << std::endl;
         std::cout << "  use_random_key  - Use random key (1) or env var (0) [default: 1]" << std::endl;
@@ -1759,13 +1762,33 @@ public:
         std::cout << "  standalone_advanced - Standalone with anti-debugging/polymorphism" << std::endl;
         std::cout << "  standalone_stealth  - Standalone with stealth features" << std::endl;
         std::cout << std::endl;
-        std::cout << "Examples:" << std::endl;
-        std::cout << "  ./native_stub_generator payload.bin stub.cpp" << std::endl;
-        std::cout << "  ./native_stub_generator payload.bin stub.cpp advanced" << std::endl;
+        std::cout << "Universal Examples:" << std::endl;
+        std::cout << "  # Executables" << std::endl;
+        std::cout << "  ./native_stub_generator calc.exe stub.cpp" << std::endl;
+        std::cout << "  ./native_stub_generator mirc_bot.cpp bot_stub.cpp advanced" << std::endl;
+        std::cout << "  ./native_stub_generator payload.exe stealth_stub.cpp" << std::endl;
+        std::cout << std::endl;
+        std::cout << "  # Documents & Media" << std::endl;
+        std::cout << "  ./native_stub_generator document.pdf doc_stub.cpp" << std::endl;
+        std::cout << "  ./native_stub_generator image.jpg img_stub.cpp" << std::endl;
+        std::cout << "  ./native_stub_generator video.mp4 vid_stub.cpp" << std::endl;
+        std::cout << std::endl;
+        std::cout << "  # Scripts & Archives" << std::endl;
+        std::cout << "  ./native_stub_generator script.py py_stub.cpp" << std::endl;
+        std::cout << "  ./native_stub_generator archive.zip zip_stub.cpp" << std::endl;
+        std::cout << std::endl;
+        std::cout << "  # Standalone Stubs" << std::endl;
         std::cout << "  ./native_stub_generator --standalone standalone_stub.cpp" << std::endl;
-        std::cout << "  ./native_stub_generator --standalone basic_stub.cpp standalone_basic" << std::endl;
         std::cout << "  ./native_stub_generator --standalone advanced_stub.cpp standalone_advanced" << std::endl;
         std::cout << "  ./native_stub_generator --standalone stealth_stub.cpp standalone_stealth" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Integration with other tools:" << std::endl;
+        std::cout << "  # Generate standalone stub, then link with any file" << std::endl;
+        std::cout << "  ./native_stub_generator --standalone stub.cpp basic" << std::endl;
+        std::cout << "  ./stub_linker stub.cpp any_file.exe dropper.cpp" << std::endl;
+        std::cout << std::endl;
+        std::cout << "  # Or generate stub with embedded file directly" << std::endl;
+        std::cout << "  ./native_stub_generator any_file.exe embedded_stub.cpp" << std::endl;
         std::cout << std::endl;
     }
 };
