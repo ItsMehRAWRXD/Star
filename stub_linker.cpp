@@ -276,32 +276,90 @@ public:
             return;
         }
         
-        // Generate encryption key and nonce
-        std::string keyHex = generateRandomKey();
-        std::string nonceHex = generateRandomNonce();
+        // Extract key and nonce from the standalone stub
+        std::string keyHex, nonceHex;
+        
+        // Find key definition line (e.g., "const std::string KEY_Hd0w2Sl5 = "6243510c1f991287aa602c2ef69dfaf1";")
+        size_t keyDefStart = stubContent.find("const std::string KEY_");
+        if (keyDefStart != std::string::npos) {
+            size_t keyStart = stubContent.find("\"", keyDefStart);
+            size_t keyEnd = stubContent.find("\"", keyStart + 1);
+            if (keyStart != std::string::npos && keyEnd != std::string::npos) {
+                keyHex = stubContent.substr(keyStart + 1, keyEnd - keyStart - 1);
+            }
+        }
+        
+        // Find nonce definition line
+        size_t nonceDefStart = stubContent.find("const std::string NONCE_");
+        if (nonceDefStart != std::string::npos) {
+            size_t nonceStart = stubContent.find("\"", nonceDefStart);
+            size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
+            if (nonceStart != std::string::npos && nonceEnd != std::string::npos) {
+                nonceHex = stubContent.substr(nonceStart + 1, nonceEnd - nonceStart - 1);
+            }
+        }
+        
+        if (keyHex.empty() || nonceHex.empty()) {
+            std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
+            return;
+        }
         
         // Convert to bytes
         uint8_t key[16], nonce[16];
         hexToBytes(keyHex, key);
         hexToBytes(nonceHex, nonce);
         
-        // Encrypt the executable data
+        // Encrypt the executable data using the stub's key/nonce
         std::vector<uint8_t> encryptedData = exeData;
         aesCtrCrypt(encryptedData.data(), encryptedData.size(), key, nonce);
         
-        // Find and replace the placeholder in the stub
-        size_t placeholderPos = stubContent.find("// Standalone stub - no embedded data");
-        if (placeholderPos == std::string::npos) {
-            std::cerr << "Error: Could not find embedded data placeholder in stub" << std::endl;
+        // Find the variable declarations and insert embedded data + decryption code after them
+        size_t varDeclPos = stubContent.find("uint8_t key[16], nonce[16];");
+        if (varDeclPos == std::string::npos) {
+            std::cerr << "Error: Could not find variable declarations in stub" << std::endl;
             return;
         }
         
-        // Replace with the encrypted data
+        // Find the end of the variable declarations line
+        size_t varDeclEnd = stubContent.find(";", varDeclPos) + 1;
+        
+        // Create the embedded data and decryption code
         std::string embeddedDataArray = embedDataAsArray(encryptedData);
-        stubContent.replace(placeholderPos, 35, 
-                           "// Embedded encrypted executable data\n"
-                           "const uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
-                           "const size_t embeddedDataSize = sizeof(embeddedData);");
+        std::string insertionCode = 
+            "\n\n"
+            "    // Embedded encrypted executable data\n"
+            "    uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
+            "    const size_t embeddedDataSize = sizeof(embeddedData);\n\n"
+            "    // Decrypt the data using AES-128-CTR\n"
+            "    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);\n\n"
+            "    // Write decrypted data to file\n"
+            "    std::ofstream outFile(\"decrypted_output.bin\", std::ios::binary);\n"
+            "    if (outFile.is_open()) {\n"
+            "        outFile.write(reinterpret_cast<const char*>(embeddedData), embeddedDataSize);\n"
+            "        outFile.close();\n"
+            "        std::cout << \"Data decrypted and saved to decrypted_output.bin\" << std::endl;\n"
+            "    } else {\n"
+            "        std::cerr << \"Failed to create output file\" << std::endl;\n"
+            "        return 1;\n"
+            "    }\n\n"
+            "    return 0;";
+        
+        // Insert the code after variable declarations
+        stubContent.insert(varDeclEnd, insertionCode);
+        
+        // Remove everything after the first return 0; and add proper closing
+        size_t firstReturn = stubContent.find("return 0;");
+        if (firstReturn != std::string::npos) {
+            // Find the last closing brace
+            size_t lastBrace = stubContent.rfind("}");
+            if (lastBrace != std::string::npos && lastBrace > firstReturn) {
+                // Remove everything after the first return 0; and add proper closing
+                stubContent.erase(firstReturn + 9, lastBrace - firstReturn - 8);
+                stubContent += "\n}\n";
+            }
+        }
+        
+
         
         // Write the final linked stub
         std::ofstream outFile(outputFile);
@@ -319,8 +377,8 @@ public:
         std::cout << "  Output: " << outputFile << std::endl;
         std::cout << "  Original size: " << exeData.size() << " bytes" << std::endl;
         std::cout << "  Encrypted size: " << encryptedData.size() << " bytes" << std::endl;
-        std::cout << "  Key: " << keyHex << std::endl;
-        std::cout << "  Nonce: " << nonceHex << std::endl;
+        std::cout << "  Using stub's key: " << keyHex << std::endl;
+        std::cout << "  Using stub's nonce: " << nonceHex << std::endl;
         std::cout << "  To compile: g++ -std=c++17 -o " << outputFile.substr(0, outputFile.find('.')) 
                   << " " << outputFile << std::endl;
     }

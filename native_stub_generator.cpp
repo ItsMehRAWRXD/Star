@@ -907,12 +907,14 @@ int main() {
     hexToBytes({NONCE_VAR}, nonce);
     
     // Decrypt the data using AES-128-CTR
-    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
     // Write decrypted data to file
-    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    // if (outFile.is_open()) {
+    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
         std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
     } else {
@@ -1128,16 +1130,18 @@ int main() {
     PolymorphicEngine::mutateArray(nonce, 16, seed);
     
     // Decrypt the data using AES-128-CTR
-    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
     // Demutate the key and nonce
     PolymorphicEngine::demutateArray(key, 16, seed);
     PolymorphicEngine::demutateArray(nonce, 16, seed);
     
     // Write decrypted data to file
-    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    // if (outFile.is_open()) {
+    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
         std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
     } else {
@@ -1338,12 +1342,14 @@ int main() {
     hexToBytes({NONCE_VAR}, nonce);
     
     // Decrypt the data using AES-128-CTR
-    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
     // Write decrypted data to file (silent)
-    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    // if (outFile.is_open()) {
+    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
     }
     
@@ -1400,14 +1406,14 @@ public:
         }
         
         // Replace variable names in the code
-        size_t keyUsagePos = stubCode.find("{KEY_VARIABLE}");
+        size_t keyUsagePos = stubCode.find("{KEY_VAR}");
         if (keyUsagePos != std::string::npos) {
-            stubCode.replace(keyUsagePos, 13, keyVarName);
+            stubCode.replace(keyUsagePos, 9, keyVarName);
         }
         
-        size_t nonceUsagePos = stubCode.find("{NONCE_VARIABLE}");
+        size_t nonceUsagePos = stubCode.find("{NONCE_VAR}");
         if (nonceUsagePos != std::string::npos) {
-            stubCode.replace(nonceUsagePos, 14, nonceVarName);
+            stubCode.replace(nonceUsagePos, 11, nonceVarName);
         }
         
         // Remove embedded data placeholder for standalone stub
