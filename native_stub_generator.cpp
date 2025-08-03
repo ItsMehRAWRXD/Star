@@ -533,12 +533,10 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-// Round constants for key expansion
 static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
-// AES helper functions
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -559,23 +557,10 @@ inline void subBytes(uint8_t* state) {
 
 inline void shiftRows(uint8_t* state) {
     uint8_t temp;
-    // Row 1: shift left by 1
-    temp = state[1];
-    state[1] = state[5];
-    state[5] = state[9];
-    state[9] = state[13];
-    state[13] = temp;
-    
-    // Row 2: shift left by 2
+    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
     temp = state[2]; state[2] = state[10]; state[10] = temp;
     temp = state[6]; state[6] = state[14]; state[14] = temp;
-    
-    // Row 3: shift left by 3
-    temp = state[3];
-    state[3] = state[15];
-    state[15] = state[11];
-    state[11] = state[7];
-    state[7] = temp;
+    temp = state[3]; state[3] = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = temp;
 }
 
 inline void mixColumns(uint8_t* state) {
@@ -596,68 +581,27 @@ inline void addRoundKey(uint8_t* state, const uint8_t* roundKey) {
 
 inline void keyExpansion(const uint8_t* key, uint8_t* roundKeys) {
     uint8_t temp[4];
-    
-    // Copy the original key
-    for (int i = 0; i < 16; i++) {
-        roundKeys[i] = key[i];
-    }
-    
+    for (int i = 0; i < 16; i++) roundKeys[i] = key[i];
     for (int i = 4; i < 44; i++) {
-        for (int j = 0; j < 4; j++) {
-            temp[j] = roundKeys[(i-1)*4 + j];
-        }
-        
+        for (int j = 0; j < 4; j++) temp[j] = roundKeys[(i-1)*4 + j];
         if (i % 4 == 0) {
-            // RotWord
-            uint8_t t = temp[0];
-            temp[0] = temp[1];
-            temp[1] = temp[2];
-            temp[2] = temp[3];
-            temp[3] = t;
-            
-            // SubWord
-            for (int j = 0; j < 4; j++) {
-                temp[j] = sbox[temp[j]];
-            }
-            
-            // XOR with Rcon
+            uint8_t t = temp[0]; temp[0] = temp[1]; temp[1] = temp[2]; temp[2] = temp[3]; temp[3] = t;
+            for (int j = 0; j < 4; j++) temp[j] = sbox[temp[j]];
             temp[0] ^= rcon[i/4 - 1];
         }
-        
-        for (int j = 0; j < 4; j++) {
-            roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
-        }
+        for (int j = 0; j < 4; j++) roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
     }
 }
 
 inline void aesEncryptBlock(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
     uint8_t state[16];
-    
-    // Copy input to state
-    for (int i = 0; i < 16; i++) {
-        state[i] = input[i];
-    }
-    
-    // Initial round
+    for (int i = 0; i < 16; i++) state[i] = input[i];
     addRoundKey(state, roundKeys);
-    
-    // Main rounds
     for (int round = 1; round < 10; round++) {
-        subBytes(state);
-        shiftRows(state);
-        mixColumns(state);
-        addRoundKey(state, roundKeys + round * 16);
+        subBytes(state); shiftRows(state); mixColumns(state); addRoundKey(state, roundKeys + round * 16);
     }
-    
-    // Final round
-    subBytes(state);
-    shiftRows(state);
-    addRoundKey(state, roundKeys + 10 * 16);
-    
-    // Copy state to output
-    for (int i = 0; i < 16; i++) {
-        output[i] = state[i];
-    }
+    subBytes(state); shiftRows(state); addRoundKey(state, roundKeys + 10 * 16);
+    for (int i = 0; i < 16; i++) output[i] = state[i];
 }
 
 inline void incrementCounter(uint8_t* counter) {
@@ -669,34 +613,23 @@ inline void incrementCounter(uint8_t* counter) {
 
 inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length, 
                        const uint8_t* key, const uint8_t* nonce) {
-    uint8_t roundKeys[176]; // 11 rounds * 16 bytes
+    uint8_t roundKeys[176];
     keyExpansion(key, roundKeys);
-    
     uint8_t counter[16];
     uint8_t keystream[16];
-    
-    // Initialize counter with nonce
-    for (int i = 0; i < 16; i++) {
-        counter[i] = nonce[i];
-    }
-    
+    for (int i = 0; i < 16; i++) counter[i] = nonce[i];
     size_t processed = 0;
     while (processed < length) {
-        // Generate keystream block
         aesEncryptBlock(counter, keystream, roundKeys);
-        
-        // XOR with input
         size_t blockSize = (length - processed < 16) ? length - processed : 16;
         for (size_t i = 0; i < blockSize; i++) {
             output[processed + i] = input[processed + i] ^ keystream[i];
         }
-        
         processed += blockSize;
         incrementCounter(counter);
     }
 }
 
-// Convert hex string to bytes
 void hexToBytes(const std::string& hex, uint8_t* bytes) {
     for (size_t i = 0; i < hex.length(); i += 2) {
         bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
@@ -704,36 +637,29 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Anti-debugging check
     if (isDebugged()) {
         std::cerr << "Debugging detected!" << std::endl;
         return 1;
     }
-    
     // Embedded encrypted data
     uint8_t encryptedData[] = {EMBEDDED_DATA};
     size_t dataSize = sizeof(encryptedData);
-    
-    // Convert hex strings to bytes
+    // Key and nonce
+    std::string keyHex = {KEY_VAR};
+    std::string nonceHex = {NONCE_VAR};
     uint8_t key[16], nonce[16];
-    hexToBytes({KEY_VAR}, key);
-    hexToBytes({NONCE_VAR}, nonce);
-    
-    // Decrypt the data using AES-128-CTR
-    aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
-    
-    // Write with random filename (anti-detection)
-    std::string filename = "output_" + std::to_string(time(nullptr)) + ".bin";
+    hexToBytes(keyHex, key);
+    hexToBytes(nonceHex, nonce);
+    // Decrypt
+    std::vector<uint8_t> decrypted(dataSize);
+    aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
+    // Write output: prepend nonce to match original file
+    std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
     std::ofstream outFile(filename, std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<char*>(encryptedData), dataSize);
-        outFile.close();
-        std::cout << "Data decrypted and saved to " << filename << std::endl;
-    } else {
-        std::cerr << "Failed to create output file" << std::endl;
-        return 1;
-    }
-    
+    outFile.write(reinterpret_cast<char*>(nonce), 16);
+    outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
+    outFile.close();
+    std::cout << "Decrypted file written: " << filename << std::endl;
     return 0;
 }
 )";
