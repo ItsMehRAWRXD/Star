@@ -277,33 +277,45 @@ public:
             return;
         }
         
-                // Extract key and nonce from the standalone stub (lines 13-14 only)
-        std::string keyHex, nonceHex;
+                        // Generate random key and nonce by default
+        std::string keyHex = generateRandomKey();
+        std::string nonceHex = generateRandomNonce();
         
-        // Split content into lines and extract from lines 13-14
-        std::istringstream iss(stubContent);
-        std::string line;
-        int lineNum = 0;
+        std::cout << "Generated random key and nonce:" << std::endl;
+        std::cout << "  Key: " << keyHex << std::endl;
+        std::cout << "  Nonce: " << nonceHex << std::endl;
         
-                 while (std::getline(iss, line)) {
-             lineNum++;
-             // Check for key definition (lines 12-13 for advanced, 13 for basic)
-             if ((lineNum == 12 || lineNum == 13) && line.find("const std::string KEY_") != std::string::npos) {
-                 size_t quoteStart = line.find("\"");
-                 size_t quoteEnd = line.find("\"", quoteStart + 1);
-                 if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
-                     keyHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
-                 }
-             }
-             // Check for nonce definition (lines 13-14 for advanced, 14 for basic)
-             if ((lineNum == 13 || lineNum == 14) && line.find("const std::string NONCE_") != std::string::npos) {
-                 size_t quoteStart = line.find("\"");
-                 size_t quoteEnd = line.find("\"", quoteStart + 1);
-                 if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
-                     nonceHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
-                 }
-             }
-         }
+        // Fallback: Try to extract from stub if random generation fails or keys are randomly placed
+        if (keyHex.empty() || nonceHex.empty()) {
+            std::cout << "Random generation failed, attempting to extract from stub..." << std::endl;
+            
+            // Split content into lines and search for key/nonce definitions anywhere
+            std::istringstream iss(stubContent);
+            std::string line;
+            int lineNum = 0;
+            
+            while (std::getline(iss, line)) {
+                lineNum++;
+                // Check for key definition anywhere in the file
+                if (line.find("const std::string KEY_") != std::string::npos) {
+                    size_t quoteStart = line.find("\"");
+                    size_t quoteEnd = line.find("\"", quoteStart + 1);
+                    if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                        keyHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+                        std::cout << "  Found key on line " << lineNum << ": " << keyHex << std::endl;
+                    }
+                }
+                // Check for nonce definition anywhere in the file
+                if (line.find("const std::string NONCE_") != std::string::npos) {
+                    size_t quoteStart = line.find("\"");
+                    size_t quoteEnd = line.find("\"", quoteStart + 1);
+                    if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                        nonceHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+                        std::cout << "  Found nonce on line " << lineNum << ": " << nonceHex << std::endl;
+                    }
+                }
+            }
+        }
         
         if (keyHex.empty() || nonceHex.empty()) {
             std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
