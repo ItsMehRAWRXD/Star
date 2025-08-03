@@ -1,1 +1,0 @@
-Test file 2 with longer content for testing encryption capabilities
