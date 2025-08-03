@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <random>
 #include <ctime>
+#include <sstream>
 
 class StubLinker {
 private:
@@ -276,64 +277,56 @@ public:
             return;
         }
         
-        // Extract key and nonce from the standalone stub
+        // Extract key and nonce from the standalone stub (lines 13-14 only)
         std::string keyHex, nonceHex, keyVarName, nonceVarName;
         
-        // Find key definition line (e.g., "const std::string KEY_abc123 = "4cde442ea60bd71c0caed5503ff32a17";")
-        size_t keyDefStart = 0;
-        while (true) {
-            keyDefStart = stubContent.find("const std::string KEY_", keyDefStart);
-            if (keyDefStart == std::string::npos) break;
-            
-            // Extract the full variable name including KEY_
-            size_t keyNameStart = keyDefStart + 20; // Skip "const std::string "
-            size_t keyNameEnd = stubContent.find(" = ", keyNameStart);
-            if (keyNameEnd != std::string::npos) {
-                keyVarName = stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
-                std::cerr << "DEBUG: Found keyVarName='" << keyVarName << "'" << std::endl;
-                
-                // Verify the extraction is correct - should start with "KEY_"
-                if (keyVarName.substr(0, 4) == "KEY_") {
-                    // Found valid key variable, now extract the hex value
-                    size_t keyStart = stubContent.find("\"", keyDefStart);
-                    size_t keyEnd = stubContent.find("\"", keyStart + 1);
-                    if (keyStart != std::string::npos && keyEnd != std::string::npos) {
-                        keyHex = stubContent.substr(keyStart + 1, keyEnd - keyStart - 1);
-                        std::cerr << "DEBUG: Found valid key: " << keyHex << std::endl;
-                        break; // Found valid key, exit loop
-                    }
-                }
-            }
-            keyDefStart++; // Try next occurrence
-        }
+        // Split content into lines and extract from lines 13-14
+        std::istringstream iss(stubContent);
+        std::string line;
+        int lineNum = 0;
         
-        // Find nonce definition line (e.g., "const std::string NONCE_def456 = "76741508ffff0d9fd474ccb52c83286c";")
-        size_t nonceDefStart = 0;
-        while (true) {
-            nonceDefStart = stubContent.find("const std::string NONCE_", nonceDefStart);
-            if (nonceDefStart == std::string::npos) break;
-            
-            // Extract the full variable name including NONCE_
-            size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string "
-            size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
-            if (nonceNameEnd != std::string::npos) {
-                nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
-                std::cerr << "DEBUG: Found nonceVarName='" << nonceVarName << "'" << std::endl;
-                
-                // Verify the extraction is correct - should start with "NONCE_"
-                if (nonceVarName.substr(0, 6) == "NONCE_") {
-                    // Found valid nonce variable, now extract the hex value
-                    size_t nonceStart = stubContent.find("\"", nonceDefStart);
-                    size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
-                    if (nonceStart != std::string::npos && nonceEnd != std::string::npos) {
-                        nonceHex = stubContent.substr(nonceStart + 1, nonceEnd - nonceStart - 1);
-                        std::cerr << "DEBUG: Found valid nonce: " << nonceHex << std::endl;
-                        break; // Found valid nonce, exit loop
-                    }
-                }
-            }
-            nonceDefStart++; // Try next occurrence
-        }
+                 while (std::getline(iss, line)) {
+             lineNum++;
+             if (lineNum == 13) {
+                 std::cerr << "DEBUG: Line 13: '" << line << "'" << std::endl;
+                 // Extract key from line 13: "const std::string KEY_xxx = "yyy";"
+                 size_t keyStart = line.find("const std::string KEY_");
+                 if (keyStart != std::string::npos) {
+                     // Extract the full variable name starting from KEY_
+                     size_t keyNameStart = line.find("KEY_", keyStart);
+                     size_t keyNameEnd = line.find(" = ", keyNameStart);
+                     if (keyNameEnd != std::string::npos) {
+                         keyVarName = line.substr(keyNameStart, keyNameEnd - keyNameStart);
+                         std::cerr << "DEBUG: Extracted keyVarName='" << keyVarName << "'" << std::endl;
+                         size_t quoteStart = line.find("\"", keyNameEnd);
+                         size_t quoteEnd = line.find("\"", quoteStart + 1);
+                         if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                             keyHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+                             std::cerr << "DEBUG: Extracted keyHex='" << keyHex << "'" << std::endl;
+                         }
+                     }
+                 }
+             } else if (lineNum == 14) {
+                 std::cerr << "DEBUG: Line 14: '" << line << "'" << std::endl;
+                 // Extract nonce from line 14: "const std::string NONCE_xxx = "yyy";"
+                 size_t nonceStart = line.find("const std::string NONCE_");
+                 if (nonceStart != std::string::npos) {
+                     // Extract the full variable name starting from NONCE_
+                     size_t nonceNameStart = line.find("NONCE_", nonceStart);
+                     size_t nonceNameEnd = line.find(" = ", nonceNameStart);
+                     if (nonceNameEnd != std::string::npos) {
+                         nonceVarName = line.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+                         std::cerr << "DEBUG: Extracted nonceVarName='" << nonceVarName << "'" << std::endl;
+                         size_t quoteStart = line.find("\"", nonceNameEnd);
+                         size_t quoteEnd = line.find("\"", quoteStart + 1);
+                         if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                             nonceHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+                             std::cerr << "DEBUG: Extracted nonceHex='" << nonceHex << "'" << std::endl;
+                         }
+                     }
+                 }
+             }
+         }
         
         if (keyHex.empty() || nonceHex.empty() || keyVarName.empty() || nonceVarName.empty()) {
             std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
@@ -385,6 +378,10 @@ public:
         
         // Check if this is an advanced stub (has isDebugged function)
         bool isAdvancedStub = (stubContent.find("bool isDebugged()") != std::string::npos);
+        
+        std::cerr << "DEBUG: Before newMainContent generation:" << std::endl;
+        std::cerr << "  keyVarName='" << keyVarName << "'" << std::endl;
+        std::cerr << "  nonceVarName='" << nonceVarName << "'" << std::endl;
         
         std::string newMainContent = "int main() {\n";
         
