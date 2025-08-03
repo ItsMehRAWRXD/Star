@@ -279,10 +279,11 @@ public:
         // Extract key and nonce from the standalone stub
         std::string keyHex, nonceHex, keyVarName, nonceVarName;
         
-        // Find key definition line (e.g., "const std::string KEY_Hd0w2Sl5 = "6243510c1f991287aa602c2ef69dfaf1";")
+        // Find key definition line (e.g., "const std::string KEY_yw1rkYaS = "4cde442ea60bd71c0caed5503ff32a17";")
         size_t keyDefStart = stubContent.find("const std::string KEY_");
         if (keyDefStart != std::string::npos) {
-            size_t keyNameStart = keyDefStart + 20; // Skip "const std::string KEY_"
+            // Extract the full variable name including KEY_
+            size_t keyNameStart = keyDefStart + 20; // Skip "const std::string "
             size_t keyNameEnd = stubContent.find(" = ", keyNameStart);
             if (keyNameEnd != std::string::npos) {
                 keyVarName = stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
@@ -300,7 +301,7 @@ public:
             size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string NONCE_"
             size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
             if (nonceNameEnd != std::string::npos) {
-                nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+                nonceVarName = "NONCE_" + stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
             }
             size_t nonceStart = stubContent.find("\"", nonceDefStart);
             size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
@@ -354,8 +355,8 @@ public:
             "    }\n\n"
             "    // Convert hex strings to bytes\n"
             "    uint8_t key[16], nonce[16];\n"
-            "    hexToBytes(KEY_" + keyVarName + ", key);\n"
-            "    hexToBytes(NONCE_" + nonceVarName + ", nonce);\n\n"
+            "    hexToBytes(" + keyVarName + ", key);\n"
+            "    hexToBytes(" + nonceVarName + ", nonce);\n\n"
             "    // Embedded encrypted executable data\n"
             "    uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
             "    const size_t embeddedDataSize = sizeof(embeddedData);\n\n"
