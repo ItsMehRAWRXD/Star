@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit, !upload, !download, !execute";
+                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -281,6 +281,62 @@ public:
                     }
                 } else {
                     sendCommand("PRIVMSG " + target + " :Usage: !execute <command>");
+                }
+            }
+            else if (command == "!uploadurl") {
+                std::string url, filename;
+                iss >> url;
+                iss >> filename;
+                if (!url.empty() && !filename.empty()) {
+                    log("Downloading from URL: " + url + " to " + filename);
+                    
+                    // Use curl to download file
+                    std::string curlCmd = "curl -s -L -o " + filename + " \"" + url + "\"";
+                    int result = system(curlCmd.c_str());
+                    
+                    if (result == 0) {
+                        // Check if file was downloaded successfully
+                        std::ifstream checkFile(filename);
+                        if (checkFile.good()) {
+                            checkFile.close();
+                            log("File downloaded from URL successfully: " + filename);
+                            sendCommand("PRIVMSG " + target + " :File downloaded from URL successfully: " + filename);
+                        } else {
+                            sendCommand("PRIVMSG " + target + " :Failed to download file from URL: " + url);
+                        }
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Failed to download from URL: " + url);
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !uploadurl <url> <filename>");
+                }
+            }
+            else if (command == "!downloadurl") {
+                std::string filename, url;
+                iss >> filename;
+                iss >> url;
+                if (!filename.empty() && !url.empty()) {
+                    // Check if file exists
+                    std::ifstream file(filename);
+                    if (file.is_open()) {
+                        file.close();
+                        log("Uploading file to URL: " + filename + " -> " + url);
+                        
+                        // Use curl to upload file
+                        std::string curlCmd = "curl -s -F \"file=@" + filename + "\" \"" + url + "\"";
+                        int result = system(curlCmd.c_str());
+                        
+                        if (result == 0) {
+                            log("File uploaded to URL successfully: " + filename + " -> " + url);
+                            sendCommand("PRIVMSG " + target + " :File uploaded to URL successfully: " + filename + " -> " + url);
+                        } else {
+                            sendCommand("PRIVMSG " + target + " :Failed to upload file to URL: " + url);
+                        }
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :File not found: " + filename);
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !downloadurl <filename> <url>");
                 }
             }
         }
