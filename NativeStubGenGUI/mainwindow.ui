@@ -55,7 +55,7 @@
     <item>
      <widget class="QPushButton" name="generateButton">
       <property name="text">
-       <string>Generate Advanced Stub</string>
+       <string>Generate Basic Stub</string>
       </property>
      </widget>
     </item>
