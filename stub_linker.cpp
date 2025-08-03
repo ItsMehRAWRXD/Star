@@ -285,7 +285,7 @@ public:
             size_t keyNameStart = keyDefStart + 20; // Skip "const std::string KEY_"
             size_t keyNameEnd = stubContent.find(" = ", keyNameStart);
             if (keyNameEnd != std::string::npos) {
-                keyVarName = "KEY_" + stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
+                keyVarName = stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
             }
             size_t keyStart = stubContent.find("\"", keyDefStart);
             size_t keyEnd = stubContent.find("\"", keyStart + 1);
@@ -300,7 +300,7 @@ public:
             size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string NONCE_"
             size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
             if (nonceNameEnd != std::string::npos) {
-                nonceVarName = "NONCE_" + stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+                nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
             }
             size_t nonceStart = stubContent.find("\"", nonceDefStart);
             size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
@@ -354,8 +354,8 @@ public:
             "    }\n\n"
             "    // Convert hex strings to bytes\n"
             "    uint8_t key[16], nonce[16];\n"
-            "    hexToBytes(" + keyVarName + ", key);\n"
-            "    hexToBytes(" + nonceVarName + ", nonce);\n\n"
+            "    hexToBytes(KEY_" + keyVarName + ", key);\n"
+            "    hexToBytes(NONCE_" + nonceVarName + ", nonce);\n\n"
             "    // Embedded encrypted executable data\n"
             "    uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
             "    const size_t embeddedDataSize = sizeof(embeddedData);\n\n"
@@ -374,8 +374,8 @@ public:
             "    return 0;\n"
             "}";
         
-        // Replace everything from the opening brace to the end of the file
-        stubContent.replace(mainBraceStart + 1, lastBrace - mainBraceStart, newMainContent.substr(newMainContent.find("{") + 1, newMainContent.rfind("}") - newMainContent.find("{") - 1));
+        // Replace the entire main function
+        stubContent.replace(mainStart, lastBrace - mainStart + 1, newMainContent);
         
 
         
