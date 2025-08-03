@@ -6,41 +6,56 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>600</width>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Native Stub Generator GUI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
+     <widget class="QLabel" name="titleLabel">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Native Stub Generator</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QLabel" name="payloadLabel">
       <property name="text">
-       <string>Drag your payload file here
-</string>
+       <string>Drag and drop your payload file here</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QLabel" name="statusLabel">
       <property name="text">
-       <string>“Waiting for input...”</string>
+       <string>Waiting for payload file...</string>
       </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="selectXllButton">
-      <property name="text">
-       <string>Select XLL File</string>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QPushButton" name="generateButton">
       <property name="text">
-       <string>Generate Stub</string>
+       <string>Generate Advanced Stub</string>
       </property>
      </widget>
     </item>

@@ -20,12 +20,10 @@ protected:
     void dropEvent(QDropEvent *event) override;
 
 private slots:
-    void on_selectXllButton_clicked();
     void on_generateButton_clicked();
 
 private:
     Ui::MainWindow *ui;
     QString payloadFile;
-    QString xllFile;
     void checkReady();
 };
