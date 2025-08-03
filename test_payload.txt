@@ -1,1 +1,0 @@
-This is a test payload for stub size analysis. It contains some sample data to test the encryption and decryption capabilities of the generated stubs.
