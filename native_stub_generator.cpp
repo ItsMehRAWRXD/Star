@@ -653,10 +653,9 @@ int main() {
     // Decrypt
     std::vector<uint8_t> decrypted(dataSize);
     aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
-    // Write output: prepend nonce to match original file
+    // Write decrypted data to output file
     std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
     std::ofstream outFile(filename, std::ios::binary);
-    outFile.write(reinterpret_cast<char*>(nonce), 16);
     outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
     outFile.close();
     std::cout << "Decrypted file written: " << filename << std::endl;
