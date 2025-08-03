@@ -259,3 +259,7 @@ make all
 
 **Choose Native Implementation for production use - it's faster, more portable, and has zero dependencies!**
 # Star-2
+
+## Star-2: Advanced Native Encryption System
+
+A comprehensive file encryption and stub generation system built with zero external dependencies.
