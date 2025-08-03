@@ -1,11 +1,22 @@
 import sys
 import os
 from PyQt5 import QtWidgets, QtCore
+import secrets
 
 # --- Key handling (shared with C++ code) ---
 XOR_OBFUSCATE_KEY = 0x5A
 ENC_KEY = bytes([0x39, 0x39, 0x08, 0x0F, 0x0F, 0x38, 0x08, 0x31, 0x38, 0x32, 0x38])
-KEY_DEOBFUSCATED = bytes([b ^ XOR_OBFUSCATE_KEY for b in ENC_KEY])
+
+# Try to get key from environment variable first
+def get_deobfuscated_key():
+    env_key = os.getenv("ENCRYPTION_KEY")
+    if env_key and len(env_key) >= len(ENC_KEY):
+        return env_key[:len(ENC_KEY)].encode('utf-8')
+    else:
+        # Fallback to obfuscated key
+        return bytes([b ^ XOR_OBFUSCATE_KEY for b in ENC_KEY])
+
+KEY_DEOBFUSCATED = get_deobfuscated_key()
 
 try:
     from Crypto.Cipher import AES  # pycryptodome
@@ -23,13 +34,19 @@ def xor_crypt(data: bytes, key: bytes) -> bytes:
     return bytes([b ^ key[i % klen] for i, b in enumerate(data)])
 
 
-def aes_ctr_crypt(data: bytes, key: bytes) -> bytes:
+def aes_ctr_crypt(data: bytes, key: bytes, nonce: bytes = None) -> tuple[bytes, bytes]:
     if AES is None:
         raise RuntimeError("PyCryptodome is required for AES operations. Install with: pip install pycryptodome")
     # Expand/truncate key to 16 bytes for AES-128
     key16 = (key * (16 // len(key) + 1))[:16]
-    cipher = AES.new(key16, AES.MODE_CTR, nonce=b"")
-    return cipher.encrypt(data)  # encryption and decryption are symmetric in CTR
+    
+    # Generate nonce if not provided
+    if nonce is None:
+        nonce = secrets.token_bytes(16)
+    
+    cipher = AES.new(key16, AES.MODE_CTR, nonce=nonce)
+    encrypted_data = cipher.encrypt(data)  # encryption and decryption are symmetric in CTR
+    return encrypted_data, nonce
 
 
 class DropLabel(QtWidgets.QLabel):
@@ -86,17 +103,25 @@ class MainWindow(QtWidgets.QWidget):
 
             method = self.methodCombo.currentText()
             key = KEY_DEOBFUSCATED
+            
             if method == "XOR":
                 processed = xor_crypt(data, key)
+                out_path = self._get_output_path(filepath, ".xor")
             else:  # AES
-                processed = aes_ctr_crypt(data, key)
-
-            # Determine output filename
-            base, ext = os.path.splitext(filepath)
-            if self.decryptCheck.isChecked():
-                out_path = base + ".dec" + ext
-            else:
-                out_path = base + ".enc" + ext
+                if self.decryptCheck.isChecked():
+                    # For decryption, read nonce from file
+                    if len(data) < 16:
+                        raise ValueError("File too small to contain nonce")
+                    nonce = data[:16]
+                    encrypted_data = data[16:]
+                    processed, _ = aes_ctr_crypt(encrypted_data, key, nonce)
+                else:
+                    # For encryption, generate new nonce
+                    processed, nonce = aes_ctr_crypt(data, key)
+                    # Prepend nonce to encrypted data
+                    processed = nonce + processed
+                
+                out_path = self._get_output_path(filepath, ".aes")
 
             with open(out_path, "wb") as f:
                 f.write(processed)
@@ -104,6 +129,13 @@ class MainWindow(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(self, "Success", f"Output written to: {out_path}")
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", str(e))
+    
+    def _get_output_path(self, filepath: str, suffix: str) -> str:
+        base, ext = os.path.splitext(filepath)
+        if self.decryptCheck.isChecked():
+            return base + ".dec" + ext
+        else:
+            return base + ".enc" + ext
 
 
 def main():

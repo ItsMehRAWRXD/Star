@@ -3,16 +3,35 @@
 #include <vector>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+#include <cstdlib>
+#include <cstring>
 
 constexpr uint8_t XOR_OBFUSCATE_KEY = 0x5A;
 
+// Fallback key (should be overridden by environment variable)
 uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
 constexpr size_t keyLen = sizeof(encKey);
 
 inline void decryptKey(uint8_t* keyBuf) {
-    for (size_t i = 0; i < keyLen; ++i) {
-        keyBuf[i] = encKey[i] ^ XOR_OBFUSCATE_KEY;
+    // Try to get key from environment variable first
+    const char* envKey = std::getenv("ENCRYPTION_KEY");
+    if (envKey && strlen(envKey) >= keyLen) {
+        // Use environment variable key
+        for (size_t i = 0; i < keyLen; ++i) {
+            keyBuf[i] = static_cast<uint8_t>(envKey[i]);
+        }
+    } else {
+        // Fallback to obfuscated key
+        for (size_t i = 0; i < keyLen; ++i) {
+            keyBuf[i] = encKey[i] ^ XOR_OBFUSCATE_KEY;
+        }
     }
+}
+
+// Generate a secure random nonce for CTR mode
+bool generateNonce(unsigned char* nonce, size_t nonceLen) {
+    return RAND_bytes(nonce, nonceLen) == 1;
 }
 
 int main(int argc, char* argv[]) {
@@ -44,10 +63,19 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < 16; ++i) {
         aesKey[i] = key[i % keyLen];
     }
-    unsigned char iv[16] = {0}; // Using zero IV for simplicity; change as needed.
+    
+    // Generate secure nonce for CTR mode
+    unsigned char nonce[16];
+    if (!generateNonce(nonce, 16)) {
+        std::cerr << "Failed to generate secure nonce." << std::endl;
+        return 1;
+    }
+    
+    // Write nonce to output file for decryption
+    fout.write(reinterpret_cast<char*>(nonce), 16);
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx || EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, aesKey, iv) != 1) {
+    if (!ctx || EVP_EncryptInit_ex(ctx, EVP_aes_128_ctr(), nullptr, aesKey, nonce) != 1) {
         std::cerr << "Failed to initialize AES context." << std::endl;
         if (ctx) EVP_CIPHER_CTX_free(ctx);
         return 1;
