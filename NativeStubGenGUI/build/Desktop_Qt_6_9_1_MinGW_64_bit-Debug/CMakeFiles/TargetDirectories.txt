@@ -1,0 +1,5 @@
+C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/CMakeFiles/RawrXD_StubGUI.dir
+C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
+C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
+C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/CMakeFiles/RawrXD_StubGUI_autogen_timestamp_deps.dir
+C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/CMakeFiles/RawrXD_StubGUI_autogen.dir
