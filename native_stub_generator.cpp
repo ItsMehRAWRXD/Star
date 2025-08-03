@@ -773,6 +773,69 @@ int main() {
 public:
     NativeStubGenerator() : rng(std::time(nullptr)) {}
     
+    void generateStandaloneStub(const std::string& outputFile, 
+                               const std::string& stubType = "basic", bool useRandomKey = true) {
+        std::cout << "Generating standalone stub..." << std::endl;
+        
+        // Generate random key and nonce for the standalone stub
+        std::string keyHex = useRandomKey ? generateRandomKey() : "3939080f0f3808313832383939080f0f";
+        std::string nonceHex = generateRandomNonce();
+        
+        // Get the stub template
+        std::string stubCode = generateStubTemplate(stubType);
+        
+        // Replace placeholders with actual values
+        std::string keyVarName = "KEY_" + generateRandomString(8);
+        std::string nonceVarName = "NONCE_" + generateRandomString(8);
+        
+        // Replace key and nonce placeholders
+        size_t keyPos = stubCode.find("{KEY_DEFINITION}");
+        if (keyPos != std::string::npos) {
+            std::string keyDef = "const std::string " + keyVarName + " = \"" + keyHex + "\";";
+            stubCode.replace(keyPos, 16, keyDef);
+        }
+        
+        size_t noncePos = stubCode.find("{NONCE_DEFINITION}");
+        if (noncePos != std::string::npos) {
+            std::string nonceDef = "const std::string " + nonceVarName + " = \"" + nonceHex + "\";";
+            stubCode.replace(noncePos, 18, nonceDef);
+        }
+        
+        // Replace variable names in the code
+        size_t keyUsagePos = stubCode.find("{KEY_VARIABLE}");
+        if (keyUsagePos != std::string::npos) {
+            stubCode.replace(keyUsagePos, 13, keyVarName);
+        }
+        
+        size_t nonceUsagePos = stubCode.find("{NONCE_VARIABLE}");
+        if (nonceUsagePos != std::string::npos) {
+            stubCode.replace(nonceUsagePos, 14, nonceVarName);
+        }
+        
+        // Remove embedded data placeholder for standalone stub
+        size_t dataPos = stubCode.find("{EMBEDDED_DATA}");
+        if (dataPos != std::string::npos) {
+            stubCode.replace(dataPos, 14, "// Standalone stub - no embedded data");
+        }
+        
+        // Write the standalone stub
+        std::ofstream outFile(outputFile);
+        if (!outFile.is_open()) {
+            std::cerr << "Error: Cannot create output file: " << outputFile << std::endl;
+            return;
+        }
+        
+        outFile << stubCode;
+        outFile.close();
+        
+        std::cout << "✓ Standalone stub generated successfully!" << std::endl;
+        std::cout << "  Output stub: " << outputFile << std::endl;
+        std::cout << "  Stub type: " << stubType << std::endl;
+        std::cout << "  Key: " << keyHex << std::endl;
+        std::cout << "  Nonce: " << nonceHex << std::endl;
+        std::cout << "  To use: Compile this stub and link it with your encrypted file" << std::endl;
+    }
+    
     void generateStub(const std::string& inputFile, const std::string& outputFile, 
                      const std::string& stubType = "basic", bool useRandomKey = true) {
         
@@ -919,12 +982,17 @@ public:
         std::cout << std::endl;
         std::cout << "Usage:" << std::endl;
         std::cout << "  ./native_stub_generator <input_file> <output_stub.cpp> [stub_type] [use_random_key]" << std::endl;
+        std::cout << "  ./native_stub_generator --standalone <output_stub.cpp> [stub_type] [use_random_key]" << std::endl;
         std::cout << std::endl;
         std::cout << "Arguments:" << std::endl;
         std::cout << "  input_file      - File to embed in stub" << std::endl;
         std::cout << "  output_stub.cpp - Generated C++ stub file" << std::endl;
         std::cout << "  stub_type       - Type of stub (basic, advanced, minimal) [default: basic]" << std::endl;
         std::cout << "  use_random_key  - Use random key (1) or env var (0) [default: 1]" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Modes:" << std::endl;
+        std::cout << "  --standalone    - Generate standalone stub (no input file required)" << std::endl;
+        std::cout << "  normal          - Generate stub with embedded file" << std::endl;
         std::cout << std::endl;
         std::cout << "Stub Types:" << std::endl;
         std::cout << "  basic    - Standard stub with AES-128-CTR decryption" << std::endl;
@@ -934,7 +1002,8 @@ public:
         std::cout << "Examples:" << std::endl;
         std::cout << "  ./native_stub_generator payload.bin stub.cpp" << std::endl;
         std::cout << "  ./native_stub_generator payload.bin stub.cpp advanced" << std::endl;
-        std::cout << "  ./native_stub_generator payload.bin stub.cpp basic 0" << std::endl;
+        std::cout << "  ./native_stub_generator --standalone standalone_stub.cpp" << std::endl;
+        std::cout << "  ./native_stub_generator --standalone advanced_stub.cpp advanced" << std::endl;
         std::cout << std::endl;
     }
 };
