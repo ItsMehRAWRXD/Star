@@ -260,6 +260,33 @@ make all
 **Choose Native Implementation for production use - it's faster, more portable, and has zero dependencies!**
 # Star-2
 
-## Star-2: Advanced Native Encryption System
+## Star-2: Advanced Native Encryption & IRC Bot System
 
-A comprehensive file encryption and stub generation system built with zero external dependencies.
+A comprehensive file encryption, stub generation, and mIRC bot system built with zero external dependencies.
+
+### Features
+
+#### 🔐 File Encryption System
+- **Native AES-128-CTR Encryption**: Pure C++ implementation with zero dependencies
+- **Stub Generation**: Create custom decryption stubs with embedded encrypted data
+- **Console GUI**: User-friendly interface for encryption/decryption operations
+- **Multiple Stub Types**: Basic, advanced, and minimal stub configurations
+
+#### 🤖 mIRC Bot System
+- **Bot Builder**: Interactive console tool to configure custom IRC bots
+- **Native Implementation**: Zero external dependencies
+- **Configurable Settings**: Bot name, server, channels, admin users, auto-reconnect
+- **Command System**: Built-in commands for bot control and information
+- **Logging**: Comprehensive logging system for bot activities
+
+### Components
+
+#### Encryption Tools
+- `native_encryptor` - AES-128-CTR file encryption
+- `native_xll_dropper` - AES-128-CTR file decryption  
+- `native_gui` - Console-based GUI interface
+- `native_stub_generator` - Stub generation utility
+
+#### IRC Bot Tools
+- `mirc_bot_builder` - Interactive bot configuration tool
+- Generated bot files (e.g., `MyBot_bot.cpp`) - Custom IRC bots

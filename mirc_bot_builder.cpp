@@ -1,0 +1,517 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+#include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <thread>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <signal.h>
+
+class MircBotBuilder {
+private:
+    std::string botName;
+    std::string server;
+    int port;
+    std::string channel;
+    std::string password;
+    std::string realName;
+    std::string userInfo;
+    std::vector<std::string> autoJoinChannels;
+    std::vector<std::string> adminUsers;
+    bool autoReconnect;
+    int reconnectDelay;
+    std::string logFile;
+    
+public:
+    MircBotBuilder() {
+        // Default settings
+        botName = "StarBot";
+        server = "irc.freenode.net";
+        port = 6667;
+        channel = "#test";
+        password = "";
+        realName = "Star-2 IRC Bot";
+        userInfo = "Star-2";
+        autoReconnect = true;
+        reconnectDelay = 30;
+        logFile = "bot.log";
+    }
+    
+    void showMenu() {
+        std::cout << "\n=== Star-2 mIRC Bot Builder ===\n";
+        std::cout << "1. Set Bot Name\n";
+        std::cout << "2. Set IRC Server\n";
+        std::cout << "3. Set Channel\n";
+        std::cout << "4. Set Password\n";
+        std::cout << "5. Set Real Name\n";
+        std::cout << "6. Add Auto-Join Channels\n";
+        std::cout << "7. Add Admin Users\n";
+        std::cout << "8. Set Auto-Reconnect Settings\n";
+        std::cout << "9. Set Log File\n";
+        std::cout << "10. Show Current Settings\n";
+        std::cout << "11. Generate Bot\n";
+        std::cout << "12. Exit\n";
+        std::cout << "Choose option: ";
+    }
+    
+    void setBotName() {
+        std::cout << "Current bot name: " << botName << "\n";
+        std::cout << "Enter new bot name: ";
+        std::getline(std::cin, botName);
+        if (botName.empty()) botName = "StarBot";
+    }
+    
+    void setServer() {
+        std::cout << "Current server: " << server << "\n";
+        std::cout << "Enter IRC server (e.g., irc.freenode.net): ";
+        std::getline(std::cin, server);
+        if (server.empty()) server = "irc.freenode.net";
+        
+        std::cout << "Current port: " << port << "\n";
+        std::cout << "Enter port (default 6667): ";
+        std::string portStr;
+        std::getline(std::cin, portStr);
+        if (!portStr.empty()) {
+            port = std::stoi(portStr);
+        }
+    }
+    
+    void setChannel() {
+        std::cout << "Current channel: " << channel << "\n";
+        std::cout << "Enter channel (e.g., #test): ";
+        std::getline(std::cin, channel);
+        if (channel.empty()) channel = "#test";
+        if (channel[0] != '#') channel = "#" + channel;
+    }
+    
+    void setPassword() {
+        std::cout << "Enter server password (leave empty if none): ";
+        std::getline(std::cin, password);
+    }
+    
+    void setRealName() {
+        std::cout << "Current real name: " << realName << "\n";
+        std::cout << "Enter real name: ";
+        std::getline(std::cin, realName);
+        if (realName.empty()) realName = "Star-2 IRC Bot";
+    }
+    
+    void addAutoJoinChannels() {
+        std::cout << "Current auto-join channels:\n";
+        for (const auto& ch : autoJoinChannels) {
+            std::cout << "  " << ch << "\n";
+        }
+        std::cout << "Enter channel to add (or 'clear' to clear all): ";
+        std::string newChannel;
+        std::getline(std::cin, newChannel);
+        
+        if (newChannel == "clear") {
+            autoJoinChannels.clear();
+        } else if (!newChannel.empty()) {
+            if (newChannel[0] != '#') newChannel = "#" + newChannel;
+            autoJoinChannels.push_back(newChannel);
+        }
+    }
+    
+    void addAdminUsers() {
+        std::cout << "Current admin users:\n";
+        for (const auto& user : adminUsers) {
+            std::cout << "  " << user << "\n";
+        }
+        std::cout << "Enter admin username to add (or 'clear' to clear all): ";
+        std::string newUser;
+        std::getline(std::cin, newUser);
+        
+        if (newUser == "clear") {
+            adminUsers.clear();
+        } else if (!newUser.empty()) {
+            adminUsers.push_back(newUser);
+        }
+    }
+    
+    void setAutoReconnect() {
+        std::cout << "Current auto-reconnect: " << (autoReconnect ? "enabled" : "disabled") << "\n";
+        std::cout << "Enable auto-reconnect? (y/n): ";
+        std::string choice;
+        std::getline(std::cin, choice);
+        autoReconnect = (choice == "y" || choice == "Y");
+        
+        if (autoReconnect) {
+            std::cout << "Current reconnect delay: " << reconnectDelay << " seconds\n";
+            std::cout << "Enter reconnect delay in seconds: ";
+            std::string delayStr;
+            std::getline(std::cin, delayStr);
+            if (!delayStr.empty()) {
+                reconnectDelay = std::stoi(delayStr);
+            }
+        }
+    }
+    
+    void setLogFile() {
+        std::cout << "Current log file: " << logFile << "\n";
+        std::cout << "Enter log file name: ";
+        std::getline(std::cin, logFile);
+        if (logFile.empty()) logFile = "bot.log";
+    }
+    
+    void showSettings() {
+        std::cout << "\n=== Current Bot Settings ===\n";
+        std::cout << "Bot Name: " << botName << "\n";
+        std::cout << "Server: " << server << ":" << port << "\n";
+        std::cout << "Channel: " << channel << "\n";
+        std::cout << "Password: " << (password.empty() ? "none" : "***") << "\n";
+        std::cout << "Real Name: " << realName << "\n";
+        std::cout << "User Info: " << userInfo << "\n";
+        std::cout << "Auto-Join Channels:\n";
+        for (const auto& ch : autoJoinChannels) {
+            std::cout << "  " << ch << "\n";
+        }
+        std::cout << "Admin Users:\n";
+        for (const auto& user : adminUsers) {
+            std::cout << "  " << user << "\n";
+        }
+        std::cout << "Auto-Reconnect: " << (autoReconnect ? "enabled" : "disabled") << "\n";
+        if (autoReconnect) {
+            std::cout << "Reconnect Delay: " << reconnectDelay << " seconds\n";
+        }
+        std::cout << "Log File: " << logFile << "\n";
+    }
+    
+    void generateBot() {
+        std::string filename = botName + "_bot.cpp";
+        std::ofstream file(filename);
+        
+        if (!file.is_open()) {
+            std::cout << "Error: Could not create bot file!\n";
+            return;
+        }
+        
+        file << generateBotCode();
+        file.close();
+        
+        std::cout << "\n✅ Bot generated successfully: " << filename << "\n";
+        std::cout << "To compile: g++ -std=c++17 -o " << botName << "_bot " << filename << "\n";
+        std::cout << "To run: ./" << botName << "_bot\n";
+    }
+    
+private:
+    std::string generateBotCode() {
+        std::stringstream code;
+        
+        code << "#include <iostream>\n";
+        code << "#include <string>\n";
+        code << "#include <vector>\n";
+        code << "#include <thread>\n";
+        code << "#include <chrono>\n";
+        code << "#include <sys/socket.h>\n";
+        code << "#include <netinet/in.h>\n";
+        code << "#include <arpa/inet.h>\n";
+        code << "#include <unistd.h>\n";
+        code << "#include <netdb.h>\n";
+        code << "#include <cstring>\n";
+        code << "#include <fstream>\n";
+        code << "#include <sstream>\n";
+        code << "#include <algorithm>\n";
+        code << "#include <signal.h>\n\n";
+        
+        code << "class MircBot {\n";
+        code << "private:\n";
+        code << "    std::string botName;\n";
+        code << "    std::string server;\n";
+        code << "    int port;\n";
+        code << "    std::string channel;\n";
+        code << "    std::string password;\n";
+        code << "    std::string realName;\n";
+        code << "    std::string userInfo;\n";
+        code << "    std::vector<std::string> autoJoinChannels;\n";
+        code << "    std::vector<std::string> adminUsers;\n";
+        code << "    bool autoReconnect;\n";
+        code << "    int reconnectDelay;\n";
+        code << "    std::string logFile;\n";
+        code << "    int sockfd;\n";
+        code << "    bool running;\n\n";
+        
+        code << "public:\n";
+        code << "    MircBot() : port(6667), autoReconnect(true), reconnectDelay(30), sockfd(-1), running(false) {\n";
+        code << "        botName = \"" << botName << "\";\n";
+        code << "        server = \"" << server << "\";\n";
+        code << "        port = " << port << ";\n";
+        code << "        channel = \"" << channel << "\";\n";
+        code << "        password = \"" << password << "\";\n";
+        code << "        realName = \"" << realName << "\";\n";
+        code << "        userInfo = \"" << userInfo << "\";\n";
+        code << "        logFile = \"" << logFile << "\";\n";
+        code << "        autoReconnect = " << (autoReconnect ? "true" : "false") << ";\n";
+        code << "        reconnectDelay = " << reconnectDelay << ";\n\n";
+        
+        for (const auto& ch : autoJoinChannels) {
+            code << "        autoJoinChannels.push_back(\"" << ch << "\");\n";
+        }
+        
+        for (const auto& user : adminUsers) {
+            code << "        adminUsers.push_back(\"" << user << "\");\n";
+        }
+        
+        code << "    }\n\n";
+        
+        code << "    void log(const std::string& message) {\n";
+        code << "        std::ofstream logStream(logFile, std::ios::app);\n";
+        code << "        if (logStream.is_open()) {\n";
+        code << "            auto now = std::chrono::system_clock::now();\n";
+        code << "            auto time_t = std::chrono::system_clock::to_time_t(now);\n";
+        code << "            logStream << std::ctime(&time_t) << \": \" << message << std::endl;\n";
+        code << "            logStream.close();\n";
+        code << "        }\n";
+        code << "        std::cout << \"[LOG] \" << message << std::endl;\n";
+        code << "    }\n\n";
+        
+        code << "    bool connect() {\n";
+        code << "        struct sockaddr_in server_addr;\n";
+        code << "        struct hostent *host;\n\n";
+        code << "        sockfd = socket(AF_INET, SOCK_STREAM, 0);\n";
+        code << "        if (sockfd < 0) {\n";
+        code << "            log(\"Error creating socket\");\n";
+        code << "            return false;\n";
+        code << "        }\n\n";
+        code << "        host = gethostbyname(server.c_str());\n";
+        code << "        if (host == NULL) {\n";
+        code << "            log(\"Error resolving hostname: \" + server);\n";
+        code << "            return false;\n";
+        code << "        }\n\n";
+        code << "        memset(&server_addr, 0, sizeof(server_addr));\n";
+        code << "        server_addr.sin_family = AF_INET;\n";
+        code << "        server_addr.sin_port = htons(port);\n";
+        code << "        memcpy(&server_addr.sin_addr.s_addr, host->h_addr, host->h_length);\n\n";
+        code << "        if (::connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {\n";
+        code << "            log(\"Error connecting to server\");\n";
+        code << "            return false;\n";
+        code << "        }\n\n";
+        code << "        log(\"Connected to \" + server + \":\" + std::to_string(port));\n";
+        code << "        return true;\n";
+        code << "    }\n\n";
+        
+        code << "    void sendCommand(const std::string& command) {\n";
+        code << "        std::string fullCommand = command + \"\\r\\n\";\n";
+        code << "        send(sockfd, fullCommand.c_str(), fullCommand.length(), 0);\n";
+        code << "        log(\"SENT: \" + command);\n";
+        code << "    }\n\n";
+        
+        code << "    void authenticate() {\n";
+        code << "        if (!password.empty()) {\n";
+        code << "            sendCommand(\"PASS \" + password);\n";
+        code << "        }\n";
+        code << "        sendCommand(\"NICK \" + botName);\n";
+        code << "        sendCommand(\"USER \" + userInfo + \" 0 * :\" + realName);\n";
+        code << "    }\n\n";
+        
+        code << "    void joinChannels() {\n";
+        code << "        sendCommand(\"JOIN \" + channel);\n";
+        code << "        for (const auto& ch : autoJoinChannels) {\n";
+        code << "            if (ch != channel) {\n";
+        code << "                sendCommand(\"JOIN \" + ch);\n";
+        code << "            }\n";
+        code << "        }\n";
+        code << "    }\n\n";
+        
+        code << "    bool isAdmin(const std::string& username) {\n";
+        code << "        return std::find(adminUsers.begin(), adminUsers.end(), username) != adminUsers.end();\n";
+        code << "    }\n\n";
+        
+        code << "    void handleMessage(const std::string& line) {\n";
+        code << "        if (line.find(\"PING :\") == 0) {\n";
+        code << "            std::string response = line.substr(6);\n";
+        code << "            sendCommand(\"PONG :\" + response);\n";
+        code << "            log(\"Responded to PING\");\n";
+        code << "        }\n";
+        code << "        else if (line.find(\"PRIVMSG\") != std::string::npos) {\n";
+        code << "            size_t pos1 = line.find('!');\n";
+        code << "            size_t pos2 = line.find(\" PRIVMSG \");\n";
+        code << "            size_t pos3 = line.find(\" :\");\n";
+        code << "            if (pos1 != std::string::npos && pos2 != std::string::npos && pos3 != std::string::npos) {\n";
+        code << "                std::string sender = line.substr(1, pos1 - 1);\n";
+        code << "                std::string target = line.substr(pos2 + 9, line.find(' ', pos2 + 9) - pos2 - 9);\n";
+        code << "                std::string message = line.substr(pos3 + 2);\n";
+        code << "                log(\"MSG from \" + sender + \" in \" + target + \": \" + message);\n";
+        code << "                if (message[0] == '!') {\n";
+        code << "                    handleCommand(sender, target, message);\n";
+        code << "                }\n";
+        code << "            }\n";
+        code << "        }\n";
+        code << "    }\n\n";
+        
+        code << "    void handleCommand(const std::string& sender, const std::string& target, const std::string& message) {\n";
+        code << "        std::istringstream iss(message);\n";
+        code << "        std::string command;\n";
+        code << "        iss >> command;\n\n";
+        code << "        if (command == \"!help\") {\n";
+        code << "            std::string help = \"Available commands: !help, !time, !version, !status\";\n";
+        code << "            if (isAdmin(sender)) {\n";
+        code << "                help += \", !join, !part, !say, !quit\";\n";
+        code << "            }\n";
+        code << "            sendCommand(\"PRIVMSG \" + target + \" :\" + help);\n";
+        code << "        }\n";
+        code << "        else if (command == \"!time\") {\n";
+        code << "            auto now = std::chrono::system_clock::now();\n";
+        code << "            auto time_t = std::chrono::system_clock::to_time_t(now);\n";
+        code << "            std::string timeStr = std::ctime(&time_t);\n";
+        code << "            timeStr.pop_back();\n";
+        code << "            sendCommand(\"PRIVMSG \" + target + \" :Current time: \" + timeStr);\n";
+        code << "        }\n";
+        code << "        else if (command == \"!version\") {\n";
+        code << "            sendCommand(\"PRIVMSG \" + target + \" :Star-2 mIRC Bot v1.0\");\n";
+        code << "        }\n";
+        code << "        else if (command == \"!status\") {\n";
+        code << "            sendCommand(\"PRIVMSG \" + target + \" :Bot is online and running\");\n";
+        code << "        }\n";
+        code << "        else if (isAdmin(sender)) {\n";
+        code << "            if (command == \"!join\") {\n";
+        code << "                std::string newChannel;\n";
+        code << "                iss >> newChannel;\n";
+        code << "                if (!newChannel.empty()) {\n";
+        code << "                    if (newChannel[0] != '#') newChannel = \"#\" + newChannel;\n";
+        code << "                    sendCommand(\"JOIN \" + newChannel);\n";
+        code << "                }\n";
+        code << "            }\n";
+        code << "            else if (command == \"!part\") {\n";
+        code << "                std::string partChannel;\n";
+        code << "                iss >> partChannel;\n";
+        code << "                if (!partChannel.empty()) {\n";
+        code << "                    if (partChannel[0] != '#') partChannel = \"#\" + partChannel;\n";
+        code << "                    sendCommand(\"PART \" + partChannel);\n";
+        code << "                }\n";
+        code << "            }\n";
+        code << "            else if (command == \"!say\") {\n";
+        code << "                std::string sayChannel, sayMessage;\n";
+        code << "                iss >> sayChannel;\n";
+        code << "                std::getline(iss, sayMessage);\n";
+        code << "                if (!sayChannel.empty() && !sayMessage.empty()) {\n";
+        code << "                    if (sayChannel[0] != '#') sayChannel = \"#\" + sayChannel;\n";
+        code << "                    sendCommand(\"PRIVMSG \" + sayChannel + \" :\" + sayMessage);\n";
+        code << "                }\n";
+        code << "            }\n";
+        code << "            else if (command == \"!quit\") {\n";
+        code << "                sendCommand(\"QUIT :Shutting down\");\n";
+        code << "                running = false;\n";
+        code << "            }\n";
+        code << "        }\n";
+        code << "    }\n\n";
+        
+        code << "    void run() {\n";
+        code << "        running = true;\n\n";
+        code << "        while (running) {\n";
+        code << "            if (!connect()) {\n";
+        code << "                if (autoReconnect) {\n";
+        code << "                    log(\"Connection failed. Retrying in \" + std::to_string(reconnectDelay) + \" seconds...\");\n";
+        code << "                    std::this_thread::sleep_for(std::chrono::seconds(reconnectDelay));\n";
+        code << "                    continue;\n";
+        code << "                } else {\n";
+        code << "                    log(\"Connection failed and auto-reconnect is disabled\");\n";
+        code << "                    break;\n";
+        code << "                }\n";
+        code << "            }\n\n";
+        code << "            authenticate();\n";
+        code << "            joinChannels();\n\n";
+        code << "            char buffer[1024];\n";
+        code << "            while (running) {\n";
+        code << "                memset(buffer, 0, sizeof(buffer));\n";
+        code << "                int bytes = recv(sockfd, buffer, sizeof(buffer) - 1, 0);\n\n";
+        code << "                if (bytes <= 0) {\n";
+        code << "                    log(\"Connection lost\");\n";
+        code << "                    break;\n";
+        code << "                }\n\n";
+        code << "                std::string data(buffer);\n";
+        code << "                std::istringstream iss(data);\n";
+        code << "                std::string line;\n\n";
+        code << "                while (std::getline(iss, line)) {\n";
+        code << "                    if (!line.empty()) {\n";
+        code << "                        handleMessage(line);\n";
+        code << "                    }\n";
+        code << "                }\n";
+        code << "            }\n\n";
+        code << "            close(sockfd);\n\n";
+        code << "            if (autoReconnect && running) {\n";
+        code << "                log(\"Reconnecting in \" + std::to_string(reconnectDelay) + \" seconds...\");\n";
+        code << "                std::this_thread::sleep_for(std::chrono::seconds(reconnectDelay));\n";
+        code << "            }\n";
+        code << "        }\n";
+        code << "    }\n\n";
+        
+        code << "    void stop() {\n";
+        code << "        running = false;\n";
+        code << "        if (sockfd >= 0) {\n";
+        code << "            close(sockfd);\n";
+        code << "        }\n";
+        code << "    }\n";
+        code << "};\n\n";
+        
+        code << "int main() {\n";
+        code << "    std::cout << \"=== Star-2 mIRC Bot ===\" << std::endl;\n";
+        code << "    std::cout << \"Starting bot...\" << std::endl;\n\n";
+        code << "    MircBot bot;\n\n";
+        code << "    signal(SIGINT, [](int) {\n";
+        code << "        std::cout << \"\\nShutting down bot...\" << std::endl;\n";
+        code << "        exit(0);\n";
+        code << "    });\n\n";
+        code << "    try {\n";
+        code << "        bot.run();\n";
+        code << "    } catch (const std::exception& e) {\n";
+        code << "        std::cout << \"Error: \" << e.what() << std::endl;\n";
+        code << "    }\n\n";
+        code << "    return 0;\n";
+        code << "}\n";
+        
+        return code.str();
+    }
+};
+
+int main() {
+    MircBotBuilder builder;
+    std::string choice;
+    
+    std::cout << "Welcome to Star-2 mIRC Bot Builder!\n";
+    std::cout << "This tool will help you create a custom IRC bot.\n";
+    
+    while (true) {
+        builder.showMenu();
+        std::getline(std::cin, choice);
+        
+        if (choice == "1") {
+            builder.setBotName();
+        } else if (choice == "2") {
+            builder.setServer();
+        } else if (choice == "3") {
+            builder.setChannel();
+        } else if (choice == "4") {
+            builder.setPassword();
+        } else if (choice == "5") {
+            builder.setRealName();
+        } else if (choice == "6") {
+            builder.addAutoJoinChannels();
+        } else if (choice == "7") {
+            builder.addAdminUsers();
+        } else if (choice == "8") {
+            builder.setAutoReconnect();
+        } else if (choice == "9") {
+            builder.setLogFile();
+        } else if (choice == "10") {
+            builder.showSettings();
+        } else if (choice == "11") {
+            builder.generateBot();
+        } else if (choice == "12") {
+            std::cout << "Goodbye!\n";
+            break;
+        } else {
+            std::cout << "Invalid option. Please try again.\n";
+        }
+    }
+    
+    return 0;
+}
