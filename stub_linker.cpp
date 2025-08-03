@@ -277,8 +277,8 @@ public:
             return;
         }
         
-        // Extract key and nonce from the standalone stub (lines 13-14 only)
-        std::string keyHex, nonceHex, keyVarName, nonceVarName;
+                // Extract key and nonce from the standalone stub (lines 13-14 only)
+        std::string keyHex, nonceHex;
         
         // Split content into lines and extract from lines 13-14
         std::istringstream iss(stubContent);
@@ -287,59 +287,32 @@ public:
         
                  while (std::getline(iss, line)) {
              lineNum++;
-             if (lineNum == 13) {
-                 std::cerr << "DEBUG: Line 13: '" << line << "'" << std::endl;
-                 // Extract key from line 13: "const std::string KEY_xxx = "yyy";"
-                 size_t keyStart = line.find("const std::string KEY_");
-                 if (keyStart != std::string::npos) {
-                     // Extract the full variable name starting from KEY_
-                     size_t keyNameStart = line.find("KEY_", keyStart);
-                     size_t keyNameEnd = line.find(" = ", keyNameStart);
-                     if (keyNameEnd != std::string::npos) {
-                         keyVarName = line.substr(keyNameStart, keyNameEnd - keyNameStart);
-                         std::cerr << "DEBUG: Extracted keyVarName='" << keyVarName << "'" << std::endl;
-                         size_t quoteStart = line.find("\"", keyNameEnd);
-                         size_t quoteEnd = line.find("\"", quoteStart + 1);
-                         if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
-                             keyHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
-                             std::cerr << "DEBUG: Extracted keyHex='" << keyHex << "'" << std::endl;
-                         }
-                     }
+             // Check for key definition (lines 12-13 for advanced, 13 for basic)
+             if ((lineNum == 12 || lineNum == 13) && line.find("const std::string KEY_") != std::string::npos) {
+                 size_t quoteStart = line.find("\"");
+                 size_t quoteEnd = line.find("\"", quoteStart + 1);
+                 if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                     keyHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
                  }
-             } else if (lineNum == 14) {
-                 std::cerr << "DEBUG: Line 14: '" << line << "'" << std::endl;
-                 // Extract nonce from line 14: "const std::string NONCE_xxx = "yyy";"
-                 size_t nonceStart = line.find("const std::string NONCE_");
-                 if (nonceStart != std::string::npos) {
-                     // Extract the full variable name starting from NONCE_
-                     size_t nonceNameStart = line.find("NONCE_", nonceStart);
-                     size_t nonceNameEnd = line.find(" = ", nonceNameStart);
-                     if (nonceNameEnd != std::string::npos) {
-                         nonceVarName = line.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
-                         std::cerr << "DEBUG: Extracted nonceVarName='" << nonceVarName << "'" << std::endl;
-                         size_t quoteStart = line.find("\"", nonceNameEnd);
-                         size_t quoteEnd = line.find("\"", quoteStart + 1);
-                         if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
-                             nonceHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
-                             std::cerr << "DEBUG: Extracted nonceHex='" << nonceHex << "'" << std::endl;
-                         }
-                     }
+             }
+             // Check for nonce definition (lines 13-14 for advanced, 14 for basic)
+             if ((lineNum == 13 || lineNum == 14) && line.find("const std::string NONCE_") != std::string::npos) {
+                 size_t quoteStart = line.find("\"");
+                 size_t quoteEnd = line.find("\"", quoteStart + 1);
+                 if (quoteStart != std::string::npos && quoteEnd != std::string::npos) {
+                     nonceHex = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
                  }
              }
          }
         
-        if (keyHex.empty() || nonceHex.empty() || keyVarName.empty() || nonceVarName.empty()) {
+        if (keyHex.empty() || nonceHex.empty()) {
             std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
             std::cerr << "  Key found: " << (!keyHex.empty()) << " (" << keyHex << ")" << std::endl;
             std::cerr << "  Nonce found: " << (!nonceHex.empty()) << " (" << nonceHex << ")" << std::endl;
-            std::cerr << "  Key var found: " << (!keyVarName.empty()) << " (" << keyVarName << ")" << std::endl;
-            std::cerr << "  Nonce var found: " << (!nonceVarName.empty()) << " (" << nonceVarName << ")" << std::endl;
             return;
         }
         
         std::cout << "Extracted from stub:" << std::endl;
-        std::cout << "  Key variable: " << keyVarName << std::endl;
-        std::cout << "  Nonce variable: " << nonceVarName << std::endl;
         std::cout << "  Key hex: " << keyHex << std::endl;
         std::cout << "  Nonce hex: " << nonceHex << std::endl;
         
@@ -379,10 +352,6 @@ public:
         // Check if this is an advanced stub (has isDebugged function)
         bool isAdvancedStub = (stubContent.find("bool isDebugged()") != std::string::npos);
         
-        std::cerr << "DEBUG: Before newMainContent generation:" << std::endl;
-        std::cerr << "  keyVarName='" << keyVarName << "'" << std::endl;
-        std::cerr << "  nonceVarName='" << nonceVarName << "'" << std::endl;
-        
         std::string newMainContent = "int main() {\n";
         
         // Add anti-debugging check only for advanced stubs
@@ -397,8 +366,8 @@ public:
         newMainContent += 
             "    // Convert hex strings to bytes\n"
             "    uint8_t key[16], nonce[16];\n"
-            "    hexToBytes(" + keyVarName + ", key);\n"
-            "    hexToBytes(" + nonceVarName + ", nonce);\n\n"
+            "    hexToBytes(\"" + keyHex + "\", key);\n"
+            "    hexToBytes(\"" + nonceHex + "\", nonce);\n\n"
             "    // Embedded encrypted executable data\n"
             "    uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
             "    const size_t embeddedDataSize = sizeof(embeddedData);\n\n"
