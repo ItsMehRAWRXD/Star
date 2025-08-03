@@ -5,7 +5,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pedantic
 
 # Native targets (zero dependencies)
-NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui
+NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui native_stub_generator
 
 # Legacy targets (require OpenSSL)
 LEGACY_TARGETS = encryptor xll_dropper packer
@@ -36,6 +36,10 @@ native_xll_dropper: native_xll_dropper.cpp
 # Native GUI (console-based interface)
 native_gui: native_gui.cpp
 	$(CXX) $(CXXFLAGS) -o native_gui native_gui.cpp
+
+# Native Stub Generator (unlimited stub creation)
+native_stub_generator: native_stub_generator.cpp
+	$(CXX) $(CXXFLAGS) -o native_stub_generator native_stub_generator.cpp
 
 # Legacy components (require OpenSSL dependencies)
 encryptor: encryptor.cpp
@@ -122,9 +126,11 @@ install: native
 	@cp native_encryptor /usr/local/bin/
 	@cp native_xll_dropper /usr/local/bin/
 	@cp native_gui /usr/local/bin/
+	@cp native_stub_generator /usr/local/bin/
 	@chmod +x /usr/local/bin/native_encryptor
 	@chmod +x /usr/local/bin/native_xll_dropper
 	@chmod +x /usr/local/bin/native_gui
+	@chmod +x /usr/local/bin/native_stub_generator
 	@echo "Native components installed to /usr/local/bin/"
 
 install-legacy: legacy
@@ -144,6 +150,7 @@ uninstall:
 	@rm -f /usr/local/bin/native_encryptor
 	@rm -f /usr/local/bin/native_xll_dropper
 	@rm -f /usr/local/bin/native_gui
+	@rm -f /usr/local/bin/native_stub_generator
 	@echo "Native components uninstalled"
 
 uninstall-legacy:
@@ -197,6 +204,7 @@ help:
 	@echo "  native_encryptor - Build native encryptor"
 	@echo "  native_xll_dropper - Build native XLL dropper"
 	@echo "  native_gui       - Build native GUI"
+	@echo "  native_stub_generator - Build native stub generator"
 	@echo "  test_native      - Test native components"
 	@echo ""
 	@echo "🟡 LEGACY IMPLEMENTATION (With Dependencies):"

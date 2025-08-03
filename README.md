@@ -10,6 +10,7 @@ A comprehensive file encryption/decryption system with both **pure native C++ im
 - **`native_encryptor`** - AES-128-CTR file encryption
 - **`native_xll_dropper`** - AES-128-CTR file decryption
 - **`native_gui`** - Console-based user interface
+- **`native_stub_generator`** - Unlimited stub creation for packing
 
 ### **🟡 Legacy Implementation (With Dependencies)**
 *Original implementations requiring external libraries*
@@ -32,6 +33,9 @@ make all
 
 # Decrypt a file
 ./native_xll_dropper your_file.enc your_file_decrypted.txt
+
+# Generate a stub for packing
+./native_stub_generator your_file.enc stub.cpp basic
 
 # Use interactive GUI
 ./native_gui
@@ -59,7 +63,9 @@ python3 dragdrop_encryptor_gui.py
 │   ├── native_encryptor.cpp      # Pure C++ AES-128-CTR encryptor
 │   ├── native_xll_dropper.cpp    # Pure C++ AES-128-CTR decryption
 │   ├── native_gui.cpp           # Console-based GUI
-│   └── README_NATIVE.md         # Native implementation docs
+│   ├── native_stub_generator.cpp # Unlimited stub generator
+│   ├── README_NATIVE.md         # Native implementation docs
+│   └── README_STUB_GENERATOR.md # Stub generator documentation
 │
 ├── 🟡 LEGACY IMPLEMENTATION (With Dependencies)
 │   ├── encryptor.cpp            # OpenSSL-based encryptor
@@ -95,6 +101,7 @@ python3 dragdrop_encryptor_gui.py
 - ✅ You want **cross-platform compatibility**
 - ✅ You prefer **console-based interface**
 - ✅ You want **faster startup times**
+- ✅ You need **unlimited stub generation** for packing
 
 ### **Use Legacy Implementation If:**
 - 🔄 You need **graphical user interface** (PyQt5)
@@ -113,6 +120,7 @@ make all
 make native_encryptor
 make native_xll_dropper
 make native_gui
+make native_stub_generator
 
 # Test native implementation
 make test_native
@@ -143,6 +151,9 @@ python3 test_xll_dropper.py
 
 # Decrypt a file
 ./native_xll_dropper secret.enc secret_decrypted.txt
+
+# Generate a stub for packing
+./native_stub_generator secret.enc stub.cpp basic
 
 # Use interactive GUI
 ./native_gui
@@ -235,6 +246,7 @@ make all
 
 ### **For Native Implementation**
 - See `README_NATIVE.md` for detailed documentation
+- See `README_STUB_GENERATOR.md` for stub generator documentation
 - Run `make docs` for build system help
 - Use `python3 test_native_comprehensive.py` for testing
 
