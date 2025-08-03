@@ -290,7 +290,13 @@ inline void generateNonce(uint8_t* nonce) {
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        std::cout << "Usage: native_encryptor <inputfile> <outputfile>\n";
+        std::cout << "=== Universal Native Encryptor ===" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <inputfile> <outputfile>" << std::endl;
+        std::cout << "Examples:" << std::endl;
+        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin" << std::endl;
+        std::cout << "  " << argv[0] << " mirc_bot.cpp bot_encrypted.bin" << std::endl;
+        std::cout << "  " << argv[0] << " document.pdf doc_encrypted.bin" << std::endl;
+        std::cout << "Encrypts any file with random AES-128-CTR keys." << std::endl;
         return 1;
     }
 

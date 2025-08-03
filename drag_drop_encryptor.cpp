@@ -183,15 +183,19 @@ inline uint32_t simpleRand() {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cout << "=== Drag & Drop Encryptor ===" << std::endl;
-        std::cout << "Usage: " << argv[0] << " <file_to_encrypt>" << std::endl;
+    if (argc < 2 || argc > 3) {
+        std::cout << "=== Universal Drag & Drop Encryptor ===" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <file_to_encrypt> [output_file]" << std::endl;
+        std::cout << "Examples:" << std::endl;
+        std::cout << "  " << argv[0] << " file.exe" << std::endl;
+        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin" << std::endl;
+        std::cout << "  " << argv[0] << " mirc_bot.cpp" << std::endl;
         std::cout << "Just drag and drop any file onto this executable!" << std::endl;
         return 1;
     }
     
     std::string inputFile = argv[1];
-    std::string outputFile = inputFile + ".enc";
+    std::string outputFile = (argc == 3) ? argv[2] : (inputFile + ".enc");
     
     // Read input file
     std::ifstream inFile(inputFile, std::ios::binary);
