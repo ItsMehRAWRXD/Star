@@ -581,15 +581,37 @@ inline void addRoundKey(uint8_t* state, const uint8_t* roundKey) {
 
 inline void keyExpansion(const uint8_t* key, uint8_t* roundKeys) {
     uint8_t temp[4];
-    for (int i = 0; i < 16; i++) roundKeys[i] = key[i];
+    
+    // Copy the original key
+    for (int i = 0; i < 16; i++) {
+        roundKeys[i] = key[i];
+    }
+    
     for (int i = 4; i < 44; i++) {
-        for (int j = 0; j < 4; j++) temp[j] = roundKeys[(i-1)*4 + j];
+        for (int j = 0; j < 4; j++) {
+            temp[j] = roundKeys[(i-1)*4 + j];
+        }
+        
         if (i % 4 == 0) {
-            uint8_t t = temp[0]; temp[0] = temp[1]; temp[1] = temp[2]; temp[2] = temp[3]; temp[3] = t;
-            for (int j = 0; j < 4; j++) temp[j] = sbox[temp[j]];
+            // RotWord
+            uint8_t t = temp[0];
+            temp[0] = temp[1];
+            temp[1] = temp[2];
+            temp[2] = temp[3];
+            temp[3] = t;
+            
+            // SubWord
+            for (int j = 0; j < 4; j++) {
+                temp[j] = sbox[temp[j]];
+            }
+            
+            // XOR with Rcon
             temp[0] ^= rcon[i/4 - 1];
         }
-        for (int j = 0; j < 4; j++) roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
+        
+        for (int j = 0; j < 4; j++) {
+            roundKeys[i*4 + j] = roundKeys[(i-4)*4 + j] ^ temp[j];
+        }
     }
 }
 
