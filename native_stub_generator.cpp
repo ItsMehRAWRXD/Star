@@ -1054,17 +1054,37 @@ const uint8_t NativeStubGenerator::rcon[11] = {
 int main(int argc, char* argv[]) {
     NativeStubGenerator generator;
     
-    if (argc < 3 || argc > 5) {
+    if (argc < 2) {
         generator.showHelp();
         return 1;
     }
     
-    std::string inputFile = argv[1];
-    std::string outputFile = argv[2];
-    std::string stubType = (argc > 3) ? argv[3] : "basic";
-    bool useRandomKey = (argc > 4) ? (std::string(argv[4]) == "1") : true;
-    
-    generator.generateStub(inputFile, outputFile, stubType, useRandomKey);
+    // Check for standalone mode
+    if (std::string(argv[1]) == "--standalone") {
+        if (argc < 3 || argc > 5) {
+            generator.showHelp();
+            return 1;
+        }
+        
+        std::string outputFile = argv[2];
+        std::string stubType = (argc > 3) ? argv[3] : "basic";
+        bool useRandomKey = (argc > 4) ? (std::string(argv[4]) == "1") : true;
+        
+        generator.generateStandaloneStub(outputFile, stubType, useRandomKey);
+    } else {
+        // Normal mode with input file
+        if (argc < 3 || argc > 5) {
+            generator.showHelp();
+            return 1;
+        }
+        
+        std::string inputFile = argv[1];
+        std::string outputFile = argv[2];
+        std::string stubType = (argc > 3) ? argv[3] : "basic";
+        bool useRandomKey = (argc > 4) ? (std::string(argv[4]) == "1") : true;
+        
+        generator.generateStub(inputFile, outputFile, stubType, useRandomKey);
+    }
     
     return 0;
 }
