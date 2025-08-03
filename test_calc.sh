@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Calculator Test"
+echo "Calculator"
 echo "Enter first number:"
 read a
 echo "Enter second number:"

