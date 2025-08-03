@@ -55,6 +55,8 @@ Star-2/
 
 ## 🚀 Quick Start
 
+**📖 For complete instructions, see [HOW_TO_GUIDE.md](HOW_TO_GUIDE.md)**
+
 ### 1. **Generate a Standalone Stub**
 ```bash
 ./native_stub_generator --standalone my_stub.cpp standalone_basic
