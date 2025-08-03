@@ -279,7 +279,7 @@ public:
         // Extract key and nonce from the standalone stub
         std::string keyHex, nonceHex, keyVarName, nonceVarName;
         
-        // Find key definition line (e.g., "const std::string KEY_yw1rkYaS = "4cde442ea60bd71c0caed5503ff32a17";")
+        // Find key definition line (e.g., "const std::string KEY_abc123 = "4cde442ea60bd71c0caed5503ff32a17";")
         size_t keyDefStart = stubContent.find("const std::string KEY_");
         if (keyDefStart != std::string::npos) {
             // Extract the full variable name including KEY_
@@ -295,13 +295,14 @@ public:
             }
         }
         
-        // Find nonce definition line
+        // Find nonce definition line (e.g., "const std::string NONCE_def456 = "76741508ffff0d9fd474ccb52c83286c";")
         size_t nonceDefStart = stubContent.find("const std::string NONCE_");
         if (nonceDefStart != std::string::npos) {
-            size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string NONCE_"
+            // Extract the full variable name including NONCE_
+            size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string "
             size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
             if (nonceNameEnd != std::string::npos) {
-                nonceVarName = "NONCE_" + stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+                nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
             }
             size_t nonceStart = stubContent.find("\"", nonceDefStart);
             size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
@@ -312,8 +313,18 @@ public:
         
         if (keyHex.empty() || nonceHex.empty() || keyVarName.empty() || nonceVarName.empty()) {
             std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
+            std::cerr << "  Key found: " << (!keyHex.empty()) << " (" << keyHex << ")" << std::endl;
+            std::cerr << "  Nonce found: " << (!nonceHex.empty()) << " (" << nonceHex << ")" << std::endl;
+            std::cerr << "  Key var found: " << (!keyVarName.empty()) << " (" << keyVarName << ")" << std::endl;
+            std::cerr << "  Nonce var found: " << (!nonceVarName.empty()) << " (" << nonceVarName << ")" << std::endl;
             return;
         }
+        
+        std::cout << "Extracted from stub:" << std::endl;
+        std::cout << "  Key variable: " << keyVarName << std::endl;
+        std::cout << "  Nonce variable: " << nonceVarName << std::endl;
+        std::cout << "  Key hex: " << keyHex << std::endl;
+        std::cout << "  Nonce hex: " << nonceHex << std::endl;
         
         // Convert to bytes
         uint8_t key[16], nonce[16];
