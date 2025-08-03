@@ -277,11 +277,16 @@ public:
         }
         
         // Extract key and nonce from the standalone stub
-        std::string keyHex, nonceHex;
+        std::string keyHex, nonceHex, keyVarName, nonceVarName;
         
         // Find key definition line (e.g., "const std::string KEY_Hd0w2Sl5 = "6243510c1f991287aa602c2ef69dfaf1";")
         size_t keyDefStart = stubContent.find("const std::string KEY_");
         if (keyDefStart != std::string::npos) {
+            size_t keyNameStart = keyDefStart + 20; // Skip "const std::string KEY_"
+            size_t keyNameEnd = stubContent.find(" = ", keyNameStart);
+            if (keyNameEnd != std::string::npos) {
+                keyVarName = stubContent.substr(keyNameStart, keyNameEnd - keyNameStart);
+            }
             size_t keyStart = stubContent.find("\"", keyDefStart);
             size_t keyEnd = stubContent.find("\"", keyStart + 1);
             if (keyStart != std::string::npos && keyEnd != std::string::npos) {
@@ -292,6 +297,11 @@ public:
         // Find nonce definition line
         size_t nonceDefStart = stubContent.find("const std::string NONCE_");
         if (nonceDefStart != std::string::npos) {
+            size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string NONCE_"
+            size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
+            if (nonceNameEnd != std::string::npos) {
+                nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+            }
             size_t nonceStart = stubContent.find("\"", nonceDefStart);
             size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
             if (nonceStart != std::string::npos && nonceEnd != std::string::npos) {
@@ -299,7 +309,7 @@ public:
             }
         }
         
-        if (keyHex.empty() || nonceHex.empty()) {
+        if (keyHex.empty() || nonceHex.empty() || keyVarName.empty() || nonceVarName.empty()) {
             std::cerr << "Error: Could not extract key/nonce from standalone stub" << std::endl;
             return;
         }
@@ -313,20 +323,46 @@ public:
         std::vector<uint8_t> encryptedData = exeData;
         aesCtrCrypt(encryptedData.data(), encryptedData.size(), key, nonce);
         
-        // Find the variable declarations and insert embedded data + decryption code after them
-        size_t varDeclPos = stubContent.find("uint8_t key[16], nonce[16];");
-        if (varDeclPos == std::string::npos) {
-            std::cerr << "Error: Could not find variable declarations in stub" << std::endl;
+        // Find the start of the main function and replace the entire logic
+        size_t mainStart = stubContent.find("int main() {");
+        if (mainStart == std::string::npos) {
+            std::cerr << "Error: Could not find main function in stub" << std::endl;
             return;
         }
         
-        // Find the end of the variable declarations line
-        size_t varDeclEnd = stubContent.find(";", varDeclPos) + 1;
+        // Find the opening brace of main
+        size_t mainBraceStart = stubContent.find("{", mainStart);
+        if (mainBraceStart == std::string::npos) {
+            std::cerr << "Error: Could not find main function opening brace" << std::endl;
+            return;
+        }
         
-        // Create the embedded data and decryption code
+        // Find the closing brace of main
+        size_t braceCount = 1;
+        size_t mainBraceEnd = mainBraceStart + 1;
+        while (braceCount > 0 && mainBraceEnd < stubContent.length()) {
+            if (stubContent[mainBraceEnd] == '{') braceCount++;
+            else if (stubContent[mainBraceEnd] == '}') braceCount--;
+            mainBraceEnd++;
+        }
+        
+        if (braceCount > 0) {
+            std::cerr << "Error: Could not find main function closing brace" << std::endl;
+            return;
+        }
+        
+        // Create the new main function content
         std::string embeddedDataArray = embedDataAsArray(encryptedData);
-        std::string insertionCode = 
-            "\n\n"
+        std::string newMainContent = 
+            "int main() {\n"
+            "    if (isDebugged()) {\n"
+            "        std::cerr << \"Debugging detected!\" << std::endl;\n"
+            "        return 1;\n"
+            "    }\n\n"
+            "    // Convert hex strings to bytes\n"
+            "    uint8_t key[16], nonce[16];\n"
+            "    hexToBytes(KEY_" + keyVarName + ", key);\n"
+            "    hexToBytes(NONCE_" + nonceVarName + ", nonce);\n\n"
             "    // Embedded encrypted executable data\n"
             "    uint8_t embeddedData[] = " + embeddedDataArray + ";\n"
             "    const size_t embeddedDataSize = sizeof(embeddedData);\n\n"
@@ -342,22 +378,13 @@ public:
             "        std::cerr << \"Failed to create output file\" << std::endl;\n"
             "        return 1;\n"
             "    }\n\n"
-            "    return 0;";
+            "    return 0;\n"
+            "}";
         
-        // Insert the code after variable declarations
-        stubContent.insert(varDeclEnd, insertionCode);
+        // Replace the entire main function
+        stubContent.replace(mainStart, mainBraceEnd - mainStart, newMainContent);
         
-        // Remove everything after the first return 0; and add proper closing
-        size_t firstReturn = stubContent.find("return 0;");
-        if (firstReturn != std::string::npos) {
-            // Find the last closing brace
-            size_t lastBrace = stubContent.rfind("}");
-            if (lastBrace != std::string::npos && lastBrace > firstReturn) {
-                // Remove everything after the first return 0; and add proper closing
-                stubContent.erase(firstReturn + 9, lastBrace - firstReturn - 8);
-                stubContent += "\n}\n";
-            }
-        }
+
         
 
         
