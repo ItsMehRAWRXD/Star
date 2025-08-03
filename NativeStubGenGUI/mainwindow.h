@@ -21,9 +21,15 @@ protected:
 
 private slots:
     void on_generateButton_clicked();
+    void on_polymorphicCheckBox_toggled(bool checked);
+    void on_obfuscationCheckBox_toggled(bool checked);
+    void on_antiDebugCheckBox_toggled(bool checked);
 
 private:
     Ui::MainWindow *ui;
     QString payloadFile;
+    bool usePolymorphism;
+    bool useObfuscation;
+    bool useAntiDebug;
     void checkReady();
 };

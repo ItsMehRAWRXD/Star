@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>400</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,9 +53,39 @@
      </widget>
     </item>
     <item>
+     <widget class="QGroupBox" name="optionsGroupBox">
+      <property name="title">
+       <string>Stub Options</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="polymorphicCheckBox">
+         <property name="text">
+          <string>Polymorphism (Code mutation)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="obfuscationCheckBox">
+         <property name="text">
+          <string>Obfuscation (String encryption)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="antiDebugCheckBox">
+         <property name="text">
+          <string>Anti-debugging (Timing checks)</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <widget class="QPushButton" name="generateButton">
       <property name="text">
-       <string>Generate Basic Stub</string>
+       <string>Generate Stub</string>
       </property>
      </widget>
     </item>
