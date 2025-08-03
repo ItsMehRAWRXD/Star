@@ -1,0 +1,10 @@
+# ninja log v6
+7	611	7759383761726570	build.ninja	a92a100d118f6407
+19	590	7759383767866672	RawrXD_StubGUI_autogen/timestamp	7110e6717fd14491
+19	590	7759383767866672	RawrXD_StubGUI_autogen/mocs_compilation.cpp	7110e6717fd14491
+19	590	7759383767866672	C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/RawrXD_StubGUI_autogen/timestamp	7110e6717fd14491
+19	590	7759383767866672	C:/Users/Garre/source/repos/NativeStubGenGUI/build/Desktop_Qt_6_9_1_MinGW_64_bit-Debug/RawrXD_StubGUI_autogen/mocs_compilation.cpp	7110e6717fd14491
+594	2268	7759383768422208	CMakeFiles/RawrXD_StubGUI.dir/RawrXD_StubGUI_autogen/mocs_compilation.cpp.obj	a2e8da11992698c7
+614	2302	7759383768623797	CMakeFiles/RawrXD_StubGUI.dir/main.cpp.obj	b73e1b89321b4393
+618	2954	7759383768659268	CMakeFiles/RawrXD_StubGUI.dir/mainwindow.cpp.obj	1bd5553ab9489028
+2954	3172	7759383792021649	RawrXD_StubGUI.exe	97afa52071ca564c
