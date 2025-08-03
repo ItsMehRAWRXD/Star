@@ -52,7 +52,21 @@ static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
-// Key handling (shared with other components)
+// Simple random number generator (for key and nonce generation)
+inline uint32_t simpleRand() {
+    static uint32_t seed = 0x12345678;
+    seed = seed * 1103515245 + 12345;
+    return seed;
+}
+
+// Random key generation
+inline void generateRandomKey(uint8_t* key) {
+    for (int i = 0; i < 16; i++) {
+        key[i] = simpleRand() & 0xFF;
+    }
+}
+
+// Fallback key handling (shared with other components)
 constexpr uint8_t XOR_OBFUSCATE_KEY = 0x5A;
 uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
 constexpr size_t keyLen = sizeof(encKey);
@@ -266,12 +280,7 @@ inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length,
     }
 }
 
-// Simple random number generator (for nonce generation)
-inline uint32_t simpleRand() {
-    static uint32_t seed = 0x12345678;
-    seed = seed * 1103515245 + 12345;
-    return seed;
-}
+
 
 inline void generateNonce(uint8_t* nonce) {
     for (int i = 0; i < 16; i++) {
@@ -285,8 +294,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    uint8_t key[keyLen];
-    decryptKey(key);
+    // Generate random key and nonce
+    uint8_t aesKey[16];
+    uint8_t nonce[16];
+    
+    generateRandomKey(aesKey);
+    generateNonce(nonce);
+    
+    std::cout << "Generated random key and nonce for encryption." << std::endl;
 
     std::ifstream fin(argv[1], std::ios::binary);
     if (!fin) {
@@ -299,16 +314,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to open output file.\n";
         return 1;
     }
-
-    // Prepare AES key (expand or truncate to 16 bytes)
-    uint8_t aesKey[16];
-    for (size_t i = 0; i < 16; ++i) {
-        aesKey[i] = key[i % keyLen];
-    }
-    
-    // Generate nonce
-    uint8_t nonce[16];
-    generateNonce(nonce);
     
     // Write nonce to output file
     fout.write(reinterpret_cast<char*>(nonce), 16);
