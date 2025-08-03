@@ -1,0 +1,194 @@
+# Rawr Core Configuration
+# Advanced Cybersecurity Learning Platform
+
+framework:
+  # Debug settings
+  debug_mode: true
+  log_level: "info"  # debug, info, warning, error
+  max_threads: 8
+  
+  # Plugin settings
+  auto_load: true
+  plugin_directory: "./plugins"
+  enable_hot_reload: true
+  
+  # Performance settings
+  max_memory_mb: 1024
+  cpu_limit_percent: 80
+  
+  # Security settings
+  enable_sandbox: true
+  enable_isolation: true
+  max_execution_time: 300  # seconds
+
+plugins:
+  # Time Manipulator Plugin
+  time_manipulator:
+    enabled: true
+    time_zone: "UTC"
+    manipulation_level: "medium"  # low, medium, high
+    enable_time_dilation: true
+    enable_temporal_loops: false
+    
+  # Calc Replacer Plugin
+  calc_replacer:
+    enabled: true
+    target_process: "calc.exe"
+    replacement_strategy: "stealth"
+    enable_persistence: true
+    enable_evasion: true
+    
+  # Malware Hunter Plugin
+  malware_hunter:
+    enabled: true
+    scan_interval: 300  # seconds
+    threat_level: "high"  # low, medium, high, critical
+    enable_behavioral_analysis: true
+    enable_signature_detection: true
+    enable_heuristic_analysis: true
+    
+  # Predator Armor Plugin
+  predator_armor:
+    enabled: true
+    armor_level: "maximum"  # basic, advanced, maximum
+    enable_adaptive_defense: true
+    enable_stealth_mode: true
+    enable_combat_mode: false
+    
+  # Malware Pac-Man Plugin
+  malware_pacman:
+    enabled: true
+    game_mode: "hunt"  # hunt, evade, destroy
+    enable_power_pellets: true
+    enable_ghost_mode: true
+    max_entities: 100
+    
+  # Power Manager Plugin
+  power_manager:
+    enabled: true
+    power_mode: "balanced"  # power_save, balanced, performance
+    enable_solar_charging: true
+    enable_battery_optimization: true
+    pool_day_chilling: true
+    
+  # Multi-Persona Plugin
+  multi_persona:
+    enabled: true
+    persona_count: 10
+    cycle_interval: 60  # seconds
+    enable_polymut: true
+    enable_metamut: true
+    
+  # Math Gatekeeper Plugin
+  math_gatekeeper:
+    enabled: true
+    challenge_difficulty: "medium"  # easy, medium, hard
+    max_attempts: 3
+    enable_rate_limiting: true
+    enable_ip_banning: true
+    
+  # Bouncer Mode Plugin
+  bouncer_mode:
+    enabled: true
+    mode: "reverse_security"  # normal, reverse_security
+    enable_friendly_mode: true
+    enable_bullying_mode: true
+    target_applications: ["notepad.exe", "chrome.exe"]
+    
+  # Pixel Evasion Plugin
+  pixel_evasion:
+    enabled: true
+    detection_sensitivity: "high"  # low, medium, high
+    enable_quantum_evasion: true
+    enable_dimensional_evasion: true
+    evaporation_threshold: 0.8
+    
+  # Bitcoin Miner Plugin
+  bitcoin_miner:
+    enabled: true
+    mining_algorithm: "sha256"  # sha256, scrypt, ethash
+    enable_stealing: true
+    enable_benchmarking: true
+    max_cpu_usage: 50  # percent
+    
+  # Offline AI Plugin
+  offline_ai:
+    enabled: true
+    ai_mode: "learning"  # learning, prediction, analysis
+    enable_neural_network: true
+    enable_behavioral_learning: true
+    enable_pattern_recognition: true
+    
+  # Multiverse System Plugin
+  multiverse_system:
+    enabled: true
+    universe_count: 20
+    enable_travel: true
+    enable_real_estate: true
+    enable_adoption_agency: true
+    enable_cujo_system: true
+    enable_pet_cemetery: true
+    enable_seeing_eye_dog: true
+    enable_cerberus: true
+
+logging:
+  # Logging configuration
+  file_logging: true
+  log_file: "./logs/rawr.log"
+  max_log_size_mb: 100
+  log_rotation: true
+  console_logging: true
+  
+  # Log levels for different components
+  framework_level: "info"
+  plugin_level: "debug"
+  security_level: "warning"
+  performance_level: "info"
+
+security:
+  # Security settings
+  enable_encryption: true
+  encryption_algorithm: "AES-256"
+  enable_authentication: true
+  enable_authorization: true
+  
+  # Access control
+  admin_users: ["admin", "root"]
+  restricted_plugins: []
+  enable_audit_logging: true
+
+performance:
+  # Performance monitoring
+  enable_monitoring: true
+  monitoring_interval: 30  # seconds
+  enable_profiling: false
+  enable_optimization: true
+  
+  # Resource limits
+  max_cpu_percent: 80
+  max_memory_percent: 70
+  max_disk_usage_percent: 90
+
+network:
+  # Network settings
+  enable_network_operations: true
+  max_connections: 100
+  connection_timeout: 30  # seconds
+  enable_proxy: false
+  proxy_settings:
+    host: ""
+    port: 0
+    username: ""
+    password: ""
+
+development:
+  # Development settings
+  enable_debugging: true
+  enable_testing: true
+  enable_profiling: false
+  enable_coverage: false
+  
+  # Testing configuration
+  test_timeout: 300  # seconds
+  enable_mock_objects: true
+  enable_integration_tests: true
