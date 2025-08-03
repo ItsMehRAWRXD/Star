@@ -258,3 +258,4 @@ make all
 ---
 
 **Choose Native Implementation for production use - it's faster, more portable, and has zero dependencies!**
+# Star-2
