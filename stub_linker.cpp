@@ -308,34 +308,31 @@ public:
         }
         
         // Find nonce definition line (e.g., "const std::string NONCE_def456 = "76741508ffff0d9fd474ccb52c83286c";")
-        size_t nonceDefStart = stubContent.find("const std::string NONCE_");
-        if (nonceDefStart != std::string::npos) {
+        size_t nonceDefStart = 0;
+        while (true) {
+            nonceDefStart = stubContent.find("const std::string NONCE_", nonceDefStart);
+            if (nonceDefStart == std::string::npos) break;
+            
             // Extract the full variable name including NONCE_
             size_t nonceNameStart = nonceDefStart + 22; // Skip "const std::string "
             size_t nonceNameEnd = stubContent.find(" = ", nonceNameStart);
             if (nonceNameEnd != std::string::npos) {
                 nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
+                std::cerr << "DEBUG: Found nonceVarName='" << nonceVarName << "'" << std::endl;
                 
                 // Verify the extraction is correct - should start with "NONCE_"
-                if (nonceVarName.substr(0, 6) != "NONCE_") {
-                    std::cerr << "DEBUG: Invalid nonce variable name, trying to re-extract..." << std::endl;
-                    // Try to find the next occurrence
-                    nonceDefStart = stubContent.find("const std::string NONCE_", nonceDefStart + 1);
-                    if (nonceDefStart != std::string::npos) {
-                        nonceNameStart = nonceDefStart + 22;
-                        nonceNameEnd = stubContent.find(" = ", nonceNameStart);
-                        if (nonceNameEnd != std::string::npos) {
-                            nonceVarName = stubContent.substr(nonceNameStart, nonceNameEnd - nonceNameStart);
-                            std::cerr << "DEBUG: Re-extracted nonceVarName='" << nonceVarName << "'" << std::endl;
-                        }
+                if (nonceVarName.substr(0, 6) == "NONCE_") {
+                    // Found valid nonce variable, now extract the hex value
+                    size_t nonceStart = stubContent.find("\"", nonceDefStart);
+                    size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
+                    if (nonceStart != std::string::npos && nonceEnd != std::string::npos) {
+                        nonceHex = stubContent.substr(nonceStart + 1, nonceEnd - nonceStart - 1);
+                        std::cerr << "DEBUG: Found valid nonce: " << nonceHex << std::endl;
+                        break; // Found valid nonce, exit loop
                     }
                 }
             }
-            size_t nonceStart = stubContent.find("\"", nonceDefStart);
-            size_t nonceEnd = stubContent.find("\"", nonceStart + 1);
-            if (nonceStart != std::string::npos && nonceEnd != std::string::npos) {
-                nonceHex = stubContent.substr(nonceStart + 1, nonceEnd - nonceStart - 1);
-            }
+            nonceDefStart++; // Try next occurrence
         }
         
         if (keyHex.empty() || nonceHex.empty() || keyVarName.empty() || nonceVarName.empty()) {
