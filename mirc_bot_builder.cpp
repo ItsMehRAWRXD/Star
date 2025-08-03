@@ -34,15 +34,18 @@ public:
     MircBotBuilder() {
         // Default settings
         botName = "StarBot";
-        server = "irc.freenode.net";
+        server = "irc.rizon.net";
         port = 6667;
-        channel = "#test";
+        channel = "#rawr";
         password = "";
         realName = "Star-2 IRC Bot";
         userInfo = "Star-2";
         autoReconnect = true;
         reconnectDelay = 30;
         logFile = "bot.log";
+        
+        // Add default admin
+        adminUsers.push_back("ItsMehRawrXD");
     }
     
     void showMenu() {
