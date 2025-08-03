@@ -225,6 +225,23 @@ private:
         return generateRandomHex(32); // 16 bytes = 32 hex chars
     }
     
+    // Use the class's proper RNG for standalone stubs
+    std::string generateRandomKeyWithRNG() {
+        std::string key;
+        for (int i = 0; i < 32; i++) {
+            key += "0123456789abcdef"[rng() % 16];
+        }
+        return key;
+    }
+    
+    std::string generateRandomNonceWithRNG() {
+        std::string nonce;
+        for (int i = 0; i < 32; i++) {
+            nonce += "0123456789abcdef"[rng() % 16];
+        }
+        return nonce;
+    }
+    
     std::string obfuscateString(const std::string& input) {
         std::string result = "std::string ";
         std::string varName = generateRandomString(8);
@@ -252,7 +269,7 @@ private:
     
     // Simple random number generator (same as encryptor)
     inline uint32_t simpleRand() {
-        static uint32_t seed = 0x12345678;
+        static uint32_t seed = std::time(nullptr);
         seed = seed * 1103515245 + 12345;
         return seed;
     }
@@ -1563,9 +1580,9 @@ public:
                                const std::string& stubType = "basic", bool useRandomKey = true) {
         std::cout << "Generating standalone stub..." << std::endl;
         
-        // Generate random key and nonce for the standalone stub
-        std::string keyHex = useRandomKey ? generateRandomKey() : "3939080f0f3808313832383939080f0f";
-        std::string nonceHex = generateRandomNonce();
+        // Generate random key and nonce for the standalone stub using proper RNG
+        std::string keyHex = useRandomKey ? generateRandomKeyWithRNG() : "3939080f0f3808313832383939080f0f";
+        std::string nonceHex = generateRandomNonceWithRNG();
         
         // Get the stub template
         std::string stubCode = generateStubTemplate(stubType);
