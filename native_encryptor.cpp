@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <ctime>
 
 // Pure native AES-128 implementation with no external dependencies
 
@@ -54,7 +55,7 @@ static const uint8_t rcon[10] = {
 
 // Simple random number generator (for key and nonce generation)
 inline uint32_t simpleRand() {
-    static uint32_t seed = 0x12345678;
+    static uint32_t seed = std::time(nullptr) + std::clock();
     seed = seed * 1103515245 + 12345;
     return seed;
 }

@@ -1574,11 +1574,25 @@ int main() {
 
 
 public:
-    NativeStubGenerator() : rng(std::time(nullptr)) {}
+    NativeStubGenerator() {
+        // Use high-quality entropy for seeding
+        std::random_device rd;
+        std::seed_seq seed{rd(), rd(), rd(), rd(), 
+                          static_cast<unsigned int>(std::time(nullptr)),
+                          static_cast<unsigned int>(std::clock())};
+        rng.seed(seed);
+    }
     
     void generateStandaloneStub(const std::string& outputFile, 
                                const std::string& stubType = "basic", bool useRandomKey = true) {
         std::cout << "Generating standalone stub..." << std::endl;
+        
+        // Reseed RNG for maximum uniqueness
+        std::random_device rd;
+        std::seed_seq seed{rd(), rd(), rd(), rd(), 
+                          static_cast<unsigned int>(std::time(nullptr)),
+                          static_cast<unsigned int>(std::clock())};
+        rng.seed(seed);
         
         // Generate random key and nonce for the standalone stub using proper RNG
         std::string keyHex = useRandomKey ? generateRandomKeyWithRNG() : "3939080f0f3808313832383939080f0f";
@@ -1643,6 +1657,13 @@ public:
     
     void generateStub(const std::string& inputFile, const std::string& outputFile, 
                      const std::string& stubType = "basic", bool useRandomKey = true) {
+        // Reseed RNG for maximum uniqueness
+        std::random_device rd;
+        std::seed_seq seed{rd(), rd(), rd(), rd(), 
+                          static_cast<unsigned int>(std::time(nullptr)),
+                          static_cast<unsigned int>(std::clock())};
+        rng.seed(seed);
+        
         // Read input file
         std::ifstream inFile(inputFile, std::ios::binary);
         if (!inFile.is_open()) {
