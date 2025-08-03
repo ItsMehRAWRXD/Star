@@ -10,8 +10,8 @@
 #include <ctime>
 
 // Standalone Basic Stub - Simple and clean
-const std::string KEY_Gdd5mWRu = "b12a25e01e874b974c55dff2a7010181";
-const std::string NONCE_jcU30wO4 = "bd96f50cab9691f887846662c5a40780";
+const std::string KEY_g3m9W6kb = "4b52f10a8bfad21888603b946dd39112";
+const std::string NONCE_xt71rEvK = "eb8757e8b93405a2963ae9e1ba0104fb";
 
 // AES-128-CTR implementation
 static const uint8_t sbox[256] = {
@@ -148,8 +148,8 @@ int main() {
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes(KEY_Gdd5mWRu, key);
-    hexToBytes(NONCE_jcU30wO4, nonce);
+    hexToBytes(KEY_g3m9W6kb, key);
+    hexToBytes(NONCE_xt71rEvK, nonce);
     
     // Decrypt the data using AES-128-CTR
     // Note: embeddedData and embeddedDataSize will be added by stub linker

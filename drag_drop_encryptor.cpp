@@ -177,7 +177,7 @@ inline void aesCtrCrypt(const uint8_t* input, uint8_t* output, size_t length,
 
 // Simple random number generator
 inline uint32_t simpleRand() {
-    static uint32_t seed = 0x12345678;
+    static uint32_t seed = std::time(nullptr) + std::clock();
     seed = seed * 1103515245 + 12345;
     return seed;
 }
