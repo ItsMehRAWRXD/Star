@@ -3,6 +3,7 @@
 #include "encryptor_stub_generator.h"
 #include "xll_stub_generator.h"
 #include "unlimited_stub_generator.h"
+#include "pe_encryptor.h"
 
 // AES S-box
 const uint8_t sbox[256] = {
@@ -479,6 +480,7 @@ void showMenu() {
     std::cout << "  5. Generate Encryptor Stub" << std::endl;
     std::cout << "  6. Generate XLL Stealth Payload Stub" << std::endl;
     std::cout << "  7. Generate Unlimited Runtime Encryptor Stub" << std::endl;
+    std::cout << "  8. PE-Aware Encryption (Preserves Executable Structure)" << std::endl;
     std::cout << "  0. Exit" << std::endl;
     std::cout << "\nEnter your choice: ";
 }
@@ -659,6 +661,20 @@ int main() {
             std::cout << "Examples:" << std::endl;
             std::cout << "  encryptor.exe calc.exe encrypted_calc.bin" << std::endl;
             std::cout << "  encryptor.exe notepad.exe encrypted_notepad.exe" << std::endl;
+        }
+        else if (choice == "8") {
+            // PE-Aware Encryption
+            std::string inputFile = getInputFile();
+            std::string outputFile = getOutputFile();
+            
+            PEEncryptor peEncryptor;
+            if (peEncryptor.encryptPE(inputFile, outputFile)) {
+                std::cout << "PE file encrypted successfully!" << std::endl;
+                std::cout << "File remains executable but code sections are encrypted" << std::endl;
+                std::cout << "Keys saved separately in: " << outputFile << ".keys" << std::endl;
+            } else {
+                std::cout << "PE encryption failed!" << std::endl;
+            }
         }
         else {
             std::cout << "Invalid choice. Please try again." << std::endl;
