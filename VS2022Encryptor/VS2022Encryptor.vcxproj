@@ -161,17 +161,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stealth_triple_encryptor.cpp" />
-    <ClCompile Include="encryptor_stub_generator.cpp" />
-    <ClCompile Include="xll_stub_generator.cpp" />
-    <ClCompile Include="unlimited_stub_generator.cpp" />
     <ClCompile Include="pe_encryptor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="encryptor.h" />
     <ClInclude Include="stealth_triple_encryptor.h" />
-    <ClInclude Include="encryptor_stub_generator.h" />
-    <ClInclude Include="xll_stub_generator.h" />
-    <ClInclude Include="unlimited_stub_generator.h" />
     <ClInclude Include="pe_encryptor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

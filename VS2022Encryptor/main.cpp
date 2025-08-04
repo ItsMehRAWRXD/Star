@@ -1,8 +1,5 @@
 #include "encryptor.h"
 #include "stealth_triple_encryptor.h"
-#include "encryptor_stub_generator.h"
-#include "xll_stub_generator.h"
-#include "unlimited_stub_generator.h"
 #include "pe_encryptor.h"
 
 // AES S-box
@@ -476,11 +473,7 @@ void showMenu() {
     std::cout << "  1. Basic Encryption (AES/ChaCha20)" << std::endl;
     std::cout << "  2. Basic Encryption - Raw Binary Output" << std::endl;
     std::cout << "  3. Stealth Triple Encryption" << std::endl;
-    std::cout << "  4. Generate Stealth Payload Stub" << std::endl;
-    std::cout << "  5. Generate Encryptor Stub" << std::endl;
-    std::cout << "  6. Generate XLL Stealth Payload Stub" << std::endl;
-    std::cout << "  7. Generate Unlimited Runtime Encryptor Stub" << std::endl;
-    std::cout << "  8. PE-Aware Encryption (Preserves Executable Structure)" << std::endl;
+    std::cout << "  4. PE-Aware Encryption (Preserves Executable Structure)" << std::endl;
     std::cout << "  0. Exit" << std::endl;
     std::cout << "\nEnter your choice: ";
 }
@@ -561,108 +554,6 @@ int main() {
             }
         }
         else if (choice == "4") {
-            // Generate Stealth Payload Stub
-            std::string inputFile = getInputFile();
-            std::string outputFile = getOutputFile();
-            
-            std::ifstream in(inputFile, std::ios::binary);
-            if (!in) {
-                std::cout << "Failed to open payload file: " << inputFile << std::endl;
-                continue;
-            }
-            
-            in.seekg(0, std::ios::end);
-            size_t size = in.tellg();
-            in.seekg(0, std::ios::beg);
-            
-            std::vector<uint8_t> payload(size);
-            in.read(reinterpret_cast<char*>(payload.data()), size);
-            in.close();
-            
-            StealthTripleEncryption ste;
-            auto keys = ste.generateKeys();
-            std::string stub = ste.generateStealthStub(payload, keys);
-            
-            std::ofstream out(outputFile);
-            out << stub;
-            out.close();
-            
-            std::cout << "Stealth stub generated: " << outputFile << std::endl;
-            std::cout << "Keys stored as decimal numbers in code" << std::endl;
-        }
-        else if (choice == "5") {
-            // Generate Encryptor Stub
-            std::string outputFile = getOutputFile();
-            
-            EncryptorStubGenerator generator;
-            auto keys = generator.generateKeys();
-            std::string stub = generator.generateEncryptorStub(keys);
-            
-            std::ofstream out(outputFile);
-            out << stub;
-            out.close();
-            
-            std::cout << "Encryptor stub generated: " << outputFile << std::endl;
-            std::cout << "This stub can encrypt files at runtime with triple-layer encryption" << std::endl;
-            std::cout << "Usage: compiled_stub.exe <inputfile> <outputfile>" << std::endl;
-        }
-        else if (choice == "6") {
-            // Generate XLL Stealth Payload Stub
-            std::string inputFile = getInputFile();
-            std::string outputFile = getOutputFile();
-            
-            std::ifstream in(inputFile, std::ios::binary);
-            if (!in) {
-                std::cout << "Failed to open payload file: " << inputFile << std::endl;
-                continue;
-            }
-            
-            in.seekg(0, std::ios::end);
-            size_t size = in.tellg();
-            in.seekg(0, std::ios::beg);
-            
-            std::vector<uint8_t> payload(size);
-            in.read(reinterpret_cast<char*>(payload.data()), size);
-            in.close();
-            
-            XLLStubGenerator generator;
-            auto keys = generator.generateKeys();
-            std::string stub = generator.generateXLLStub(payload, keys);
-            
-            std::ofstream out(outputFile);
-            out << stub;
-            out.close();
-            
-            std::cout << "XLL stealth stub generated: " << outputFile << std::endl;
-            std::cout << "This stub can be compiled as an XLL add-in for Excel" << std::endl;
-            std::cout << "Keys stored as decimal numbers in code" << std::endl;
-        }
-        else if (choice == "7") {
-            // Generate Unlimited Runtime Encryptor Stub
-            std::string outputFile = getOutputFile();
-            
-            UnlimitedStubGenerator generator;
-            std::string stub = generator.generateStub();
-            
-            std::ofstream out(outputFile);
-            out << stub;
-            out.close();
-            
-            std::cout << "Unlimited runtime encryptor stub generated: " << outputFile << std::endl;
-            std::cout << "Features:" << std::endl;
-            std::cout << "  - 4-layer encryption (AES + ChaCha20 + XOR + Additional)" << std::endl;
-            std::cout << "  - Extended 32-byte keys" << std::endl;
-            std::cout << "  - Variable XOR key length (32-64 bytes)" << std::endl;
-            std::cout << "  - Randomized encryption order" << std::endl;
-            std::cout << "  - Decimal key representation" << std::endl;
-            std::cout << "  - Unlimited file size support" << std::endl;
-            std::cout << "Usage: g++ -o encryptor.exe " << outputFile << std::endl;
-            std::cout << "Then: encryptor.exe input_file output_file" << std::endl;
-            std::cout << "Examples:" << std::endl;
-            std::cout << "  encryptor.exe calc.exe encrypted_calc.bin" << std::endl;
-            std::cout << "  encryptor.exe notepad.exe encrypted_notepad.exe" << std::endl;
-        }
-        else if (choice == "8") {
             // PE-Aware Encryption
             std::string inputFile = getInputFile();
             std::string outputFile = getOutputFile();
@@ -671,7 +562,8 @@ int main() {
             if (peEncryptor.encryptPE(inputFile, outputFile)) {
                 std::cout << "PE file encrypted successfully!" << std::endl;
                 std::cout << "File remains executable but code sections are encrypted" << std::endl;
-                std::cout << "Keys saved separately in: " << outputFile << ".keys" << std::endl;
+                std::cout << "Keys embedded directly in file - self-contained!" << std::endl;
+                std::cout << "File can decrypt itself without external key files" << std::endl;
             } else {
                 std::cout << "PE encryption failed!" << std::endl;
             }
