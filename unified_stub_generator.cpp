@@ -1078,6 +1078,7 @@ public:
         
         return stub.str();
     }
+};  // Add this closing brace for the class
 
 // Interactive configuration
 UnifiedStubGenerator::StubConfig getConfigFromUser() {
@@ -1107,9 +1108,9 @@ UnifiedStubGenerator::StubConfig getConfigFromUser() {
             std::cin >> yn;
             config.embedBothPayloads = (yn == 'y' || yn == 'Y');
             if (!config.embedBothPayloads) {
-                std::cout << "Enter Windows payload file (for URL download): ";
+                std::cout << "Enter Windows download URL: ";
                 std::cin >> config.windowsURL;
-                std::cout << "Enter Linux payload file (for URL download): ";
+                std::cout << "Enter Linux download URL: ";
                 std::cin >> config.linuxURL;
             }
             break;
@@ -1216,6 +1217,12 @@ int main(int argc, char* argv[]) {
     } else if (std::string(argv[1]) == "--cross-platform") {
         outputFile = argv[2];
         config.payloadMethod = UnifiedStubGenerator::StubConfig::CROSS_PLATFORM;
+        
+        // For cross-platform, we need to get the payload files
+        if (argc >= 5 && std::string(argv[3]) != "--config") {
+            config.windowsPayloadFile = argv[3];
+            config.linuxPayloadFile = argv[4];
+        }
     } else {
         inputFile = argv[1];
         outputFile = argv[2];
