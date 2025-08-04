@@ -266,7 +266,13 @@ public:
         stub << "#include <vector>\n";
         stub << "#include <cstring>\n";
         stub << "#include <cstdint>\n";
-        stub << "#include <string>\n\n";
+        stub << "#include <string>\n";
+        stub << "#ifdef __linux__\n";
+        stub << "#include <sys/mman.h>\n";
+        stub << "#endif\n";
+        stub << "#ifdef _WIN32\n";
+        stub << "#include <windows.h>\n";
+        stub << "#endif\n\n";
         
         // Embed payload as calculations result
         stub << "// Runtime generated data\n";
