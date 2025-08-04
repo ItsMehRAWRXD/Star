@@ -8,6 +8,12 @@
 #include <cstring>
 #include <algorithm>
 #include <thread>
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 class StealthTripleEncryption {
 private:
@@ -333,7 +339,7 @@ std::vector<uint8_t> decToBytes(const std::string& dec, size_t len) {
         stub << "    // Extract keys from numbers\n";
         stub << "    auto k1 = decToBytes(" << v3 << ", 16);\n";
         stub << "    auto k2 = decToBytes(" << v4 << ", 32);\n";
-        stub << "    auto k3 = decToBytes(" << v5 << ", " << keys.xorKeyLen << ");\n\n";
+        stub << "    auto k3 = decToBytes(" << v5 << ", " << std::dec << keys.xorKeyLen << ");\n\n";
         
         stub << "    // Extract payload (skip padding)\n";
         stub << "    std::vector<uint8_t> data(" << v8 << " + 8, " << v8 << " + " 
