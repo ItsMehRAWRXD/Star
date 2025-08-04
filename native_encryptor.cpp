@@ -289,26 +289,108 @@ inline void generateNonce(uint8_t* nonce) {
     }
 }
 
+inline void generateChaCha20Nonce(uint8_t* nonce) {
+    for (int i = 0; i < 12; i++) {
+        nonce[i] = simpleRand() & 0xFF;
+    }
+}
+
+// ChaCha20 implementation
+inline void quarterRound(uint32_t& a, uint32_t& b, uint32_t& c, uint32_t& d) {
+    a += b; d ^= a; d = (d << 16) | (d >> 16);
+    c += d; b ^= c; b = (b << 12) | (b >> 20);
+    a += b; d ^= a; d = (d << 8) | (d >> 24);
+    c += d; b ^= c; b = (b << 7) | (b >> 25);
+}
+
+void chachaBlock(uint32_t output[16], const uint32_t input[16]) {
+    uint32_t x[16];
+    for (int i = 0; i < 16; i++) {
+        x[i] = input[i];
+    }
+    
+    for (int i = 0; i < 10; i++) {
+        quarterRound(x[0], x[4], x[8], x[12]);
+        quarterRound(x[1], x[5], x[9], x[13]);
+        quarterRound(x[2], x[6], x[10], x[14]);
+        quarterRound(x[3], x[7], x[11], x[15]);
+        
+        quarterRound(x[0], x[5], x[10], x[15]);
+        quarterRound(x[1], x[6], x[11], x[12]);
+        quarterRound(x[2], x[7], x[8], x[13]);
+        quarterRound(x[3], x[4], x[9], x[14]);
+    }
+    
+    for (int i = 0; i < 16; i++) {
+        output[i] = x[i] + input[i];
+    }
+}
+
+void initChachaState(uint32_t state[16], const uint8_t key[32], const uint8_t nonce[12], uint32_t counter) {
+    state[0] = 0x61707865;
+    state[1] = 0x3320646e;
+    state[2] = 0x79622d32;
+    state[3] = 0x6b206574;
+    
+    for (int i = 0; i < 8; i++) {
+        state[4 + i] = ((uint32_t)key[4*i]) |
+                       ((uint32_t)key[4*i + 1] << 8) |
+                       ((uint32_t)key[4*i + 2] << 16) |
+                       ((uint32_t)key[4*i + 3] << 24);
+    }
+    
+    state[12] = counter;
+    
+    for (int i = 0; i < 3; i++) {
+        state[13 + i] = ((uint32_t)nonce[4*i]) |
+                        ((uint32_t)nonce[4*i + 1] << 8) |
+                        ((uint32_t)nonce[4*i + 2] << 16) |
+                        ((uint32_t)nonce[4*i + 3] << 24);
+    }
+}
+
+void chacha20Crypt(const uint8_t* input, uint8_t* output, size_t length,
+                   const uint8_t key[32], const uint8_t nonce[12], uint32_t counter) {
+    uint32_t state[16];
+    uint32_t keystream[16];
+    uint8_t* keystream_bytes = (uint8_t*)keystream;
+    
+    size_t processed = 0;
+    while (processed < length) {
+        initChachaState(state, key, nonce, counter);
+        chachaBlock(keystream, state);
+        
+        size_t blockSize = (length - processed < 64) ? length - processed : 64;
+        for (size_t i = 0; i < blockSize; i++) {
+            output[processed + i] = input[processed + i] ^ keystream_bytes[i];
+        }
+        
+        processed += blockSize;
+        counter++;
+    }
+}
+
+inline void generateChaCha20Key(uint8_t* key) {
+    for (int i = 0; i < 32; i++) {
+        key[i] = simpleRand() & 0xFF;
+    }
+}
+
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
+    if (argc < 3 || argc > 4) {
         std::cout << "=== Universal Native Encryptor ===" << std::endl;
-        std::cout << "Usage: " << argv[0] << " <inputfile> <outputfile>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <inputfile> <outputfile> [algorithm]" << std::endl;
+        std::cout << "Algorithm: aes (default) or chacha20" << std::endl;
         std::cout << "Examples:" << std::endl;
         std::cout << "  " << argv[0] << " file.exe encrypted_file.bin" << std::endl;
-        std::cout << "  " << argv[0] << " mirc_bot.cpp bot_encrypted.bin" << std::endl;
-        std::cout << "  " << argv[0] << " document.pdf doc_encrypted.bin" << std::endl;
-        std::cout << "Encrypts any file with random AES-128-CTR keys." << std::endl;
+        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin aes" << std::endl;
+        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin chacha20" << std::endl;
+        std::cout << "Encrypts any file with random AES-128-CTR or ChaCha20 keys." << std::endl;
         return 1;
     }
 
-    // Generate random key and nonce
-    uint8_t aesKey[16];
-    uint8_t nonce[16];
-    
-    generateRandomKey(aesKey);
-    generateNonce(nonce);
-    
-    std::cout << "Generated random key and nonce for encryption." << std::endl;
+    std::string algorithm = (argc == 4) ? argv[3] : "aes";
+    bool useChaCha = (algorithm == "chacha20");
 
     std::ifstream fin(argv[1], std::ios::binary);
     if (!fin) {
@@ -321,20 +403,68 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to open output file.\n";
         return 1;
     }
-    
-    // Write nonce to output file
-    fout.write(reinterpret_cast<char*>(nonce), 16);
 
-    // Process file in chunks
-    std::vector<uint8_t> buffer(4096);
-    while (fin.read(reinterpret_cast<char*>(buffer.data()), buffer.size()) || fin.gcount() > 0) {
-        std::streamsize bytesRead = fin.gcount();
-        std::vector<uint8_t> outputBuffer(bytesRead);
+    if (useChaCha) {
+        // ChaCha20 encryption
+        uint8_t chachaKey[32];
+        uint8_t chachaNonce[12];
         
-        aesCtrCrypt(buffer.data(), outputBuffer.data(), bytesRead, aesKey, nonce);
-        fout.write(reinterpret_cast<char*>(outputBuffer.data()), bytesRead);
-    }
+        generateChaCha20Key(chachaKey);
+        generateChaCha20Nonce(chachaNonce);
+        
+        std::cout << "Generated random ChaCha20 key and nonce for encryption." << std::endl;
+        
+        // Write algorithm identifier (1 byte: 0x02 for ChaCha20)
+        uint8_t algId = 0x02;
+        fout.write(reinterpret_cast<char*>(&algId), 1);
+        
+        // Write nonce to output file
+        fout.write(reinterpret_cast<char*>(chachaNonce), 12);
 
-    std::cout << "File encrypted successfully with native AES-128-CTR." << std::endl;
+        // Process file in chunks
+        std::vector<uint8_t> buffer(4096);
+        uint32_t counter = 0;
+        
+        while (fin.read(reinterpret_cast<char*>(buffer.data()), buffer.size()) || fin.gcount() > 0) {
+            std::streamsize bytesRead = fin.gcount();
+            std::vector<uint8_t> outputBuffer(bytesRead);
+            
+            chacha20Crypt(buffer.data(), outputBuffer.data(), bytesRead, chachaKey, chachaNonce, counter);
+            fout.write(reinterpret_cast<char*>(outputBuffer.data()), bytesRead);
+            
+            counter += (bytesRead + 63) / 64;
+        }
+
+        std::cout << "File encrypted successfully with ChaCha20." << std::endl;
+    } else {
+        // AES encryption
+        uint8_t aesKey[16];
+        uint8_t nonce[16];
+        
+        generateRandomKey(aesKey);
+        generateNonce(nonce);
+        
+        std::cout << "Generated random key and nonce for AES encryption." << std::endl;
+        
+        // Write algorithm identifier (1 byte: 0x01 for AES)
+        uint8_t algId = 0x01;
+        fout.write(reinterpret_cast<char*>(&algId), 1);
+        
+        // Write nonce to output file
+        fout.write(reinterpret_cast<char*>(nonce), 16);
+
+        // Process file in chunks
+        std::vector<uint8_t> buffer(4096);
+        while (fin.read(reinterpret_cast<char*>(buffer.data()), buffer.size()) || fin.gcount() > 0) {
+            std::streamsize bytesRead = fin.gcount();
+            std::vector<uint8_t> outputBuffer(bytesRead);
+            
+            aesCtrCrypt(buffer.data(), outputBuffer.data(), bytesRead, aesKey, nonce);
+            fout.write(reinterpret_cast<char*>(outputBuffer.data()), bytesRead);
+        }
+
+        std::cout << "File encrypted successfully with native AES-128-CTR." << std::endl;
+    }
+    
     return 0;
 }

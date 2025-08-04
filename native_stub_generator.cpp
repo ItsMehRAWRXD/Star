@@ -8,10 +8,34 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <chrono>
 
 class NativeStubGenerator {
 private:
     std::mt19937 rng;
+    
+    // Enhanced RNG initialization with multiple entropy sources
+    void initializeRNG() {
+        std::random_device rd;
+        auto now = std::chrono::high_resolution_clock::now();
+        auto duration = now.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+        
+        std::seed_seq seed{
+            rd(), rd(), rd(), rd(),
+            static_cast<unsigned int>(std::time(nullptr)),
+            static_cast<unsigned int>(std::clock()),
+            static_cast<unsigned int>(millis),
+            static_cast<unsigned int>(millis >> 32)
+        };
+        
+        rng.seed(seed);
+    }
+    
+    // Reseed RNG for maximum uniqueness
+    void reseedRNG() {
+        initializeRNG();
+    }
     
     // AES-128-CTR implementation (same as native_encryptor)
     static const uint8_t sbox[256];
@@ -272,6 +296,164 @@ private:
         static uint32_t seed = std::time(nullptr);
         seed = seed * 1103515245 + 12345;
         return seed;
+    }
+    
+    // String encryption methods
+    std::string xorEncryptString(const std::string& input, uint8_t key) {
+        std::string result;
+        for (char c : input) {
+            result += (char)(c ^ key);
+        }
+        return result;
+    }
+    
+    std::string xorEncryptStringMultiKey(const std::string& input, const std::vector<uint8_t>& key) {
+        std::string result;
+        for (size_t i = 0; i < input.length(); i++) {
+            result += (char)(input[i] ^ key[i % key.size()]);
+        }
+        return result;
+    }
+    
+    std::string rotateString(const std::string& input, int shift) {
+        std::string result;
+        for (char c : input) {
+            if (c >= 'a' && c <= 'z') {
+                result += (char)('a' + (c - 'a' + shift) % 26);
+            } else if (c >= 'A' && c <= 'Z') {
+                result += (char)('A' + (c - 'A' + shift) % 26);
+            } else {
+                result += c;
+            }
+        }
+        return result;
+    }
+    
+    std::string generateXorDecryptCode(const std::string& varName, const std::string& encVarName, uint8_t key) {
+        std::string code = "std::string " + varName + ";\n";
+        code += "for (char c : " + encVarName + ") {\n";
+        code += "    " + varName + " += (char)(c ^ " + std::to_string(key) + ");\n";
+        code += "}\n";
+        return code;
+    }
+    
+    std::string generateXorMultiKeyDecryptCode(const std::string& varName, const std::string& encVarName, 
+                                                const std::string& keyVarName, size_t keyLen) {
+        std::string code = "std::string " + varName + ";\n";
+        code += "for (size_t i = 0; i < " + encVarName + ".length(); i++) {\n";
+        code += "    " + varName + " += (char)(" + encVarName + "[i] ^ " + keyVarName + "[i % " + std::to_string(keyLen) + "]);\n";
+        code += "}\n";
+        return code;
+    }
+    
+    std::string generateRotateDecryptCode(const std::string& varName, const std::string& encVarName, int shift) {
+        int reverseShift = (26 - shift) % 26;
+        std::string code = "std::string " + varName + ";\n";
+        code += "for (char c : " + encVarName + ") {\n";
+        code += "    if (c >= 'a' && c <= 'z') {\n";
+        code += "        " + varName + " += (char)('a' + (c - 'a' + " + std::to_string(reverseShift) + ") % 26);\n";
+        code += "    } else if (c >= 'A' && c <= 'Z') {\n";
+        code += "        " + varName + " += (char)('A' + (c - 'A' + " + std::to_string(reverseShift) + ") % 26);\n";
+        code += "    } else {\n";
+        code += "        " + varName + " += c;\n";
+        code += "    }\n";
+        code += "}\n";
+        return code;
+    }
+    
+    // Generate encrypted string with chosen method
+    std::string generateEncryptedString(const std::string& input, const std::string& method, 
+                                      std::string& decryptCode, std::string& varName) {
+        varName = "str_" + generateRandomString(6);
+        std::string encVarName = "enc_" + generateRandomString(6);
+        std::string result;
+        
+        if (method == "xor") {
+            uint8_t key = rng() % 255 + 1; // Avoid 0
+            std::string encrypted = xorEncryptString(input, key);
+            result = "const std::string " + encVarName + " = \"";
+            for (char c : encrypted) {
+                result += "\\x" + std::string(1, "0123456789abcdef"[(unsigned char)c >> 4]) + 
+                         std::string(1, "0123456789abcdef"[(unsigned char)c & 0xF]);
+            }
+            result += "\";\n";
+            decryptCode = generateXorDecryptCode(varName, encVarName, key);
+            
+        } else if (method == "xor_multi") {
+            std::vector<uint8_t> key;
+            size_t keyLen = 8 + rng() % 8; // 8-16 byte key
+            std::string keyVarName = "key_" + generateRandomString(6);
+            
+            result = "const uint8_t " + keyVarName + "[] = {";
+            for (size_t i = 0; i < keyLen; i++) {
+                uint8_t k = rng() % 255 + 1;
+                key.push_back(k);
+                if (i > 0) result += ", ";
+                result += std::to_string(k);
+            }
+            result += "};\n";
+            
+            std::string encrypted = xorEncryptStringMultiKey(input, key);
+            result += "const std::string " + encVarName + " = \"";
+            for (char c : encrypted) {
+                result += "\\x" + std::string(1, "0123456789abcdef"[(unsigned char)c >> 4]) + 
+                         std::string(1, "0123456789abcdef"[(unsigned char)c & 0xF]);
+            }
+            result += "\";\n";
+            decryptCode = generateXorMultiKeyDecryptCode(varName, encVarName, keyVarName, keyLen);
+            
+        } else if (method == "rotate") {
+            int shift = rng() % 25 + 1; // 1-25 shift
+            std::string encrypted = rotateString(input, shift);
+            result = "const std::string " + encVarName + " = \"" + encrypted + "\";\n";
+            decryptCode = generateRotateDecryptCode(varName, encVarName, shift);
+            
+        } else if (method == "base64_xor") {
+            // Base64 encode then XOR
+            std::string b64 = base64Encode(input);
+            uint8_t key = rng() % 255 + 1;
+            std::string encrypted = xorEncryptString(b64, key);
+            result = "const std::string " + encVarName + " = \"";
+            for (char c : encrypted) {
+                result += "\\x" + std::string(1, "0123456789abcdef"[(unsigned char)c >> 4]) + 
+                         std::string(1, "0123456789abcdef"[(unsigned char)c & 0xF]);
+            }
+            result += "\";\n";
+            
+            std::string b64VarName = "b64_" + generateRandomString(6);
+            decryptCode = generateXorDecryptCode(b64VarName, encVarName, key);
+            decryptCode += varName + " = base64Decode(" + b64VarName + ");\n";
+            
+        } else {
+            // Default: simple hex encoding
+            result = "const std::string " + encVarName + " = \"";
+            for (char c : input) {
+                result += "\\x" + std::string(1, "0123456789abcdef"[(unsigned char)c >> 4]) + 
+                         std::string(1, "0123456789abcdef"[(unsigned char)c & 0xF]);
+            }
+            result += "\";\n";
+            decryptCode = "std::string " + varName + " = " + encVarName + ";\n";
+        }
+        
+        return result;
+    }
+    
+    // Base64 encoding/decoding helpers
+    std::string base64Encode(const std::string& input) {
+        const std::string b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        std::string result;
+        int val = 0, valb = -6;
+        for (unsigned char c : input) {
+            val = (val << 8) + c;
+            valb += 8;
+            while (valb >= 0) {
+                result.push_back(b64[(val >> valb) & 0x3F]);
+                valb -= 6;
+            }
+        }
+        if (valb > -6) result.push_back(b64[((val << 8) >> (valb + 8)) & 0x3F]);
+        while (result.size() % 4) result.push_back('=');
+        return result;
     }
     
     std::string generateStubTemplate(const std::string& stubType) {
