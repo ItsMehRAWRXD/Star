@@ -2,6 +2,7 @@
 #include "stealth_triple_encryptor.h"
 #include "encryptor_stub_generator.h"
 #include "xll_stub_generator.h"
+#include "unlimited_stub_generator.h"
 
 // AES S-box
 const uint8_t sbox[256] = {
@@ -477,6 +478,7 @@ void showMenu() {
     std::cout << "  4. Generate Stealth Payload Stub" << std::endl;
     std::cout << "  5. Generate Encryptor Stub" << std::endl;
     std::cout << "  6. Generate XLL Stealth Payload Stub" << std::endl;
+    std::cout << "  7. Generate Unlimited Runtime Encryptor Stub" << std::endl;
     std::cout << "  0. Exit" << std::endl;
     std::cout << "\nEnter your choice: ";
 }
@@ -632,6 +634,28 @@ int main() {
             std::cout << "XLL stealth stub generated: " << outputFile << std::endl;
             std::cout << "This stub can be compiled as an XLL add-in for Excel" << std::endl;
             std::cout << "Keys stored as decimal numbers in code" << std::endl;
+        }
+        else if (choice == "7") {
+            // Generate Unlimited Runtime Encryptor Stub
+            std::string outputFile = getOutputFile();
+            
+            UnlimitedStubGenerator generator;
+            std::string stub = generator.generateStub();
+            
+            std::ofstream out(outputFile);
+            out << stub;
+            out.close();
+            
+            std::cout << "Unlimited runtime encryptor stub generated: " << outputFile << std::endl;
+            std::cout << "Features:" << std::endl;
+            std::cout << "  - 4-layer encryption (AES + ChaCha20 + XOR + Additional)" << std::endl;
+            std::cout << "  - Extended 32-byte keys" << std::endl;
+            std::cout << "  - Variable XOR key length (32-64 bytes)" << std::endl;
+            std::cout << "  - Randomized encryption order" << std::endl;
+            std::cout << "  - Decimal key representation" << std::endl;
+            std::cout << "  - Unlimited file size support" << std::endl;
+            std::cout << "Usage: g++ -o encryptor.exe " << outputFile << std::endl;
+            std::cout << "Then: encryptor.exe input_file output_file" << std::endl;
         }
         else {
             std::cout << "Invalid choice. Please try again." << std::endl;
