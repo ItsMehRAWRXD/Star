@@ -1,247 +1,171 @@
-# Visual Studio 2022 Universal Native Encryptor
+# Visual Studio 2022 Universal PE Packer
 
-A high-performance, native C++ file encryption tool built with Visual Studio 2022. This encryptor supports both basic encryption (AES-128-CTR and ChaCha20) and advanced stealth triple-layer encryption with decimal key representation and stub generation capabilities.
+A professional-grade PE (Portable Executable) packer that creates self-decrypting executables with embedded encryption keys. Similar to commercial packers like Themida and VMProtect.
 
-## Features
+## 🚀 Features
 
-- **Pure Native Implementation**: No external libraries required
-- **Multiple Encryption Modes**: Basic (AES-128-CTR, ChaCha20) and Advanced (Triple-Layer Stealth)
-- **Stealth Capabilities**: Decimal key representation to avoid detection
-- **Stub Generation**: Creates self-contained executable stubs
-- **Dynamic Entropy**: Advanced entropy mixing for key generation
-- **Visual Studio 2022 Ready**: Complete project files included
-- **Cross-Platform Compatible**: Works on Windows x86 and x64
-- **High Performance**: Optimized for large file encryption
-- **Secure**: Uses cryptographically secure random key generation
+### **Encryption Modes:**
+- **Basic Encryption** - AES-128-CTR and ChaCha20 with headers
+- **Raw Binary Output** - Pure encrypted data without headers
+- **Stealth Triple Encryption** - 3-layer encryption (AES + ChaCha20 + XOR) with decimal key representation
+- **PE-Aware Encryption** - Self-decrypting executables with embedded keys
 
-## Requirements
+### **Security Features:**
+- **Triple-layer encryption** - Maximum protection against reverse engineering
+- **Embedded keys** - Self-contained operation, no external key files
+- **PE structure preservation** - Executables remain functional
+- **Stealth key storage** - Decimal representation for obfuscation
+- **Randomized encryption order** - Fisher-Yates shuffle for additional security
 
-- Visual Studio 2022 (Community, Professional, or Enterprise)
-- Windows 10 or later
-- C++17 support
+## 📋 Requirements
 
-## Building the Project
+- **Visual Studio 2022** (Community, Professional, or Enterprise)
+- **Windows SDK** (included with Visual Studio)
+- **C++17** or later
 
-### Method 1: Using Visual Studio 2022 IDE
+## 🛠️ Building
+
+### **Method 1: Visual Studio IDE**
 1. Open `vs2022_encryptor.sln` in Visual Studio 2022
-2. Select your desired configuration (Debug/Release) and platform (x86/x64)
+2. Select your target configuration (Debug/Release, x86/x64)
 3. Build the solution (Ctrl+Shift+B)
 
-### Method 2: Using Command Line
-```cmd
-# Navigate to the project directory
-cd VS2022Encryptor
-
+### **Method 2: Command Line**
+```batch
 # Build for x64 Release
-msbuild VS2022Encryptor.vcxproj /p:Configuration=Release /p:Platform=x64
+build.bat
 
-# Build for x86 Release
-msbuild VS2022Encryptor.vcxproj /p:Configuration=Release /p:Platform=Win32
+# Or manually:
+msbuild vs2022_encryptor.sln /p:Configuration=Release /p:Platform=x64
 ```
 
-## Usage
+## 🎯 Usage
 
-### Basic Encryption
-```cmd
-# Encrypt a file with AES (default)
-VS2022Encryptor.exe -b input_file.exe encrypted_file.bin
-
-# Encrypt a file with ChaCha20
-VS2022Encryptor.exe -b input_file.exe encrypted_file.bin chacha20
+### **Interactive Menu:**
+```
+VS2022Encryptor.exe
 ```
 
-### Stealth Triple Encryption
-```cmd
-# Encrypt a file with triple-layer stealth encryption
-VS2022Encryptor.exe -e payload.exe encrypted_payload.bin
+**Available Options:**
+1. **Basic Encryption (AES/ChaCha20)** - Standard encryption with algorithm headers
+2. **Basic Encryption - Raw Binary Output** - Pure encrypted data, no headers
+3. **Stealth Triple Encryption** - 3-layer encryption with decimal keys
+4. **PE-Aware Encryption** - Self-decrypting executables (like Themida/VMProtect)
 
-# Generate a stealth stub from a payload
-VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
-
-# Generate an encryptor stub (can encrypt files at runtime)
-VS2022Encryptor.exe -g encryptor_stub.cpp
+### **PE-Aware Encryption Example:**
+```
+Input: calc.exe
+Output: encrypted_calc.exe
+Result: Self-decrypting executable that runs normally
 ```
 
-### Command Line Options
-```
-Usage: VS2022Encryptor.exe <mode> [options]
+## 🔒 How It Works
 
-Modes:
-  -b    Basic encryption (AES-128-CTR or ChaCha20)
-  -e    Stealth triple encryption
-  -s    Generate stealth stub
+### **PE-Aware Encryption Process:**
+1. **Load PE file** - Parse DOS, NT, and section headers
+2. **Identify code sections** - Find sections with `IMAGE_SCN_CNT_CODE` flag
+3. **Apply triple encryption** - AES + ChaCha20 + XOR in randomized order
+4. **Embed keys** - Store encryption keys in new PE section
+5. **Preserve structure** - Maintain executable compatibility
 
-Basic Encryption:
-  VS2022Encryptor.exe -b <inputfile> <outputfile> [algorithm]
-  Algorithm: "aes" (default) or "chacha20"
+### **Runtime Decryption:**
+1. **Load self** - Executable reads its own encrypted code sections
+2. **Extract keys** - Retrieve embedded keys from PE section
+3. **Decrypt in memory** - Apply decryption layers in reverse order
+4. **Execute normally** - Run the decrypted program
 
-Stealth Encryption:
-  VS2022Encryptor.exe -e <input> <output>
-
-Stub Generation:
-  VS2022Encryptor.exe -s <payload> <stub.cpp>
-
-Encryptor Stub Generation:
-  VS2022Encryptor.exe -g <encryptor_stub.cpp>
-
-Examples:
-  VS2022Encryptor.exe -b file.exe encrypted_file.bin
-  VS2022Encryptor.exe -b file.exe encrypted_file.bin chacha20
-  VS2022Encryptor.exe -e payload.exe encrypted_payload.bin
-  VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
-  VS2022Encryptor.exe -g encryptor_stub.cpp
-```
-
-## Encryption Details
-
-### Basic Encryption
-
-#### AES-128-CTR Mode
-- **Key Size**: 128 bits (16 bytes)
-- **Nonce Size**: 128 bits (16 bytes)
-- **Mode**: Counter (CTR)
-- **Algorithm ID**: 0x01
-
-#### ChaCha20
-- **Key Size**: 256 bits (32 bytes)
-- **Nonce Size**: 96 bits (12 bytes)
-- **Rounds**: 20
-- **Algorithm ID**: 0x02
-
-#### Basic Output Format
-The encrypted file contains:
-1. **Algorithm Identifier** (1 byte): 0x01 for AES, 0x02 for ChaCha20
-2. **Nonce** (16 bytes for AES, 12 bytes for ChaCha20)
-3. **Encrypted Data** (variable length)
-
-### Stealth Triple Encryption
-
-#### Triple-Layer Protection
-- **Layer 1**: AES-128 (simplified)
-- **Layer 2**: ChaCha20 (simplified)
-- **Layer 3**: XOR with variable-length key
-- **Randomized Order**: Encryption layers applied in random sequence
-
-#### Key Features
-- **Decimal Representation**: Keys stored as large decimal numbers (less detectable than hex)
-- **Dynamic Entropy**: Uses time, memory, thread, and counter components
-- **Variable XOR Key**: 16-32 byte random length
-- **Obfuscated Variables**: Random variable names in generated stubs
-
-#### Stealth Output Format
-- **Encrypted Data**: Triple-layer encrypted payload
-- **Key File**: Separate `.keys` file with decimal representations
-- **Stub Generation**: Self-contained C++ source with embedded decryption
-- **Encryptor Stub**: Self-contained C++ source that can encrypt files at runtime
-
-## Security Features
-
-- **Random Key Generation**: Each encryption uses a new random key
-- **Random Nonce**: Unique nonce for each encryption
-- **Dynamic Entropy Mixing**: Advanced entropy collection from multiple sources
-- **Triple-Layer Protection**: Multiple encryption layers with randomized order
-- **Decimal Key Representation**: Less detectable than traditional hex encoding
-- **No Key Storage**: Keys are not stored with the encrypted data (basic mode)
-- **Cryptographic Strength**: Uses industry-standard algorithms
-- **Stealth Capabilities**: Designed to avoid detection by security tools
-
-## Performance
-
-- **AES-128-CTR**: Optimized for speed with native implementation
-- **ChaCha20**: High-performance stream cipher
-- **Triple-Layer**: Efficient multi-layer encryption
-- **Memory Efficient**: Processes files in 4KB chunks
-- **No External Dependencies**: Reduces attack surface
-- **Stub Generation**: Fast compilation-ready C++ output
-- **Encryptor Stubs**: Runtime file encryption capabilities
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 VS2022Encryptor/
-├── VS2022Encryptor.vcxproj           # Visual Studio project file
-├── main.cpp                          # Main source file with all encryption modes
-├── encryptor.h                      # Header file for basic encryption functions
-├── stealth_triple_encryptor.h       # Header file for stealth encryption
-├── stealth_triple_encryptor.cpp     # Implementation of stealth encryption
-├── encryptor_stub_generator.h       # Header file for encryptor stub generation
-├── encryptor_stub_generator.cpp     # Implementation of encryptor stub generation
-├── build.bat                        # Batch file for easy building
-├── .gitignore                       # Git ignore file
-└── README.md                        # This file
-
-vs2022_encryptor.sln                 # Visual Studio solution file
+├── vs2022_encryptor.sln          # Visual Studio solution
+├── VS2022Encryptor/
+│   ├── VS2022Encryptor.vcxproj   # Project file
+│   ├── main.cpp                  # Main application and menu
+│   ├── encryptor.h               # Basic AES/ChaCha20 encryption
+│   ├── stealth_triple_encryptor.h/.cpp  # Triple-layer encryption
+│   ├── pe_encryptor.h/.cpp       # PE-aware encryption
+│   ├── build.bat                 # Build script
+│   ├── README.md                 # This file
+│   └── .gitignore               # Git ignore rules
+└── test_example.txt             # Test file for encryption
 ```
 
-## Workflow Examples
+## 🔧 Technical Details
 
-### Complete Encryption Workflow
-```cmd
-# Step 1: Generate an encryptor stub
-VS2022Encryptor.exe -g encryptor_stub.cpp
+### **Encryption Algorithms:**
+- **AES-128-CTR** - Advanced Encryption Standard in Counter Mode
+- **ChaCha20** - High-speed stream cipher
+- **XOR** - Simple byte-wise XOR with variable-length keys
 
-# Step 2: Compile the encryptor stub
-g++ -o encryptor_stub.exe encryptor_stub.cpp
+### **Key Management:**
+- **32-byte AES keys** - Extended key length for maximum security
+- **32-byte ChaCha20 keys** - Standard ChaCha20 key size
+- **Variable XOR keys** - 32-64 bytes for additional entropy
+- **Decimal representation** - Keys stored as large decimal strings
 
-# Step 3: Use the stub to encrypt any file
-encryptor_stub.exe file_to_encrypt.exe encrypted_file.bin
+### **PE Section Management:**
+- **New .keys section** - Dedicated section for key storage
+- **Header updates** - Automatic PE header modification
+- **Size calculations** - Proper virtual and raw size management
 
-# Result: encrypted_file.bin and encrypted_file.bin.keys are created
+## 🛡️ Security Features
+
+### **Anti-Reverse Engineering:**
+- **Code section encryption** - Protects program logic
+- **Stealth key storage** - Keys hidden in decimal format
+- **Randomized encryption order** - Prevents pattern analysis
+- **PE structure preservation** - Maintains file integrity
+
+### **Professional Quality:**
+- **Self-contained operation** - No external dependencies
+- **Universal compatibility** - Works with any Windows executable
+- **Commercial-grade protection** - Similar to Themida/VMProtect
+
+## 📝 Examples
+
+### **Encrypting an Executable:**
+```
+VS2022Encryptor.exe
+Select: 4. PE-Aware Encryption
+Input: myapp.exe
+Output: protected_myapp.exe
 ```
 
-### Stealth Payload Workflow
-```cmd
-# Step 1: Generate a stealth stub from a payload
-VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
+**Result:** `protected_myapp.exe` - Self-decrypting executable that runs normally but has encrypted code sections.
 
-# Step 2: Compile the stealth stub
-g++ -o stealth_stub.exe stealth_stub.cpp
-
-# Step 3: Run the stealth stub (executes the payload)
-stealth_stub.exe
+### **File Comparison:**
+```
+Original: myapp.exe (1.2 MB)
+Encrypted: protected_myapp.exe (1.2 MB + key section)
 ```
 
-## Building for Different Platforms
+## ⚠️ Important Notes
 
-### x86 (32-bit)
-- Platform: Win32
-- Target: 32-bit Windows applications
-- Use: `/p:Platform=Win32`
+- **Backup original files** - Always keep unencrypted copies
+- **Test thoroughly** - Verify encrypted executables work correctly
+- **Legal use only** - Intended for software protection, not malicious purposes
+- **Windows only** - PE format is Windows-specific
 
-### x64 (64-bit)
-- Platform: x64
-- Target: 64-bit Windows applications
-- Use: `/p:Platform=x64`
+## 🤝 Contributing
 
-## Troubleshooting
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-### Common Issues
+## 📄 License
 
-1. **"Failed to open input file"**
-   - Check if the input file exists
-   - Verify file path is correct
-   - Ensure you have read permissions
+This project is for educational and legitimate software protection purposes only. Users are responsible for ensuring compliance with applicable laws and regulations.
 
-2. **"Failed to open output file"**
-   - Check if you have write permissions to the output directory
-   - Ensure the output directory exists
-   - Verify disk space is available
+## 🎯 Use Cases
 
-3. **Build Errors**
-   - Ensure Visual Studio 2022 is installed
-   - Check that C++17 support is enabled
-   - Verify Windows SDK is installed
+- **Software protection** - Protect commercial applications
+- **License management** - Add protection layers to licensed software
+- **Anti-reverse engineering** - Prevent code analysis
+- **Professional deployment** - Secure software distribution
 
-## License
+---
 
-This project is provided as-is for educational and development purposes.
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## Version History
-
-- **v1.0**: Initial release with AES-128-CTR and ChaCha20 support
-- Built with Visual Studio 2022 v143 toolset
-- Supports Windows 10+ platforms
+**Built with ❤️ using Visual Studio 2022 and C++**
