@@ -1,0 +1,19 @@
+This is a test file for the VS2022 Universal PE Packer.
+
+The packer supports multiple encryption modes:
+1. Basic Encryption (AES/ChaCha20)
+2. Stealth Triple Encryption
+3. PE-Aware Encryption
+
+This file can be used to test the basic encryption functionality.
+The PE-Aware encryption is specifically designed for Windows executables (.exe, .dll files).
+
+Features:
+- AES-128-CTR encryption
+- ChaCha20 stream cipher
+- Triple-layer encryption with randomized order
+- PE structure preservation
+- Self-decrypting executables
+- Embedded keys for self-contained operation
+
+Test this file with different encryption modes to verify functionality.
