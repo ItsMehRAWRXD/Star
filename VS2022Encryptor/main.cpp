@@ -381,7 +381,7 @@ void generateChaCha20Key(uint8_t* key) {
 }
 
 // Basic encryption function
-bool basicEncrypt(const std::string& inputFile, const std::string& outputFile, const std::string& algorithm) {
+bool basicEncrypt(const std::string& inputFile, const std::string& outputFile, const std::string& algorithm, bool rawOutput = false) {
     bool useChaCha = (algorithm == "chacha20");
 
     std::ifstream fin(inputFile, std::ios::binary);
@@ -406,12 +406,14 @@ bool basicEncrypt(const std::string& inputFile, const std::string& outputFile, c
         
         std::cout << "Generated random ChaCha20 key and nonce for encryption." << std::endl;
         
-        // Write algorithm identifier (1 byte: 0x02 for ChaCha20)
-        uint8_t algId = 0x02;
-        fout.write(reinterpret_cast<char*>(&algId), 1);
-        
-        // Write nonce to output file
-        fout.write(reinterpret_cast<char*>(chachaNonce), 12);
+        if (!rawOutput) {
+            // Write algorithm identifier (1 byte: 0x02 for ChaCha20)
+            uint8_t algId = 0x02;
+            fout.write(reinterpret_cast<char*>(&algId), 1);
+            
+            // Write nonce to output file
+            fout.write(reinterpret_cast<char*>(chachaNonce), 12);
+        }
 
         // Process file in chunks
         std::vector<uint8_t> buffer(4096);
@@ -438,12 +440,14 @@ bool basicEncrypt(const std::string& inputFile, const std::string& outputFile, c
         
         std::cout << "Generated random key and nonce for AES encryption." << std::endl;
         
-        // Write algorithm identifier (1 byte: 0x01 for AES)
-        uint8_t algId = 0x01;
-        fout.write(reinterpret_cast<char*>(&algId), 1);
-        
-        // Write nonce to output file
-        fout.write(reinterpret_cast<char*>(nonce), 16);
+        if (!rawOutput) {
+            // Write algorithm identifier (1 byte: 0x01 for AES)
+            uint8_t algId = 0x01;
+            fout.write(reinterpret_cast<char*>(&algId), 1);
+            
+            // Write nonce to output file
+            fout.write(reinterpret_cast<char*>(nonce), 16);
+        }
 
         // Process file in chunks
         std::vector<uint8_t> buffer(4096);
@@ -470,6 +474,8 @@ int main(int argc, char* argv[]) {
         std::cout << "  Basic encryption:" << std::endl;
         std::cout << "    " << argv[0] << " -b <inputfile> <outputfile> [algorithm]" << std::endl;
         std::cout << "    Algorithm: aes (default) or chacha20" << std::endl;
+        std::cout << "    " << argv[0] << " -r <inputfile> <outputfile> [algorithm]" << std::endl;
+        std::cout << "    Raw binary output (no headers)" << std::endl;
         std::cout << std::endl;
         std::cout << "  Stealth triple encryption:" << std::endl;
         std::cout << "    " << argv[0] << " -e <input> <output>" << std::endl;
@@ -479,6 +485,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Examples:" << std::endl;
         std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin" << std::endl;
         std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin chacha20" << std::endl;
+        std::cout << "  " << argv[0] << " -r file.exe raw_encrypted.bin" << std::endl;
         std::cout << "  " << argv[0] << " -e payload.exe encrypted_payload.bin" << std::endl;
         std::cout << "  " << argv[0] << " -s payload.exe stealth_stub.cpp" << std::endl;
         std::cout << "  " << argv[0] << " -g encryptor_stub.cpp" << std::endl;
@@ -494,7 +501,8 @@ int main(int argc, char* argv[]) {
 
     std::string mode = argv[1];
     
-    if (mode == "-b") {
+    if (mode == "-b" || mode == "-r") {
+        bool rawOutput = (mode == "-r");
         // Basic encryption
         if (argc < 4 || argc > 5) {
             std::cerr << "Basic encryption requires: -b <inputfile> <outputfile> [algorithm]" << std::endl;
@@ -502,7 +510,7 @@ int main(int argc, char* argv[]) {
         }
         
         std::string algorithm = (argc == 5) ? argv[4] : "aes";
-        if (!basicEncrypt(argv[2], argv[3], algorithm)) {
+        if (!basicEncrypt(argv[2], argv[3], algorithm, rawOutput)) {
             return 1;
         }
         
