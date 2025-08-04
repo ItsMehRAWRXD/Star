@@ -10,8 +10,11 @@ NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui native_stub_gene
 # Legacy targets (require OpenSSL)
 LEGACY_TARGETS = encryptor xll_dropper packer
 
+# Advanced targets (require zlib)
+ADVANCED_TARGETS = advanced_packer
+
 # All targets
-ALL_TARGETS = $(NATIVE_TARGETS) $(LEGACY_TARGETS)
+ALL_TARGETS = $(NATIVE_TARGETS) $(LEGACY_TARGETS) $(ADVANCED_TARGETS)
 
 # Default target (builds native implementation)
 all: native
@@ -53,6 +56,11 @@ xll_dropper: xll_dropper.cpp
 packer: packer.cpp
 	@echo "Building legacy packer..."
 	$(CXX) $(CXXFLAGS) -o packer packer.cpp
+
+# Advanced packer (compression + encryption)
+advanced_packer: advanced_packer.cpp
+	@echo "Building advanced packer (requires zlib)..."
+	$(CXX) $(CXXFLAGS) -o advanced_packer advanced_packer.cpp -lz
 
 # Test targets
 test_native: native
