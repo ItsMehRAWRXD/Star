@@ -1068,10 +1068,12 @@ public:
         std::cout << "• Cross-platform C++ code" << std::endl;
         std::cout << "• TRUE runtime-only: Reads file at execution time" << std::endl;
         std::cout << "• Original file UNTOUCHED" << std::endl;
-        std::cout << "• In-memory decryption only" << std::endl;
+        std::cout << "• In-memory decryption, safe temp file execution" << std::endl;
         std::cout << "• ChaCha20-based stream cipher" << std::endl;
         std::cout << "• Polymorphic variable/function names" << std::endl;
         std::cout << "• Decimal key obfuscation" << std::endl;
+        std::cout << "• Proper PE execution via CreateProcess/system" << std::endl;
+        std::cout << "• Automatic temp file cleanup" << std::endl;
         
         return true;
     }
