@@ -273,29 +273,38 @@ bool PEEncryptor::encryptPE(const std::string& inputFile, const std::string& out
         return false;
     }
     
-    // Write encrypted PE file
+    // Embed keys into the PE file
+    // Find a suitable location to embed keys (end of file)
+    size_t keyDataSize = 32 + 32 + keys.xorKeyLen + 3 + 4; // AES + ChaCha20 + XOR + order + size
+    std::vector<uint8_t> keyData;
+    
+    // Add keys
+    keyData.insert(keyData.end(), keys.aesKey, keys.aesKey + 32);
+    keyData.insert(keyData.end(), keys.chachaKey, keys.chachaKey + 32);
+    keyData.insert(keyData.end(), keys.xorKey, keys.xorKey + keys.xorKeyLen);
+    keyData.insert(keyData.end(), keys.encryptionOrder, keys.encryptionOrder + 3);
+    
+    // Add key data size at the end
+    uint32_t keySize = static_cast<uint32_t>(keyData.size());
+    keyData.insert(keyData.end(), reinterpret_cast<uint8_t*>(&keySize), 
+                   reinterpret_cast<uint8_t*>(&keySize) + 4);
+    
+    // Append key data to file
+    peInfo.fileData.insert(peInfo.fileData.end(), keyData.begin(), keyData.end());
+    
+    // Write encrypted PE file with embedded keys
     std::ofstream outFile(outputFile, std::ios::binary);
     if (!outFile) {
         std::cout << "Failed to create output file: " << outputFile << std::endl;
         return false;
     }
     
-    outFile.write(reinterpret_cast<const char*>(peInfo.fileData.data()), peInfo.fileSize);
+    outFile.write(reinterpret_cast<const char*>(peInfo.fileData.data()), peInfo.fileData.size());
     outFile.close();
     
-    // Save keys separately
-    std::string keyFile = outputFile + ".keys";
-    std::ofstream keyOut(keyFile);
-    keyOut << "AES Key: " << bytesToBigDecimal(keys.aesKey, 32) << std::endl;
-    keyOut << "ChaCha20 Key: " << bytesToBigDecimal(keys.chachaKey, 32) << std::endl;
-    keyOut << "XOR Key: " << bytesToBigDecimal(keys.xorKey, keys.xorKeyLen) << std::endl;
-    keyOut << "Encryption Order: " << keys.encryptionOrder[0] << "," 
-           << keys.encryptionOrder[1] << "," << keys.encryptionOrder[2] << std::endl;
-    keyOut.close();
-    
     std::cout << "PE file encrypted successfully: " << outputFile << std::endl;
-    std::cout << "Keys saved to: " << keyFile << std::endl;
-    std::cout << "File remains executable but code sections are encrypted" << std::endl;
+    std::cout << "Keys embedded directly in file - no separate key file needed!" << std::endl;
+    std::cout << "File remains executable and self-contained" << std::endl;
     
     return true;
 }
