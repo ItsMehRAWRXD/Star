@@ -797,9 +797,13 @@ public:
         stub += "#include <vector>\n";
         stub += "#include <fstream>\n";
         stub += "#include <cstring>\n";
+        stub += "#include <cstdio>\n";
         stub += "#ifdef _WIN32\n";
         stub += "#include <windows.h>\n";
         stub += "#include <process.h>\n";
+        stub += "#else\n";
+        stub += "#include <unistd.h>\n";
+        stub += "#include <sys/stat.h>\n";
         stub += "#endif\n\n";
         
         // Embed encrypted payload directly in the executable
@@ -807,7 +811,9 @@ public:
         stub += "unsigned char " + varPrefix + "[] = {\n";
         for (size_t i = 0; i < fileData.size(); i++) {
             if (i % 16 == 0) stub += "    ";
-            stub += "0x" + std::to_string(fileData[i] < 16 ? 0 : fileData[i] / 16) + std::to_string(fileData[i] % 16);
+            char hexBuf[8];
+            sprintf(hexBuf, "0x%02X", fileData[i]);
+            stub += std::string(hexBuf);
             if (i < fileData.size() - 1) stub += ",";
             if (i % 16 == 15) stub += "\n";
         }
