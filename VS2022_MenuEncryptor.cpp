@@ -231,8 +231,8 @@ public:
         std::cout << "  3. Pack File (Triple Encryption) - Maximum Security" << std::endl;
         std::cout << "  4. Basic File Encryption (Save to disk)" << std::endl;
         std::cout << "  5. Advanced: Generate Custom MASM Stub" << std::endl;
-        std::cout << "  6. Pack File from URL (AES) - Download & Encrypt" << std::endl;
-        std::cout << "  7. Pack File from URL (Triple) - Download & Maximum Security" << std::endl;
+        std::cout << "  6. URL Crypto Service (AES) - Download, Encrypt & Re-upload" << std::endl;
+        std::cout << "  7. URL Crypto Service (Triple) - Download, Encrypt & Re-upload" << std::endl;
         std::cout << "  0. Exit" << std::endl;
         std::cout << "\nEnter your choice: ";
     }
