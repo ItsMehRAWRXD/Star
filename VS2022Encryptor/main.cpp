@@ -1,4 +1,5 @@
 #include "encryptor.h"
+#include "stealth_triple_encryptor.h"
 
 // AES S-box
 const uint8_t sbox[256] = {
@@ -378,33 +379,20 @@ void generateChaCha20Key(uint8_t* key) {
     }
 }
 
-int main(int argc, char* argv[]) {
-    if (argc < 3 || argc > 4) {
-        std::cout << "=== Visual Studio 2022 Universal Native Encryptor ===" << std::endl;
-        std::cout << "Usage: " << argv[0] << " <inputfile> <outputfile> [algorithm]" << std::endl;
-        std::cout << "Algorithm: aes (default) or chacha20" << std::endl;
-        std::cout << "Examples:" << std::endl;
-        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin" << std::endl;
-        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin aes" << std::endl;
-        std::cout << "  " << argv[0] << " file.exe encrypted_file.bin chacha20" << std::endl;
-        std::cout << "Encrypts any file with random AES-128-CTR or ChaCha20 keys." << std::endl;
-        std::cout << "Built with Visual Studio 2022 - No external dependencies!" << std::endl;
-        return 1;
-    }
-
-    std::string algorithm = (argc == 4) ? argv[3] : "aes";
+// Basic encryption function
+bool basicEncrypt(const std::string& inputFile, const std::string& outputFile, const std::string& algorithm) {
     bool useChaCha = (algorithm == "chacha20");
 
-    std::ifstream fin(argv[1], std::ios::binary);
+    std::ifstream fin(inputFile, std::ios::binary);
     if (!fin) {
-        std::cerr << "Failed to open input file: " << argv[1] << std::endl;
-        return 1;
+        std::cerr << "Failed to open input file: " << inputFile << std::endl;
+        return false;
     }
 
-    std::ofstream fout(argv[2], std::ios::binary);
+    std::ofstream fout(outputFile, std::ios::binary);
     if (!fout) {
-        std::cerr << "Failed to open output file: " << argv[2] << std::endl;
-        return 1;
+        std::cerr << "Failed to open output file: " << outputFile << std::endl;
+        return false;
     }
 
     if (useChaCha) {
@@ -469,6 +457,104 @@ int main(int argc, char* argv[]) {
         std::cout << "File encrypted successfully with native AES-128-CTR." << std::endl;
     }
     
-    std::cout << "Output saved to: " << argv[2] << std::endl;
+    std::cout << "Output saved to: " << outputFile << std::endl;
+    return true;
+}
+
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cout << "=== Visual Studio 2022 Universal Encryptor ===" << std::endl;
+        std::cout << "Advanced encryption tool with multiple algorithms and stealth features\n" << std::endl;
+        std::cout << "Usage:" << std::endl;
+        std::cout << "  Basic encryption:" << std::endl;
+        std::cout << "    " << argv[0] << " -b <inputfile> <outputfile> [algorithm]" << std::endl;
+        std::cout << "    Algorithm: aes (default) or chacha20" << std::endl;
+        std::cout << std::endl;
+        std::cout << "  Stealth triple encryption:" << std::endl;
+        std::cout << "    " << argv[0] << " -e <input> <output>" << std::endl;
+        std::cout << "    " << argv[0] << " -s <payload> <stub.cpp>" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Examples:" << std::endl;
+        std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin" << std::endl;
+        std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin chacha20" << std::endl;
+        std::cout << "  " << argv[0] << " -e payload.exe encrypted_payload.bin" << std::endl;
+        std::cout << "  " << argv[0] << " -s payload.exe stealth_stub.cpp" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Features:" << std::endl;
+        std::cout << "  - Basic: AES-128-CTR and ChaCha20 encryption" << std::endl;
+        std::cout << "  - Stealth: Triple-layer encryption with decimal key representation" << std::endl;
+        std::cout << "  - Stub generation: Creates self-contained executable stubs" << std::endl;
+        std::cout << "  - Built with Visual Studio 2022 - No external dependencies!" << std::endl;
+        return 1;
+    }
+
+    std::string mode = argv[1];
+    
+    if (mode == "-b") {
+        // Basic encryption
+        if (argc < 4 || argc > 5) {
+            std::cerr << "Basic encryption requires: -b <inputfile> <outputfile> [algorithm]" << std::endl;
+            return 1;
+        }
+        
+        std::string algorithm = (argc == 5) ? argv[4] : "aes";
+        if (!basicEncrypt(argv[2], argv[3], algorithm)) {
+            return 1;
+        }
+        
+    } else if (mode == "-e") {
+        // Stealth triple encryption
+        if (argc != 4) {
+            std::cerr << "Stealth encryption requires: -e <input> <output>" << std::endl;
+            return 1;
+        }
+        
+        StealthTripleEncryption ste;
+        if (ste.encryptFile(argv[2], argv[3])) {
+            std::cout << "File encrypted with triple layer encryption" << std::endl;
+            std::cout << "Keys saved as decimal numbers in: " << argv[3] << ".keys" << std::endl;
+        } else {
+            std::cerr << "Stealth encryption failed!" << std::endl;
+            return 1;
+        }
+        
+    } else if (mode == "-s") {
+        // Generate stealth stub
+        if (argc != 4) {
+            std::cerr << "Stub generation requires: -s <payload> <stub.cpp>" << std::endl;
+            return 1;
+        }
+        
+        std::ifstream in(argv[2], std::ios::binary);
+        if (!in) {
+            std::cerr << "Failed to open payload file: " << argv[2] << std::endl;
+            return 1;
+        }
+        
+        in.seekg(0, std::ios::end);
+        size_t size = in.tellg();
+        in.seekg(0, std::ios::beg);
+        
+        std::vector<uint8_t> payload(size);
+        in.read(reinterpret_cast<char*>(payload.data()), size);
+        in.close();
+        
+        StealthTripleEncryption ste;
+        auto keys = ste.generateKeys();
+        std::string stub = ste.generateStealthStub(payload, keys);
+        
+        std::ofstream out(argv[3]);
+        out << stub;
+        out.close();
+        
+        std::cout << "Stealth stub generated: " << argv[3] << std::endl;
+        std::cout << "Keys stored as decimal numbers in code" << std::endl;
+        
+    } else {
+        std::cerr << "Unknown mode: " << mode << std::endl;
+        std::cerr << "Use -b for basic encryption, -e for stealth encryption, or -s for stub generation" << std::endl;
+        return 1;
+    }
+    
     return 0;
 }
