@@ -492,7 +492,7 @@ std::string getInputFile() {
 
 std::string getOutputFile() {
     std::string filename;
-    std::cout << "Enter output file path: ";
+    std::cout << "Enter output file path (e.g., encrypted_file.bin or encrypted_file.exe): ";
     std::getline(std::cin, filename);
     return filename;
 }
@@ -656,6 +656,9 @@ int main() {
             std::cout << "  - Unlimited file size support" << std::endl;
             std::cout << "Usage: g++ -o encryptor.exe " << outputFile << std::endl;
             std::cout << "Then: encryptor.exe input_file output_file" << std::endl;
+            std::cout << "Examples:" << std::endl;
+            std::cout << "  encryptor.exe calc.exe encrypted_calc.bin" << std::endl;
+            std::cout << "  encryptor.exe notepad.exe encrypted_notepad.exe" << std::endl;
         }
         else {
             std::cout << "Invalid choice. Please try again." << std::endl;

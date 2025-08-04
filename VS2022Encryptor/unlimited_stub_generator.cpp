@@ -359,7 +359,10 @@ void encryptFile(const std::string& inputFile, const std::string& outputFile) {
     stub << "int main(int argc, char* argv[]) {\n";
     stub << "    if (argc != 3) {\n";
     stub << "        std::cout << \"Usage: \" << argv[0] << \" <input_file> <output_file>\" << std::endl;\n";
-    stub << "        std::cout << \"Example: \" << argv[0] << \" calc.exe encrypted_calc.bin\" << std::endl;\n";
+    stub << "        std::cout << \"Examples:\" << std::endl;\n";
+    stub << "        std::cout << \"  \" << argv[0] << \" calc.exe encrypted_calc.bin\" << std::endl;\n";
+    stub << "        std::cout << \"  \" << argv[0] << \" notepad.exe encrypted_notepad.exe\" << std::endl;\n";
+    stub << "        std::cout << \"  \" << argv[0] << \" any_file.exe encrypted_file.exe\" << std::endl;\n";
     stub << "        return 1;\n";
     stub << "    }\n\n";
     
