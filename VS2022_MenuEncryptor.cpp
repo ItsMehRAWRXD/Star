@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <filesystem>
 #include <cstring>
+#include <thread>
 
 #ifdef _WIN32
 #include <windows.h>
