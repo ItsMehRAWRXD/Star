@@ -229,9 +229,10 @@ public:
         std::cout << "  1. Basic Encryption (AES/ChaCha20)" << std::endl;
         std::cout << "  2. Basic Encryption - Raw Binary Output" << std::endl;
         std::cout << "  3. Stealth Triple Encryption" << std::endl;
-        std::cout << "  4. Generate Stealth Payload Stub" << std::endl;
-        std::cout << "  5. Generate Encryptor Stub" << std::endl;
-        std::cout << "  6. Generate XLL Stealth Payload Stub" << std::endl;
+        std::cout << "  4. Runtime-Only Encryption (No Disk Save)" << std::endl;
+        std::cout << "  5. Generate Stealth Payload Stub" << std::endl;
+        std::cout << "  6. Generate Encryptor Stub" << std::endl;
+        std::cout << "  7. Generate XLL Stealth Payload Stub" << std::endl;
         std::cout << "  0. Exit" << std::endl;
         std::cout << "\nEnter your choice: ";
     }
@@ -398,6 +399,138 @@ public:
         std::cout << "Stealth triple encryption completed successfully!" << std::endl;
         std::cout << "Output: " << outputFile << std::endl;
         std::cout << "Keys saved: " << keyFile << " (decimal format)" << std::endl;
+        
+        return true;
+    }
+
+    bool runtimeOnlyEncryption() {
+        std::string inputFile;
+        int algorithm;
+        
+        std::cout << "=== Runtime-Only Encryption (No Disk Save) ===" << std::endl;
+        std::cout << "File will be encrypted in memory only - no encrypted file saved to disk!\n" << std::endl;
+        
+        std::cout << "Enter input file path (e.g., C:\\Windows\\System32\\calc.exe): ";
+        std::getline(std::cin, inputFile);
+        
+        std::cout << "Select algorithm:" << std::endl;
+        std::cout << "  1. AES-128-CTR (fast)" << std::endl;
+        std::cout << "  2. ChaCha20 (secure)" << std::endl;
+        std::cout << "  3. Triple Encryption (maximum security)" << std::endl;
+        std::cout << "Enter choice (1-3): ";
+        std::cin >> algorithm;
+        std::cin.ignore();
+        
+        // Read input file
+        std::ifstream inFile(inputFile, std::ios::binary);
+        if (!inFile) {
+            std::cout << "Error: Cannot open input file!" << std::endl;
+            return false;
+        }
+        
+        std::vector<uint8_t> originalData((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+        inFile.close();
+        
+        if (originalData.empty()) {
+            std::cout << "Error: Input file is empty!" << std::endl;
+            return false;
+        }
+        
+        // Make a copy for encryption (keep original intact)
+        std::vector<uint8_t> encryptedData = originalData;
+        
+        // Generate keys
+        TripleKey keys = generateKeys();
+        
+        std::cout << "\nOriginal file size: " << originalData.size() << " bytes" << std::endl;
+        std::cout << "Encrypting in memory..." << std::endl;
+        
+        // Apply encryption based on choice
+        switch (algorithm) {
+            case 1: // AES
+                aesStreamCrypt(encryptedData, keys.aes_key);
+                std::cout << "✓ AES encryption applied" << std::endl;
+                break;
+                
+            case 2: // ChaCha20
+                chacha20Crypt(encryptedData, keys.chacha_key.data(), keys.chacha_nonce.data());
+                std::cout << "✓ ChaCha20 encryption applied" << std::endl;
+                break;
+                
+            case 3: // Triple encryption
+                {
+                    std::vector<int> order;
+                    switch (keys.encryption_order) {
+                        case 0: order = {0, 1, 2}; break; // ChaCha20, AES, XOR
+                        case 1: order = {0, 2, 1}; break; // ChaCha20, XOR, AES
+                        case 2: order = {1, 0, 2}; break; // AES, ChaCha20, XOR
+                        case 3: order = {1, 2, 0}; break; // AES, XOR, ChaCha20
+                        case 4: order = {2, 0, 1}; break; // XOR, ChaCha20, AES
+                        case 5: order = {2, 1, 0}; break; // XOR, AES, ChaCha20
+                    }
+                    
+                    for (int method : order) {
+                        switch (method) {
+                            case 0: chacha20Crypt(encryptedData, keys.chacha_key.data(), keys.chacha_nonce.data()); break;
+                            case 1: aesStreamCrypt(encryptedData, keys.aes_key); break;
+                            case 2: xorCrypt(encryptedData, keys.xor_key); break;
+                        }
+                    }
+                    std::cout << "✓ Triple encryption applied (order: " << keys.encryption_order << ")" << std::endl;
+                }
+                break;
+                
+            default:
+                std::cout << "Invalid algorithm choice!" << std::endl;
+                return false;
+        }
+        
+        // Show encryption results (in memory only)
+        std::cout << "\n=== Runtime Encryption Complete ===" << std::endl;
+        std::cout << "✓ File encrypted successfully in memory" << std::endl;
+        std::cout << "✓ Original file size: " << originalData.size() << " bytes" << std::endl;
+        std::cout << "✓ Encrypted size: " << encryptedData.size() << " bytes" << std::endl;
+        std::cout << "✓ Memory locations:" << std::endl;
+        std::cout << "  - Original data: 0x" << std::hex << (uintptr_t)originalData.data() << std::endl;
+        std::cout << "  - Encrypted data: 0x" << std::hex << (uintptr_t)encryptedData.data() << std::dec << std::endl;
+        
+        // Verify encryption worked by comparing first few bytes
+        bool different = false;
+        for (size_t i = 0; i < std::min(originalData.size(), (size_t)16); i++) {
+            if (originalData[i] != encryptedData[i]) {
+                different = true;
+                break;
+            }
+        }
+        
+        if (different) {
+            std::cout << "✓ Encryption verified - data has been transformed" << std::endl;
+        } else {
+            std::cout << "⚠ Warning: Encrypted data appears identical to original" << std::endl;
+        }
+        
+        std::cout << "\n=== Runtime Status ===" << std::endl;
+        std::cout << "• Original file: UNCHANGED on disk" << std::endl;
+        std::cout << "• Encrypted data: EXISTS ONLY IN MEMORY" << std::endl;
+        std::cout << "• Keys: GENERATED IN MEMORY (not saved)" << std::endl;
+        std::cout << "• When program exits: ALL ENCRYPTED DATA DESTROYED" << std::endl;
+        
+        // Optional: Show first few bytes comparison
+        std::cout << "\nFirst 8 bytes comparison:" << std::endl;
+        std::cout << "Original:  ";
+        for (size_t i = 0; i < std::min(originalData.size(), (size_t)8); i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)originalData[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Encrypted: ";
+        for (size_t i = 0; i < std::min(encryptedData.size(), (size_t)8); i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)encryptedData[i] << " ";
+        }
+        std::cout << std::dec << std::endl;
+        
+        // Data automatically destroyed when function exits (vectors go out of scope)
+        std::cout << "\nPress Enter to destroy encrypted data and return to menu...";
+        std::cin.get();
         
         return true;
     }
