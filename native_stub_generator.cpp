@@ -8,10 +8,34 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <chrono>
 
 class NativeStubGenerator {
 private:
     std::mt19937 rng;
+    
+    // Enhanced RNG initialization with multiple entropy sources
+    void initializeRNG() {
+        std::random_device rd;
+        auto now = std::chrono::high_resolution_clock::now();
+        auto duration = now.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+        
+        std::seed_seq seed{
+            rd(), rd(), rd(), rd(),
+            static_cast<unsigned int>(std::time(nullptr)),
+            static_cast<unsigned int>(std::clock()),
+            static_cast<unsigned int>(millis),
+            static_cast<unsigned int>(millis >> 32)
+        };
+        
+        rng.seed(seed);
+    }
+    
+    // Reseed RNG for maximum uniqueness
+    void reseedRNG() {
+        initializeRNG();
+    }
     
     // AES-128-CTR implementation (same as native_encryptor)
     static const uint8_t sbox[256];
