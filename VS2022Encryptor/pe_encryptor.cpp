@@ -273,31 +273,57 @@ bool PEEncryptor::encryptPE(const std::string& inputFile, const std::string& out
         return false;
     }
     
-    // Write encrypted PE file (preserve original structure)
+    // Embed keys safely in PE file (add new section)
+    // Create a new section for key storage
+    IMAGE_SECTION_HEADER keySection;
+    memset(&keySection, 0, sizeof(IMAGE_SECTION_HEADER));
+    strcpy_s(reinterpret_cast<char*>(keySection.Name), 8, ".keys");
+    
+    // Calculate new section position
+    size_t newSectionOffset = peInfo.fileSize;
+    keySection.PointerToRawData = static_cast<DWORD>(newSectionOffset);
+    keySection.SizeOfRawData = 32 + 32 + keys.xorKeyLen + 3 + 4; // AES + ChaCha20 + XOR + order + size
+    keySection.VirtualAddress = peInfo.ntHeaders->OptionalHeader.SizeOfImage;
+    keySection.Misc.VirtualSize = keySection.SizeOfRawData;
+    keySection.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+    
+    // Prepare key data
+    std::vector<uint8_t> keyData;
+    keyData.insert(keyData.end(), keys.aesKey, keys.aesKey + 32);
+    keyData.insert(keyData.end(), keys.chachaKey, keys.chachaKey + 32);
+    keyData.insert(keyData.end(), keys.xorKey, keys.xorKey + keys.xorKeyLen);
+    keyData.insert(keyData.end(), keys.encryptionOrder, keys.encryptionOrder + 3);
+    
+    // Add key data size
+    uint32_t keySize = static_cast<uint32_t>(keyData.size());
+    keyData.insert(keyData.end(), reinterpret_cast<uint8_t*>(&keySize), 
+                   reinterpret_cast<uint8_t*>(&keySize) + 4);
+    
+    // Update PE headers
+    peInfo.ntHeaders->FileHeader.NumberOfSections++;
+    peInfo.ntHeaders->OptionalHeader.SizeOfImage += keySection.SizeOfRawData;
+    
+    // Add new section header
+    PIMAGE_SECTION_HEADER newSectionHeaders = reinterpret_cast<PIMAGE_SECTION_HEADER>(
+        reinterpret_cast<uint8_t*>(peInfo.ntHeaders) + sizeof(IMAGE_NT_HEADERS));
+    newSectionHeaders[peInfo.ntHeaders->FileHeader.NumberOfSections - 1] = keySection;
+    
+    // Append key data to file
+    peInfo.fileData.insert(peInfo.fileData.end(), keyData.begin(), keyData.end());
+    
+    // Write encrypted PE file with embedded keys
     std::ofstream outFile(outputFile, std::ios::binary);
     if (!outFile) {
         std::cout << "Failed to create output file: " << outputFile << std::endl;
         return false;
     }
     
-    outFile.write(reinterpret_cast<const char*>(peInfo.fileData.data()), peInfo.fileSize);
+    outFile.write(reinterpret_cast<const char*>(peInfo.fileData.data()), peInfo.fileData.size());
     outFile.close();
     
-    // Save keys separately (safer approach)
-    std::string keyFile = outputFile + ".keys";
-    std::ofstream keyOut(keyFile);
-    keyOut << "AES Key: " << bytesToBigDecimal(keys.aesKey, 32) << std::endl;
-    keyOut << "ChaCha20 Key: " << bytesToBigDecimal(keys.chachaKey, 32) << std::endl;
-    keyOut << "XOR Key: " << bytesToBigDecimal(keys.xorKey, keys.xorKeyLen) << std::endl;
-    keyOut << "Encryption Order: " << keys.encryptionOrder[0] << "," 
-           << keys.encryptionOrder[1] << "," << keys.encryptionOrder[2] << std::endl;
-    keyOut.close();
-    
     std::cout << "PE file encrypted successfully: " << outputFile << std::endl;
-    std::cout << "Keys saved to: " << keyFile << std::endl;
-    std::cout << "File remains executable but code sections are encrypted" << std::endl;
-    std::cout << "SECURITY: Keys are separate - encrypted file cannot decrypt itself!" << std::endl;
-    std::cout << "Usage: Need both " << outputFile << " AND " << keyFile << " to decrypt" << std::endl;
+    std::cout << "Keys embedded directly in file - self-contained!" << std::endl;
+    std::cout << "File can decrypt itself without external key files" << std::endl;
     
     return true;
 }
