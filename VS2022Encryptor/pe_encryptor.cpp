@@ -296,7 +296,8 @@ bool PEEncryptor::encryptPE(const std::string& inputFile, const std::string& out
     std::cout << "PE file encrypted successfully: " << outputFile << std::endl;
     std::cout << "Keys saved to: " << keyFile << std::endl;
     std::cout << "File remains executable but code sections are encrypted" << std::endl;
-    std::cout << "WARNING: This is for testing only - original file structure preserved!" << std::endl;
+    std::cout << "SECURITY: Keys are separate - encrypted file cannot decrypt itself!" << std::endl;
+    std::cout << "Usage: Need both " << outputFile << " AND " << keyFile << " to decrypt" << std::endl;
     
     return true;
 }
