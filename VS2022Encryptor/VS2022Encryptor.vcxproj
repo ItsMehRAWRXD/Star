@@ -162,11 +162,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stealth_triple_encryptor.cpp" />
     <ClCompile Include="encryptor_stub_generator.cpp" />
+    <ClCompile Include="xll_stub_generator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="encryptor.h" />
     <ClInclude Include="stealth_triple_encryptor.h" />
     <ClInclude Include="encryptor_stub_generator.h" />
+    <ClInclude Include="xll_stub_generator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

