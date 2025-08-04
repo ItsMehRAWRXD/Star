@@ -231,9 +231,9 @@ public:
         std::cout << "  3. Stealth Triple Encryption" << std::endl;
         std::cout << "  4. Runtime-Only Encryption (No Disk Save)" << std::endl;
         std::cout << "  5. Generate MASM Runtime Stub (<2KB)" << std::endl;
-        std::cout << "  6. Generate AES Runtime PE Stub" << std::endl;
-        std::cout << "  7. Generate ChaCha20 Runtime PE Stub" << std::endl;
-        std::cout << "  8. Generate Triple Encryption Runtime PE Stub" << std::endl;
+        std::cout << "  6. UPX-Style AES Packer (Embedded)" << std::endl;
+        std::cout << "  7. UPX-Style ChaCha20 Packer (Embedded)" << std::endl;
+        std::cout << "  8. UPX-Style Triple Packer (Embedded)" << std::endl;
         std::cout << "  9. Generate XLL Stealth Payload Stub" << std::endl;
         std::cout << "  0. Exit" << std::endl;
         std::cout << "\nEnter your choice: ";
