@@ -57,6 +57,9 @@ VS2022Encryptor.exe -e payload.exe encrypted_payload.bin
 
 # Generate a stealth stub from a payload
 VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
+
+# Generate an encryptor stub (can encrypt files at runtime)
+VS2022Encryptor.exe -g encryptor_stub.cpp
 ```
 
 ### Command Line Options
@@ -78,11 +81,15 @@ Stealth Encryption:
 Stub Generation:
   VS2022Encryptor.exe -s <payload> <stub.cpp>
 
+Encryptor Stub Generation:
+  VS2022Encryptor.exe -g <encryptor_stub.cpp>
+
 Examples:
   VS2022Encryptor.exe -b file.exe encrypted_file.bin
   VS2022Encryptor.exe -b file.exe encrypted_file.bin chacha20
   VS2022Encryptor.exe -e payload.exe encrypted_payload.bin
   VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
+  VS2022Encryptor.exe -g encryptor_stub.cpp
 ```
 
 ## Encryption Details
@@ -125,6 +132,7 @@ The encrypted file contains:
 - **Encrypted Data**: Triple-layer encrypted payload
 - **Key File**: Separate `.keys` file with decimal representations
 - **Stub Generation**: Self-contained C++ source with embedded decryption
+- **Encryptor Stub**: Self-contained C++ source that can encrypt files at runtime
 
 ## Security Features
 
@@ -145,6 +153,7 @@ The encrypted file contains:
 - **Memory Efficient**: Processes files in 4KB chunks
 - **No External Dependencies**: Reduces attack surface
 - **Stub Generation**: Fast compilation-ready C++ output
+- **Encryptor Stubs**: Runtime file encryption capabilities
 
 ## Project Structure
 
@@ -155,11 +164,41 @@ VS2022Encryptor/
 ├── encryptor.h                      # Header file for basic encryption functions
 ├── stealth_triple_encryptor.h       # Header file for stealth encryption
 ├── stealth_triple_encryptor.cpp     # Implementation of stealth encryption
+├── encryptor_stub_generator.h       # Header file for encryptor stub generation
+├── encryptor_stub_generator.cpp     # Implementation of encryptor stub generation
 ├── build.bat                        # Batch file for easy building
 ├── .gitignore                       # Git ignore file
 └── README.md                        # This file
 
 vs2022_encryptor.sln                 # Visual Studio solution file
+```
+
+## Workflow Examples
+
+### Complete Encryption Workflow
+```cmd
+# Step 1: Generate an encryptor stub
+VS2022Encryptor.exe -g encryptor_stub.cpp
+
+# Step 2: Compile the encryptor stub
+g++ -o encryptor_stub.exe encryptor_stub.cpp
+
+# Step 3: Use the stub to encrypt any file
+encryptor_stub.exe file_to_encrypt.exe encrypted_file.bin
+
+# Result: encrypted_file.bin and encrypted_file.bin.keys are created
+```
+
+### Stealth Payload Workflow
+```cmd
+# Step 1: Generate a stealth stub from a payload
+VS2022Encryptor.exe -s payload.exe stealth_stub.cpp
+
+# Step 2: Compile the stealth stub
+g++ -o stealth_stub.exe stealth_stub.cpp
+
+# Step 3: Run the stealth stub (executes the payload)
+stealth_stub.exe
 ```
 
 ## Building for Different Platforms

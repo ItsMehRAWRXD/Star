@@ -1,5 +1,6 @@
 #include "encryptor.h"
 #include "stealth_triple_encryptor.h"
+#include "encryptor_stub_generator.h"
 
 // AES S-box
 const uint8_t sbox[256] = {
@@ -473,17 +474,20 @@ int main(int argc, char* argv[]) {
         std::cout << "  Stealth triple encryption:" << std::endl;
         std::cout << "    " << argv[0] << " -e <input> <output>" << std::endl;
         std::cout << "    " << argv[0] << " -s <payload> <stub.cpp>" << std::endl;
+        std::cout << "    " << argv[0] << " -g <encryptor_stub.cpp>" << std::endl;
         std::cout << std::endl;
         std::cout << "Examples:" << std::endl;
         std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin" << std::endl;
         std::cout << "  " << argv[0] << " -b file.exe encrypted_file.bin chacha20" << std::endl;
         std::cout << "  " << argv[0] << " -e payload.exe encrypted_payload.bin" << std::endl;
         std::cout << "  " << argv[0] << " -s payload.exe stealth_stub.cpp" << std::endl;
+        std::cout << "  " << argv[0] << " -g encryptor_stub.cpp" << std::endl;
         std::cout << std::endl;
         std::cout << "Features:" << std::endl;
         std::cout << "  - Basic: AES-128-CTR and ChaCha20 encryption" << std::endl;
         std::cout << "  - Stealth: Triple-layer encryption with decimal key representation" << std::endl;
         std::cout << "  - Stub generation: Creates self-contained executable stubs" << std::endl;
+        std::cout << "  - Encryptor stubs: Creates stubs that can encrypt files at runtime" << std::endl;
         std::cout << "  - Built with Visual Studio 2022 - No external dependencies!" << std::endl;
         return 1;
     }
@@ -550,9 +554,28 @@ int main(int argc, char* argv[]) {
         std::cout << "Stealth stub generated: " << argv[3] << std::endl;
         std::cout << "Keys stored as decimal numbers in code" << std::endl;
         
+    } else if (mode == "-g") {
+        // Generate encryptor stub
+        if (argc != 3) {
+            std::cerr << "Encryptor stub generation requires: -g <encryptor_stub.cpp>" << std::endl;
+            return 1;
+        }
+        
+        EncryptorStubGenerator generator;
+        auto keys = generator.generateKeys();
+        std::string stub = generator.generateEncryptorStub(keys);
+        
+        std::ofstream out(argv[2]);
+        out << stub;
+        out.close();
+        
+        std::cout << "Encryptor stub generated: " << argv[2] << std::endl;
+        std::cout << "This stub can encrypt files at runtime with triple-layer encryption" << std::endl;
+        std::cout << "Usage: compiled_stub.exe <inputfile> <outputfile>" << std::endl;
+        
     } else {
         std::cerr << "Unknown mode: " << mode << std::endl;
-        std::cerr << "Use -b for basic encryption, -e for stealth encryption, or -s for stub generation" << std::endl;
+        std::cerr << "Use -b for basic encryption, -e for stealth encryption, -s for stub generation, or -g for encryptor stub generation" << std::endl;
         return 1;
     }
     
