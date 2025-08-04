@@ -1,0 +1,17 @@
+This is a test document for demonstrating the Workflow Triple Encryptor.
+
+The encryptor will:
+1. Generate a unique encryption stub
+2. Compile the stub to an executable
+3. Use the stub to encrypt this file
+4. Create an encrypted output ready for deployment
+5. Clean up temporary files
+
+This file contains sensitive information that needs to be protected using
+ChaCha20 + AES + XOR triple-layer encryption with randomized order.
+
+File size: approximately 500 bytes
+Creation date: 2024
+Status: Unencrypted (original)
+
+--- END OF TEST DOCUMENT ---
