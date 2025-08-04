@@ -1,0 +1,14 @@
+This is a test file for the Visual Studio 2022 Universal Encryptor.
+
+Features demonstrated:
+- Basic AES-128-CTR encryption
+- Basic ChaCha20 encryption  
+- Stealth triple-layer encryption
+- Stub generation with decimal key representation
+
+The encryptor supports multiple modes:
+1. Basic encryption (-b flag)
+2. Stealth encryption (-e flag)
+3. Stub generation (-s flag)
+
+This file can be used to test all encryption modes.
