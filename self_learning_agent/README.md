@@ -1,43 +1,26 @@
-# Self-Learning Task Agent (Benign)
+# Self-Learning Task Agent (Benign) - C++
 
-This module provides a safe, generic self-learning task agent with:
+This is a safe, generic self-learning task agent implemented in modern C++17.
+It supports:
 
 - Strategy-based planning and execution
-- Retrieval of public, permissive-licensed examples from GitHub search
-- Optional OpenAI-assisted reasoning (chat/completions)
-- Self-observation logs and metrics
-- Policy-based re-branching when underperforming
+- Retrieval of public GitHub code search metadata (paths only)
+- Optional OpenAI-assisted reasoning via HTTPS (requires env var)
+- Self-observation metrics and policy-based re-branching
 
-Safety: Do not use this with offensive, malware, or prohibited tasks. The agent filters queries and blocks unsafe usage.
+Safety: Do not use this for offensive or prohibited tasks. The agent includes a simple content filter to block unsafe requests.
 
-## Quickstart
-
-1. Create and activate a virtualenv
-2. Install requirements:
+## Build
 
 ```bash
-pip install -r self_learning_agent/requirements.txt
+make -C self_learning_agent
 ```
 
-3. Set environment variables if using OpenAI:
+## Run
 
 ```bash
-export OPENAI_API_KEY=...
-```
-
-4. Run help:
-
-```bash
-python -m self_learning_agent --help
-```
-
-5. Example run:
-
-```bash
-python -m self_learning_agent run \
-  --task "Write a Python function to merge overlapping intervals" \
-  --language python \
-  --policy bandit
+./self_learning_agent/bin/agent --help
+./self_learning_agent/bin/agent run --task "Write a C++ function to merge intervals" --policy bandit
 ```
 
 ## Config
