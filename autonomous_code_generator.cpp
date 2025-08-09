@@ -1,3 +1,9 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <string>
