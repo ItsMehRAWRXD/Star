@@ -20,6 +20,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="auto-code-gen", description="Auto Code Generator CLI")
     parser.add_argument("command", choices=["generate"], help="Command to run")
     parser.add_argument("--templates", dest="templates_dir", type=Path, default=None, help="Directory with templates (.tmpl). Defaults to built-in.")
+    parser.add_argument("--context-json", dest="context_json", type=Path, default=None, help="Path to JSON file with variables exposed to templates.")
     parser.add_argument("--out", dest="out_dir", type=Path, required=True, help="Output directory for generated code.")
     parser.add_argument("--count", dest="count", type=int, default=1, help="Number of files to generate (ignored if --infinite).")
     parser.add_argument("--infinite", action="store_true", help="Generate indefinitely until interrupted.")
@@ -43,7 +44,7 @@ def main(argv: Optional[list[str]] = None) -> None:
 
     loader = TemplateLoader(args.templates_dir)
     engine = SimpleTemplateEngine()
-    context = RenderContext.empty()
+    context = RenderContext.from_json(args.context_json) if args.context_json else RenderContext.empty()
     writer = CodeWriter(out_dir=out_dir, overwrite=args.overwrite, ext_override=args.ext_override)
 
     available_templates = discover_templates(loader.templates_root)

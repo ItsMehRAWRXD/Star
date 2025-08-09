@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
+import json
 
 DEFAULT_TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -28,6 +29,13 @@ class RenderContext:
     @staticmethod
     def empty() -> "RenderContext":
         return RenderContext(values={})
+
+    @staticmethod
+    def from_json(path: Path) -> "RenderContext":
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("JSON context must be an object at the top level")
+        return RenderContext(values=data)
 
 
 class TemplateLoader:

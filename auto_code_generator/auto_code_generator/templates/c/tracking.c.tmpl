@@ -1,0 +1,10 @@
+#include <stdio.h>
+
+void track_event(const char* event, const char* user) {
+    printf("TRACK: event=%s user=%s\n", event, user);
+}
+
+int main(void) {
+    track_event("{{ event|kebab }}", "{{ user_id|kebab }}");
+    return 0;
+}
