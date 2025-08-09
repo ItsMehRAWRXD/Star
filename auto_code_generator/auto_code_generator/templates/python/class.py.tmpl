@@ -1,0 +1,6 @@
+class {{ class_name|camel }}:
+    def __init__(self, {{ init_params }}):
+        self.id = "{{ uuid }}"
+
+    def {{ method_name|snake }}(self, {{ method_params }}):
+        return {{ return_value }}

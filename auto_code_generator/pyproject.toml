@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "auto-code-generator"
+version = "0.1.0"
+description = "Autonomous unlimited code generator CLI that continuously generates code files from simple templates"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Auto Code Generator" }
+]
+license = { text = "MIT" }
+dependencies = []
+
+[project.urls]
+Homepage = "https://example.com/auto-code-generator"
