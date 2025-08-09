@@ -31,8 +31,6 @@ private:
         PYTHON_SCRIPT,
         JAVASCRIPT_MODULE,
         BASH_SCRIPT,
-        MAKEFILE,
-        CMAKE_FILE,
         HEADER_FILE
     };
     
@@ -88,7 +86,7 @@ public:
     
 private:
     void generateTasks() {
-        std::uniform_int_distribution<> typeDist(0, 7);
+        std::uniform_int_distribution<> typeDist(0, 5);
         std::uniform_int_distribution<> complexityDist(1, 10);
         
         while (running) {
@@ -144,12 +142,6 @@ private:
                 break;
             case GenerationType::BASH_SCRIPT:
                 content = generateBashScript(task.complexity);
-                break;
-            case GenerationType::MAKEFILE:
-                content = generateMakefile(task.complexity);
-                break;
-            case GenerationType::CMAKE_FILE:
-                content = generateCMakeFile(task.complexity);
                 break;
             case GenerationType::HEADER_FILE:
                 content = generateHeaderFile(task.complexity);
