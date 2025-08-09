@@ -1,13 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Self-Learning Agent",
-  "version": "0.1.0",
-  "description": "Send selected text to a native self-learning agent and display results.",
-  "permissions": ["contextMenus", "nativeMessaging", "storage", "notifications"],
+  "version": "0.2.0",
+  "description": "Analyze repos and selected code with OpenAI; Chrome-only.",
+  "permissions": ["contextMenus", "storage", "notifications", "scripting"],
+  "host_permissions": [
+    "https://api.github.com/*",
+    "https://api.openai.com/*"
+  ],
   "action": {
     "default_title": "Self-Learning Agent",
     "default_popup": "popup.html"
   },
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   }
