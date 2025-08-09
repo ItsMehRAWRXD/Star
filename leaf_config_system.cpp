@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <chrono>
 #include <random>
 #include <algorithm>
 #include <thread>
@@ -51,12 +50,12 @@ public:
         EffectivenessMetrics metrics;
         int usageCount = 0;
         double weight = 1.0;
-        std::chrono::system_clock::time_point lastUsed;
+        int lastUsedCounter = 0;
         std::set<TaskType> compatibleTasks;
         
         ConfigurationLeaf(const std::string& id, const std::string& cat) 
             : leafId(id), category(cat) {
-            lastUsed = std::chrono::system_clock::now();
+            lastUsedCounter = 0;
         }
     };
 
@@ -81,7 +80,7 @@ private:
     std::map<TaskType, std::map<std::string, EffectivenessMetrics>> taskSpecificLeafMetrics;
     
     // Self-analysis components
-    std::chrono::high_resolution_clock::time_point lastAnalysis;
+    int lastAnalysisCounter = 0;
     int analysisInterval = 50;
     int operationCount = 0;
     
@@ -90,21 +89,18 @@ public:
         initializeRNG();
         initializeLeaves();
         initializeClusters();
-        lastAnalysis = std::chrono::high_resolution_clock::now();
+        lastAnalysisCounter = 0;
     }
     
     void initializeRNG() {
         std::random_device rd;
-        auto now = std::chrono::high_resolution_clock::now();
-        auto duration = now.time_since_epoch();
-        auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
         
         std::seed_seq seed{
             rd(), rd(), rd(), rd(),
             static_cast<unsigned int>(std::time(nullptr)),
-            static_cast<unsigned int>(nanos),
-            static_cast<unsigned int>(nanos >> 32),
-            static_cast<unsigned int>(std::hash<std::thread::id>{}(std::this_thread::get_id()))
+            static_cast<unsigned int>(std::hash<std::thread::id>{}(std::this_thread::get_id())),
+            static_cast<unsigned int>(operationCount),
+            static_cast<unsigned int>(allLeaves.size())
         };
         
         rng.seed(seed);
@@ -416,11 +412,10 @@ public:
             score += 0.1 * std::min(1.0, leaf->usageCount / 10.0);
         }
         
-        // Freshness factor (slightly favor recently used leaves)
-        auto timeSinceUse = std::chrono::system_clock::now() - leaf->lastUsed;
-        auto hoursSinceUse = std::chrono::duration_cast<std::chrono::hours>(timeSinceUse).count();
-        if (hoursSinceUse < 24) {
-            score += 0.05;
+        // Freshness factor (favor recently used leaves)
+        int operationsSinceUse = operationCount - leaf->lastUsedCounter;
+        if (operationsSinceUse < 100) {
+            score += 0.05 * (1.0 - operationsSinceUse / 100.0);
         }
         
         // Weight factor
@@ -442,7 +437,7 @@ public:
             
             // Update leaf usage
             leaf->usageCount++;
-            leaf->lastUsed = std::chrono::system_clock::now();
+            leaf->lastUsedCounter = operationCount;
             
             // Update leaf metrics (running average)
             if (leaf->metrics.overallEffectiveness == 0.0) {
@@ -487,10 +482,9 @@ public:
     
     // Self-analysis and optimization
     bool shouldTriggerAnalysis() {
-        auto now = std::chrono::high_resolution_clock::now();
-        auto timeSinceLastAnalysis = std::chrono::duration_cast<std::chrono::minutes>(now - lastAnalysis).count();
+        int operationsSinceAnalysis = operationCount - lastAnalysisCounter;
         
-        return (operationCount >= analysisInterval) || (timeSinceLastAnalysis >= 15);
+        return (operationsSinceAnalysis >= analysisInterval);
     }
     
     void performSelfAnalysis() {
@@ -505,8 +499,7 @@ public:
         // Rebalance active leaf sets
         rebalanceActiveSets();
         
-        lastAnalysis = std::chrono::high_resolution_clock::now();
-        operationCount = 0;
+        lastAnalysisCounter = operationCount;
         
         std::cout << "[LEAF ANALYSIS] Analysis complete. System optimized." << std::endl;
     }
@@ -610,8 +603,7 @@ public:
         std::cout << "\n=== LEAF CONFIGURATION SYSTEM STATUS ===" << std::endl;
         std::cout << "Total Leaves: " << allLeaves.size() << std::endl;
         std::cout << "Total Operations: " << operationCount << std::endl;
-        std::cout << "Last Analysis: " << std::chrono::duration_cast<std::chrono::minutes>(
-            std::chrono::high_resolution_clock::now() - lastAnalysis).count() << " minutes ago" << std::endl;
+        std::cout << "Operations Since Last Analysis: " << (operationCount - lastAnalysisCounter) << std::endl;
         
         std::cout << "\nActive Leaf Sets by Task:" << std::endl;
         for (const auto& [taskType, leafSet] : activeLeafSets) {
