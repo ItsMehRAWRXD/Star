@@ -21,21 +21,24 @@
     </select>
   </label>
   <label>GitHub Token (optional, increases rate limits) <input id="githubToken" type="password"/></label>
+  <label><input id="aggressiveMode" type="checkbox"/> Aggressive mode (higher concurrency, larger batches)</label>
   <button id="save">Save</button>
   <span id="status"></span>
   <script>
     const $ = (s) => document.querySelector(s);
     async function load() {
-      const cfg = await new Promise(r => chrome.storage.sync.get(['openaiKey','openaiModel','githubToken'], r));
+      const cfg = await new Promise(r => chrome.storage.sync.get(['openaiKey','openaiModel','githubToken','aggressiveMode'], r));
       if (cfg.openaiKey) $('#openaiKey').value = cfg.openaiKey;
       if (cfg.openaiModel) $('#openaiModel').value = cfg.openaiModel;
       if (cfg.githubToken) $('#githubToken').value = cfg.githubToken;
+      $('#aggressiveMode').checked = !!cfg.aggressiveMode;
     }
     $('#save').addEventListener('click', async () => {
       await chrome.storage.sync.set({
         openaiKey: $('#openaiKey').value.trim(),
         openaiModel: $('#openaiModel').value,
-        githubToken: $('#githubToken').value.trim()
+        githubToken: $('#githubToken').value.trim(),
+        aggressiveMode: $('#aggressiveMode').checked
       });
       $('#status').textContent = 'Saved';
       setTimeout(() => $('#status').textContent = '', 1500);

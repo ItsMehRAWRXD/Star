@@ -1,7 +1,7 @@
 const STORE = {
   async get() {
     return new Promise((resolve) => chrome.storage.sync.get([
-      'openaiKey', 'openaiModel', 'githubToken'
+      'openaiKey', 'openaiModel', 'githubToken', 'aggressiveMode'
     ], resolve));
   }
 };
@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({ id: 'sla-analyze-selection', title: 'Analyze selection (OpenAI)', contexts: ['selection'] });
 });
 
-async function callOpenAI(prompt, key, model) {
+async function callOpenAI(prompt, key, model, temperature = 0.2) {
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -19,7 +19,7 @@ async function callOpenAI(prompt, key, model) {
     },
     body: JSON.stringify({
       model: model || 'gpt-4o-mini',
-      temperature: 0.2,
+      temperature: temperature, 
       messages: [
         { role: 'system', content: 'Provide concise, safe, benign assistance. Prefer C++/MASM for code tasks.' },
         { role: 'user', content: prompt }
@@ -80,9 +80,10 @@ async function analyzeRepository(repoUrl, cfg, onProgress) {
   // Fetch file contents in chunks
   const chunks = [];
   let batch = [];
+  const maxBatch = cfg.aggressiveMode ? 50 : 25;
   for (let i = 0; i < files.length; i++) {
     batch.push(files[i]);
-    if (batch.length === 25 || i === files.length - 1) {
+    if (batch.length === maxBatch || i === files.length - 1) {
       const texts = await Promise.all(batch.map(async f => {
         const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${encodeURI(f.path)}`);
         if (!r.ok) return `// ${f.path}: failed`;
@@ -97,10 +98,13 @@ async function analyzeRepository(repoUrl, cfg, onProgress) {
 
   // Summarize chunks with OpenAI
   const summaries = [];
-  for (let i = 0; i < chunks.length; i++) {
-    const content = await callOpenAI(`Summarize the following code. Extract components, responsibilities, and any build details. Prefer C++/MASM naming.\n\n${chunks[i].slice(0, 120000)}`, cfg.openaiKey, cfg.openaiModel);
-    summaries.push(content);
-    onProgress && onProgress(`Summarized ${i+1}/${chunks.length}`);
+  const temp = cfg.aggressiveMode ? 0.0 : 0.2;
+  const conc = cfg.aggressiveMode ? 4 : 1;
+  for (let i = 0; i < chunks.length; i += conc) {
+    const slice = chunks.slice(i, i + conc);
+    const results = await Promise.all(slice.map((chunk) => callOpenAI(`Summarize the following code. Extract components, responsibilities, and any build details. Prefer C++/MASM naming.\n\n${chunk.slice(0, 120000)}`, cfg.openaiKey, cfg.openaiModel, temp)));
+    for (const r of results) summaries.push(r);
+    onProgress && onProgress(`Summarized ${Math.min(i+conc, chunks.length)}/${chunks.length}`);
   }
 
   // Global synthesis
