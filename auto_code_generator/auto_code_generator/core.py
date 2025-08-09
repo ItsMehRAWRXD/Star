@@ -84,7 +84,7 @@ class CodeWriter:
 
     def write_unique(self, content: str, template_rel_path: Path) -> Path:
         ext = self.ext_override or infer_extension_from_template(template_rel_path)
-        base_name = template_rel_path.stem.replace(".py", "").replace(".js", "")
+        base_name = derive_output_basename(template_rel_path)
         safe_base = to_kebab_case(base_name)
 
         attempt = 0
@@ -110,6 +110,17 @@ def infer_extension_from_template(template_rel_path: Path) -> str:
         return "." + parts[-2]
     return ".txt"
 
+
+def derive_output_basename(template_rel_path: Path) -> str:
+    """Derive output base filename by stripping the last two suffixes when the last is .tmpl."""
+    name = template_rel_path.name
+    suffixes = template_rel_path.suffixes
+    if len(suffixes) >= 2 and suffixes[-1] == ".tmpl":
+        trim_len = len(suffixes[-1]) + len(suffixes[-2])
+        base = name[:-trim_len]
+    else:
+        base = template_rel_path.stem
+    return base
 
 _s1 = re.compile(r"[^a-zA-Z0-9]+")
 _s2 = re.compile(r"(_|\s)+")
