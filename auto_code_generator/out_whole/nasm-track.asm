@@ -1,0 +1,46 @@
+; nasm -felf64 track.asm && ld -o track track.o && ./track
+
+section .data
+    prefix db "TRACK: event=",0
+    event  db "app-event",0
+    mid db " user=",0
+    user db "user-d4e87ad2",0
+    nl db 10,0
+
+section .text
+    global _start
+
+print_z:
+    ; rdi -> zero-terminated string
+    push rbx
+    mov rbx, rdi
+.next:
+    mov al, [rbx]
+    cmp al, 0
+    je .done
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, rbx
+    mov rdx, 1
+    syscall
+    inc rbx
+    jmp .next
+.done:
+    pop rbx
+    ret
+
+_start:
+    mov rdi, prefix
+    call print_z
+    mov rdi, event
+    call print_z
+    mov rdi, mid
+    call print_z
+    mov rdi, user
+    call print_z
+    mov rdi, nl
+    call print_z
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall

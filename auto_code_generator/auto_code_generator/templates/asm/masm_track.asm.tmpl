@@ -1,0 +1,25 @@
+; Build with MASM (example): ml /c /coff track.asm && link /SUBSYSTEM:CONSOLE track.obj
+.386
+.model flat, stdcall
+option casemap:none
+
+includelib msvcrt.lib
+printf PROTO C :PTR SBYTE, :VARARG
+
+.data
+    fmt db "TRACK: event=%s user=%s", 10, 0
+    ev  db "{{ event|kebab }}", 0
+    usr db "{{ user_id|kebab }}", 0
+
+.code
+main PROC
+    push OFFSET usr
+    push OFFSET ev
+    push OFFSET fmt
+    call printf
+    add esp, 12
+    xor eax, eax
+    ret
+main ENDP
+
+END main
