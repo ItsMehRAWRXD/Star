@@ -1,0 +1,9 @@
+{
+  "name": "com.self_learning_agent",
+  "description": "Self-Learning Agent native host",
+  "path": "C:/Program Files/SelfLearningAgent/self_learning_host.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://REPLACE_WITH_YOUR_EXTENSION_ID/"
+  ]
+}

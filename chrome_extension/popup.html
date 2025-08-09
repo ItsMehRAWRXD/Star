@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Self-Learning Agent</title>
+  <style>
+    body { font: 13px sans-serif; margin: 12px; width: 380px; }
+    textarea, input { width: 100%; }
+    textarea { height: 90px; }
+    pre { white-space: pre-wrap; background: #f5f5f5; padding: 8px; max-height: 260px; overflow: auto; }
+    button { padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <h3>Self-Learning Agent</h3>
+  <div>
+    <label>GitHub Repo URL</label>
+    <input id="repo" type="text" placeholder="https://github.com/owner/repo" />
+    <button id="analyze">Analyze repo (up to ~4,000 files)</button>
+  </div>
+  <div id="progress" style="margin-top:8px;color:#555;"></div>
+  <pre id="out"></pre>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    $('#analyze').addEventListener('click', async () => {
+      const repoUrl = $('#repo').value.trim();
+      if (!repoUrl) { $('#out').textContent = 'Enter a repo URL.'; return; }
+      $('#out').textContent = '';
+      $('#progress').textContent = 'Starting...';
+      chrome.runtime.onMessage.addListener(function listener(msg){
+        if (msg?.type === 'progress') { $('#progress').textContent = msg.message; }
+      });
+      chrome.runtime.sendMessage({ type: 'analyzeRepo', repoUrl }, (resp) => {
+        if (!resp) { $('#out').textContent = 'No response'; return; }
+        if (resp.ok) { $('#out').textContent = resp.report; $('#progress').textContent = 'Done'; }
+        else { $('#out').textContent = 'Error: ' + resp.error; $('#progress').textContent = ''; }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.self_learning_agent]
+@="C:\\Program Files\\SelfLearningAgent\\com.self_learning_agent.json"

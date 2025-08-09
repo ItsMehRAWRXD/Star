@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Self-Learning Agent Options</title>
+  <style>
+    body { font: 13px sans-serif; margin: 16px; max-width: 520px; }
+    label { display:block; margin-top: 12px; }
+    input, select { width: 100%; padding: 6px; }
+    button { margin-top: 16px; padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h2>Self-Learning Agent Options</h2>
+  <label>OpenAI API Key <input id="openaiKey" type="password" placeholder="sk-..."/></label>
+  <label>OpenAI Model
+    <select id="openaiModel">
+      <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+      <option value="gpt-4o">gpt-4o</option>
+      <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+    </select>
+  </label>
+  <label>GitHub Token (optional, increases rate limits) <input id="githubToken" type="password"/></label>
+  <label><input id="aggressiveMode" type="checkbox"/> Aggressive mode (higher concurrency, larger batches)</label>
+  <button id="save">Save</button>
+  <span id="status"></span>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    async function load() {
+      const cfg = await new Promise(r => chrome.storage.sync.get(['openaiKey','openaiModel','githubToken','aggressiveMode'], r));
+      if (cfg.openaiKey) $('#openaiKey').value = cfg.openaiKey;
+      if (cfg.openaiModel) $('#openaiModel').value = cfg.openaiModel;
+      if (cfg.githubToken) $('#githubToken').value = cfg.githubToken;
+      $('#aggressiveMode').checked = !!cfg.aggressiveMode;
+    }
+    $('#save').addEventListener('click', async () => {
+      await chrome.storage.sync.set({
+        openaiKey: $('#openaiKey').value.trim(),
+        openaiModel: $('#openaiModel').value,
+        githubToken: $('#githubToken').value.trim(),
+        aggressiveMode: $('#aggressiveMode').checked
+      });
+      $('#status').textContent = 'Saved';
+      setTimeout(() => $('#status').textContent = '', 1500);
+    });
+    load();
+  </script>
+</body>
+</html>
