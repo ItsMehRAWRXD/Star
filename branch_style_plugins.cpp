@@ -1,6 +1,5 @@
 #include "branch_style_plugins.h"
 #include <sstream>
-#include <chrono>
 #include <iomanip>
 
 namespace BranchStylePlugins {
