@@ -7,6 +7,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Optional
+import re
 
 from .core import (
     CodeWriter,
@@ -32,6 +33,8 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--ext", dest="ext_override", type=str, default=None, help="Force output file extension (e.g., .py). Defaults to template-driven.")
     parser.add_argument("--quiet", action="store_true", help="Suppress output messages.")
     parser.add_argument("--var", dest="vars", action="append", default=None, help="Template variable override in key=value form. Can be repeated.")
+    parser.add_argument("--strip-word", dest="strip_words", action="append", default=None, help="Word to remove from rendered output. Can be repeated. Defaults to removing 'rent' and 'rot'.")
+    parser.add_argument("--strip-mode", dest="strip_mode", choices=["whole", "substr"], default="whole", help="Whole word removal or substring removal.")
     return parser.parse_args(argv)
 
 
@@ -60,10 +63,27 @@ def main(argv: Optional[list[str]] = None) -> None:
     context = RenderContext(values=base_values)
     writer = CodeWriter(out_dir=out_dir, overwrite=args.overwrite, ext_override=args.ext_override)
 
+    # Configure stripping defaults if none provided
+    strip_words = args.strip_words[:] if args.strip_words else ["rent", "rot"]
+    strip_mode = args.strip_mode
+
     available_templates = discover_templates(loader.templates_root)
     if not available_templates:
         print("No templates found.", file=sys.stderr)
         sys.exit(1)
+
+    def strip_content(text: str) -> str:
+        if not strip_words:
+            return text
+        if strip_mode == "whole":
+            # Whole-word, case-insensitive
+            pattern = r"\b(" + "|".join(re.escape(w) for w in strip_words) + r")\b"
+            return re.sub(pattern, "", text, flags=re.IGNORECASE)
+        # Substring, case-insensitive for each word
+        result = text
+        for w in strip_words:
+            result = re.sub(re.escape(w), "", result, flags=re.IGNORECASE)
+        return result
 
     def render_one() -> Path:
         candidates = available_templates[:]
@@ -72,6 +92,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         template_path = random.choice(candidates)
         template_text = loader.read_text(template_path)
         rendered = engine.render(template_text, context.values)
+        rendered = strip_content(rendered)
         output_path = writer.write_unique(rendered, template_path)
         if not args.quiet:
             print(f"Generated: {output_path}")
