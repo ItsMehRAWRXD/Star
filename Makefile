@@ -1,139 +1,161 @@
-# Makefile for File Encryption Project
-# Native implementation only (zero dependencies)
-
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pedantic
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g
+INCLUDES = -I.
+LIBS = -lpthread
 
-# Native targets (zero dependencies)
-NATIVE_TARGETS = native_encryptor native_xll_dropper native_gui native_stub_generator mirc_bot_builder stub_linker
+# Source files
+BRANCH_PLUGIN_SOURCES = branch_style_plugins.cpp
+DEMO_SOURCES = branch_style_demo.cpp
+ENHANCED_GENERATOR_SOURCES = enhanced_stub_generator_with_branches.cpp
 
-# Default target (builds native implementation)
-all: native
+# Object files
+BRANCH_PLUGIN_OBJECTS = $(BRANCH_PLUGIN_SOURCES:.cpp=.o)
+DEMO_OBJECTS = $(DEMO_SOURCES:.cpp=.o)
+ENHANCED_GENERATOR_OBJECTS = $(ENHANCED_GENERATOR_SOURCES:.cpp=.o)
 
-# Build native implementation (zero dependencies)
-native: $(NATIVE_TARGETS)
+# Executable names
+DEMO_EXEC = branch_style_demo
+ENHANCED_GENERATOR_EXEC = enhanced_stub_generator_with_branches
 
-# Native encryptor (AES-128-CTR encryption)
-native_encryptor: native_encryptor.cpp
-	$(CXX) $(CXXFLAGS) -o native_encryptor native_encryptor.cpp
+# Default target
+all: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
 
-# Native XLL dropper (AES-128-CTR decryption)
-native_xll_dropper: native_xll_dropper.cpp
-	$(CXX) $(CXXFLAGS) -o native_xll_dropper native_xll_dropper.cpp
+# Build the demo executable
+$(DEMO_EXEC): $(BRANCH_PLUGIN_OBJECTS) $(DEMO_OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LIBS)
 
-# Native GUI (console-based interface)
-native_gui: native_gui.cpp
-	$(CXX) $(CXXFLAGS) -o native_gui native_gui.cpp
+# Build the enhanced generator executable
+$(ENHANCED_GENERATOR_EXEC): $(BRANCH_PLUGIN_OBJECTS) $(ENHANCED_GENERATOR_OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LIBS)
 
-# Native stub generator
-native_stub_generator: native_stub_generator.cpp
-	$(CXX) $(CXXFLAGS) -o native_stub_generator native_stub_generator.cpp
+# Compile source files to object files
+%.o: %.cpp branch_style_plugins.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# mIRC Bot Builder
-mirc_bot_builder: mirc_bot_builder.cpp
-	$(CXX) $(CXXFLAGS) -o mirc_bot_builder mirc_bot_builder.cpp
+# Run the demo
+demo: $(DEMO_EXEC)
+	./$(DEMO_EXEC)
 
-# Test targets
-test: native
-	@echo "Testing native components..."
-	@echo "Creating test file..."
-	@echo "Test content for native encryption" > test_native.txt
-	@echo "Encrypting with native AES..."
-	@./native_encryptor test_native.txt test_native.enc
-	@echo "Decrypting with native XLL dropper..."
-	@./native_xll_dropper test_native.enc test_native.dec
-	@echo "Verifying content..."
-	@if cmp -s test_native.txt test_native.dec; then \
-		echo "✓ Native encryption/decryption test PASSED"; \
-	else \
-		echo "✗ Native encryption/decryption test FAILED"; \
-	fi
-	@rm -f test_native.txt test_native.enc test_native.dec
+# Run the enhanced generator demo
+generator-demo: $(ENHANCED_GENERATOR_EXEC)
+	./$(ENHANCED_GENERATOR_EXEC) demo
 
-# Clean targets
+# Generate a basic stub
+generate: $(ENHANCED_GENERATOR_EXEC)
+	./$(ENHANCED_GENERATOR_EXEC) generate
+
+# Generate a complex stub
+complex: $(ENHANCED_GENERATOR_EXEC)
+	./$(ENHANCED_GENERATOR_EXEC) complex
+
+# Benchmark branch styles
+benchmark: $(ENHANCED_GENERATOR_EXEC)
+	./$(ENHANCED_GENERATOR_EXEC) benchmark
+
+# Test all functionality
+test: demo generator-demo benchmark
+
+# Build with Windows support (cross-compile)
+windows: CXXFLAGS += -DWIN32 -static-libgcc -static-libstdc++
+windows: CXX = x86_64-w64-mingw32-g++
+windows: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+
+# Debug build
+debug: CXXFLAGS += -DDEBUG -g3 -O0
+debug: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+
+# Release build with optimizations
+release: CXXFLAGS += -DNDEBUG -O3 -flto -march=native
+release: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+
+# Profiling build
+profile: CXXFLAGS += -pg -O2
+profile: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+
+# Static analysis
+analyze:
+	@echo "Running static analysis..."
+	cppcheck --enable=all --std=c++17 $(BRANCH_PLUGIN_SOURCES) $(DEMO_SOURCES) $(ENHANCED_GENERATOR_SOURCES)
+
+# Format code
+format:
+	@echo "Formatting code..."
+	clang-format -i *.cpp *.h
+
+# Clean build artifacts
 clean:
-	rm -f $(NATIVE_TARGETS)
-	rm -f *.o *.exe
-	rm -f test_*.txt test_*.enc test_*.dec
-	rm -f *_bot.cpp *_bot
-	rm -f bot.log
+	rm -f *.o $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+	rm -f enhanced_stub_with_branches.cpp complex_mixed_stub.cpp
+	rm -f gmon.out
 
-# Install targets
-install: native
-	@echo "Installing native components..."
-	@mkdir -p /usr/local/bin
-	@cp native_encryptor /usr/local/bin/
-	@cp native_xll_dropper /usr/local/bin/
-	@cp native_gui /usr/local/bin/
-	@cp native_stub_generator /usr/local/bin/
-	@cp mirc_bot_builder /usr/local/bin/
-	@chmod +x /usr/local/bin/native_encryptor
-	@chmod +x /usr/local/bin/native_xll_dropper
-	@chmod +x /usr/local/bin/native_gui
-	@chmod +x /usr/local/bin/native_stub_generator
-	@chmod +x /usr/local/bin/mirc_bot_builder
-	@echo "Native components installed to /usr/local/bin/"
+# Clean all generated files
+distclean: clean
+	rm -f *.exe
 
-# Uninstall targets
-uninstall:
-	@echo "Uninstalling native components..."
-	@rm -f /usr/local/bin/native_encryptor
-	@rm -f /usr/local/bin/native_xll_dropper
-	@rm -f /usr/local/bin/native_gui
-	@rm -f /usr/local/bin/native_stub_generator
-	@rm -f /usr/local/bin/mirc_bot_builder
-	@echo "Native components uninstalled"
-
-# Documentation
+# Documentation generation
 docs:
-	@echo "=== File Encryption Project Documentation ==="
-	@echo ""
-	@echo "🟢 NATIVE IMPLEMENTATION (Zero Dependencies):"
-	@echo "  native_encryptor  - AES-128-CTR file encryption"
-	@echo "  native_xll_dropper - AES-128-CTR file decryption"
-	@echo "  native_gui        - Console-based GUI interface"
-	@echo "  native_stub_generator - Stub generation utility"
-	@echo "  mirc_bot_builder  - mIRC bot configuration tool"
-	@echo ""
-	@echo "📋 BUILD TARGETS:"
-	@echo "  make              - Build all native components"
-	@echo "  make native       - Build native implementation"
-	@echo ""
-	@echo "🧪 TEST TARGETS:"
-	@echo "  make test         - Test native implementation"
-	@echo ""
-	@echo "📦 INSTALL TARGETS:"
-	@echo "  make install      - Install native components"
-	@echo "  make uninstall    - Remove native components"
-	@echo ""
-	@echo "🔧 USAGE EXAMPLES:"
-	@echo "  Encryption: ./native_encryptor <input> <output>"
-	@echo "  Decryption: ./native_xll_dropper <input> <output>"
-	@echo "  GUI:       ./native_gui"
-	@echo "  Stub Gen:  ./native_stub_generator"
-	@echo "  Bot Builder: ./mirc_bot_builder"
-	@echo ""
+	@echo "Generating documentation..."
+	doxygen Doxyfile 2>/dev/null || echo "Doxygen not available"
+
+# Installation (copy to system directory)
+install: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC)
+	@echo "Installing branch style plugins..."
+	install -d /usr/local/bin
+	install -m 755 $(DEMO_EXEC) /usr/local/bin/
+	install -m 755 $(ENHANCED_GENERATOR_EXEC) /usr/local/bin/
+	install -d /usr/local/include/branch_style_plugins
+	install -m 644 branch_style_plugins.h /usr/local/include/branch_style_plugins/
+
+# Create example usage
+examples: $(ENHANCED_GENERATOR_EXEC)
+	@echo "Creating example outputs..."
+	./$(ENHANCED_GENERATOR_EXEC) generate
+	./$(ENHANCED_GENERATOR_EXEC) complex
+	@echo "Examples created: enhanced_stub_with_branches.cpp, complex_mixed_stub.cpp"
+
+# Performance test
+perf-test: $(ENHANCED_GENERATOR_EXEC)
+	@echo "Running performance tests..."
+	time ./$(ENHANCED_GENERATOR_EXEC) benchmark
+	@echo "Performance test completed"
+
+# Memory leak check (requires valgrind)
+memcheck: $(DEMO_EXEC)
+	@echo "Running memory leak check..."
+	valgrind --leak-check=full --show-leak-kinds=all ./$(DEMO_EXEC) 2>/dev/null || echo "Valgrind not available"
+
+# Code coverage (requires gcov)
+coverage: CXXFLAGS += --coverage
+coverage: $(DEMO_EXEC)
+	@echo "Running code coverage..."
+	./$(DEMO_EXEC)
+	gcov $(BRANCH_PLUGIN_SOURCES) $(DEMO_SOURCES) 2>/dev/null || echo "gcov not available"
 
 # Help target
 help:
 	@echo "Available targets:"
-	@echo ""
-	@echo "🟢 NATIVE IMPLEMENTATION (Zero Dependencies):"
-	@echo "  native           - Build all native components"
-	@echo "  native_encryptor - Build native encryptor"
-	@echo "  native_xll_dropper - Build native XLL dropper"
-	@echo "  native_gui       - Build native GUI"
-	@echo "  native_stub_generator - Build native stub generator"
-	@echo "  mirc_bot_builder - Build mIRC bot builder"
-	@echo "  test             - Test native components"
-	@echo ""
-	@echo "📦 INSTALLATION:"
-	@echo "  install          - Install native components"
-	@echo "  uninstall        - Remove native components"
-	@echo ""
-	@echo "🔧 UTILITIES:"
-	@echo "  clean            - Remove all built files"
-	@echo "  docs             - Show documentation"
-	@echo "  help             - Show this help"
+	@echo "  all           - Build all executables"
+	@echo "  demo          - Run the branch style demo"
+	@echo "  generator-demo- Run the enhanced generator demo"
+	@echo "  generate      - Generate a basic obfuscated stub"
+	@echo "  complex       - Generate a complex mixed-style stub"
+	@echo "  benchmark     - Benchmark all branch styles"
+	@echo "  test          - Run all tests"
+	@echo "  windows       - Cross-compile for Windows"
+	@echo "  debug         - Build with debug symbols"
+	@echo "  release       - Build optimized release version"
+	@echo "  profile       - Build with profiling support"
+	@echo "  analyze       - Run static analysis"
+	@echo "  format        - Format source code"
+	@echo "  clean         - Remove build artifacts"
+	@echo "  distclean     - Remove all generated files"
+	@echo "  docs          - Generate documentation"
+	@echo "  install       - Install to system directories"
+	@echo "  examples      - Create example output files"
+	@echo "  perf-test     - Run performance tests"
+	@echo "  memcheck      - Check for memory leaks"
+	@echo "  coverage      - Generate code coverage report"
+	@echo "  help          - Show this help message"
 
-.PHONY: all native clean install uninstall test docs help
+# Declare phony targets
+.PHONY: all demo generator-demo generate complex benchmark test windows debug release profile analyze format clean distclean docs install examples perf-test memcheck coverage help
