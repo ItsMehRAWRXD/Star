@@ -1,4 +1,0 @@
-You will receive a task. Produce a short plan with numbered steps and end with 'READY'.
-Focus on clear milestones and a minimal viable first iteration.
-Keep to 10-15 lines at most.
-When you are ready to begin, output exactly: READY
