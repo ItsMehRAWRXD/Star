@@ -4,6 +4,7 @@ import argparse
 import random
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -30,6 +31,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--seed", dest="seed", type=int, default=None, help="Seed for pseudo-randomness.")
     parser.add_argument("--ext", dest="ext_override", type=str, default=None, help="Force output file extension (e.g., .py). Defaults to template-driven.")
     parser.add_argument("--quiet", action="store_true", help="Suppress output messages.")
+    parser.add_argument("--var", dest="vars", action="append", default=None, help="Template variable override in key=value form. Can be repeated.")
     return parser.parse_args(argv)
 
 
@@ -44,7 +46,18 @@ def main(argv: Optional[list[str]] = None) -> None:
 
     loader = TemplateLoader(args.templates_dir)
     engine = SimpleTemplateEngine()
-    context = RenderContext.from_json(args.context_json) if args.context_json else RenderContext.empty()
+    base_values = RenderContext.from_json(args.context_json).values if args.context_json else {}
+    # Merge CLI --var overrides
+    if args.vars:
+        for item in args.vars:
+            if "=" in item:
+                k, v = item.split("=", 1)
+                base_values[k.strip()] = v
+    # Provide light defaults
+    base_values.setdefault("target", "World")
+    base_values.setdefault("event", "app_event")
+    base_values.setdefault("user_id", f"user_{uuid.uuid4().hex[:8]}")
+    context = RenderContext(values=base_values)
     writer = CodeWriter(out_dir=out_dir, overwrite=args.overwrite, ext_override=args.ext_override)
 
     available_templates = discover_templates(loader.templates_root)
