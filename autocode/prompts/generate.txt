@@ -1,0 +1,12 @@
+Task: {{task}}
+
+Respond with a JSON object with keys:
+- files: list of {"path": string, "content": string}
+- run_command: optional string
+- finish: boolean
+- notes: optional string
+
+Rules:
+- Only output JSON, nothing else
+- Avoid shell placeholders; provide concrete, runnable code
+- Prefer minimal viable solution first; iterate in subsequent steps
