@@ -9,6 +9,7 @@ DEMO_SOURCES = branch_style_demo.cpp
 ENHANCED_GENERATOR_SOURCES = enhanced_stub_generator_with_branches.cpp
 NATIVE_TETRIS_SOURCES = native_branch_tetris.cpp
 BUSINESS_COPILOT_SOURCES = business_copilot.cpp
+PURE_COPILOT_SOURCES = pure_business_copilot.cpp
 
 # Object files
 BRANCH_PLUGIN_OBJECTS = $(BRANCH_PLUGIN_SOURCES:.cpp=.o)
@@ -16,15 +17,17 @@ DEMO_OBJECTS = $(DEMO_SOURCES:.cpp=.o)
 ENHANCED_GENERATOR_OBJECTS = $(ENHANCED_GENERATOR_SOURCES:.cpp=.o)
 NATIVE_TETRIS_OBJECTS = $(NATIVE_TETRIS_SOURCES:.cpp=.o)
 BUSINESS_COPILOT_OBJECTS = $(BUSINESS_COPILOT_SOURCES:.cpp=.o)
+PURE_COPILOT_OBJECTS = $(PURE_COPILOT_SOURCES:.cpp=.o)
 
 # Executable names
 DEMO_EXEC = branch_style_demo
 ENHANCED_GENERATOR_EXEC = enhanced_stub_generator_with_branches
 NATIVE_TETRIS_EXEC = native_branch_tetris
 BUSINESS_COPILOT_EXEC = business_copilot
+PURE_COPILOT_EXEC = pure_business_copilot
 
 # Default target
-all: $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC) $(NATIVE_TETRIS_EXEC) $(BUSINESS_COPILOT_EXEC)
+all: $(PURE_COPILOT_EXEC)
 
 # Build the demo executable
 $(DEMO_EXEC): $(BRANCH_PLUGIN_OBJECTS) $(DEMO_OBJECTS)
@@ -75,7 +78,7 @@ test: business tetris demo
 
 # Clean build artifacts
 clean:
-	rm -f *.o $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC) $(NATIVE_TETRIS_EXEC) $(BUSINESS_COPILOT_EXEC)
+	rm -f *.o $(DEMO_EXEC) $(ENHANCED_GENERATOR_EXEC) $(NATIVE_TETRIS_EXEC) $(BUSINESS_COPILOT_EXEC) $(PURE_COPILOT_EXEC)
 	rm -f enhanced_stub_with_branches.cpp complex_mixed_stub.cpp
 
 # Help target
