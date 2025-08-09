@@ -1,0 +1,44 @@
+# Default configuration for autonomous code generator
+
+generators:
+  simple:
+    seed: 42
+    default_language: "asm"
+    
+  pattern:
+    seed: 42
+    default_patterns:
+      - singleton
+      - factory
+      - observer
+      
+  fractal:
+    seed: 42
+    min_depth: 1
+    max_depth: 5
+    default_branching: 2
+    
+  markov:
+    seed: 42
+    order: 2
+    
+  function:
+    seed: 42
+    default_types:
+      - math
+      - string
+      - alphanumeric
+      
+  template:
+    seed: 42
+    template_dir: "src/templates"
+
+# Output settings
+output:
+  default_extension: ".txt"
+  create_directories: true
+  
+# Generation limits
+limits:
+  max_file_size: 1048576  # 1MB
+  max_generation_time: 300  # 5 minutes
