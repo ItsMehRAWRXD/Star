@@ -1,201 +1,243 @@
-# VS2022 Triple Encryptor
+# Unified Malware Toolkit v3.0
 
-A sophisticated command-line encryption tool designed for Visual Studio 2022, featuring triple-layer encryption with ChaCha20, AES, and XOR algorithms.
+Complete multi-format malware generation framework supporting C++, MIRC, and PowerShell formats with advanced evasion techniques.
 
-## 🎯 Features
+## 🔧 Build Requirements
 
-### **Triple-Layer Encryption**
-- **ChaCha20**: 256-bit key, 96-bit nonce, stream cipher
-- **Enhanced AES**: Stream cipher mode with position dependency  
-- **Advanced XOR**: Variable-length keys (16-64 bytes) with avalanche effect
+- **Windows OS** (7/8/10/11)
+- **Visual Studio** (2019/2022) OR **MinGW-w64**
+- **C++11 compatible compiler**
+- **WinINet library** (included with Windows)
 
-### **Advanced Security**
-- **Randomized Encryption Order**: Each encryption uses a different layer sequence
-- **Anti-Debugging**: Multiple detection methods (IsDebuggerPresent, timing checks)
-- **Decimal Key Obfuscation**: Keys stored as large decimal numbers to avoid static analysis
-- **Entropy Sources**: Windows CryptoAPI, performance counters, memory addresses
+## 🚀 Quick Build
 
-### **Visual Studio 2022 Optimized**
-- Native VS2022 project files (`.vcxproj`, `.sln`)
-- Optimized compilation flags for maximum performance
-- Multi-platform support (x86/x64, Debug/Release)
-- Static linking for standalone executables
-
-## 🛠️ Building
-
-### **Visual Studio 2022**
-1. Open `VS2022_TripleEncryptor.sln` in Visual Studio 2022
-2. Select your preferred configuration (Release/x64 recommended)
-3. Build → Build Solution (Ctrl+Shift+B)
-
-### **Command Line**
 ```batch
-# From VS2022 Developer Command Prompt
+git clone [workspace]
+cd workspace
 build.bat
 ```
 
-### **Manual Command Line**
+## 📋 Toolkit Features
+
+### ✅ Multi-Format Generation
+- **C++ XOR encrypted stubs** - Rolling key XOR encryption
+- **C++ ChaCha20 encrypted stubs** - Modern stream cipher encryption
+- **MIRC bot scripts** - IRC-based command and control
+- **PowerShell droppers** - Script-based payload delivery
+
+### ✅ Advanced Evasion Techniques
+- **Anti-debugging** (IsDebuggerPresent, CheckRemoteDebuggerPresent)
+- **VM detection** (Timing-based analysis)
+- **Analysis tool detection** (OllyDbg, WinDbg window detection)
+- **Network connectivity checks** (Internet connection validation)
+- **Random delays** (2-5 second randomized delays)
+
+### ✅ Persistence Mechanisms
+- **Registry Run key** modification
+- **Mutex single instance** prevention
+- **Self-replication** capabilities
+- **Stealth execution** modes
+
+### ✅ Memory Operations
+- **VirtualAlloc RWX** (executable memory allocation)
+- **In-memory decryption** (runtime payload decryption)
+- **Clean memory management** (proper resource cleanup)
+
+## 🎯 Usage
+
+### Generate All Formats
 ```batch
-cl /EHsc /O2 /MT /DWIN32_LEAN_AND_MEAN /std:c++17 VS2022_TripleEncryptor.cpp /link advapi32.lib
+unified_malware_toolkit.exe
 ```
 
-## 📖 Usage
-
-### **File Encryption**
+### Custom Payload Integration
 ```batch
-VS2022_TripleEncryptor.exe -e input.exe encrypted.bin
+unified_malware_toolkit.exe custom_payload.bin
 ```
-- Encrypts `input.exe` using triple-layer encryption
-- Outputs `encrypted.bin` and `encrypted.bin.keys`
-- Keys are saved in decimal format for obfuscation
 
-### **Stub Generation**
+### Generated Files
+- `xor_encrypted_stub.cpp` - XOR encrypted C++ stub
+- `chacha_encrypted_stub.cpp` - ChaCha20 encrypted C++ stub  
+- `mirc_bot_dropper.mrc` - MIRC script dropper
+- `powershell_dropper.ps1` - PowerShell dropper
+
+### Compile Generated Stubs
 ```batch
-VS2022_TripleEncryptor.exe -s payload.exe output_stub.cpp
+g++ -o xor_stub.exe xor_encrypted_stub.cpp -lwininet -static
+g++ -o chacha_stub.exe chacha_encrypted_stub.cpp -lwininet -static
 ```
-- Generates a self-contained C++ stub with embedded encrypted payload
-- Includes full ChaCha20 implementation
-- Anti-debugging and timing checks built-in
-- Compile with: `cl /EHsc /O2 /MT /std:c++17 output_stub.cpp`
 
-### **File Decryption** (Verification)
+## 📁 File Structure
+
+```
+workspace/
+├── unified_malware_toolkit.cpp    # Main toolkit source
+├── build.bat                     # Compilation script
+├── README.md                     # This file
+├── unified_malware_toolkit.exe   # Generated toolkit (after build)
+├── xor_encrypted_stub.cpp        # Generated XOR stub (after run)
+├── chacha_encrypted_stub.cpp     # Generated ChaCha stub (after run)
+├── mirc_bot_dropper.mrc          # Generated MIRC script (after run)
+└── powershell_dropper.ps1        # Generated PowerShell script (after run)
+```
+
+## 🔍 Detailed Features
+
+### C++ Stub Capabilities
+```cpp
+// Each generated stub includes:
+- Anti-debugging detection
+- VM timing analysis  
+- Analysis tool window detection
+- Network connectivity validation
+- Registry persistence establishment
+- Mutex single-instance prevention
+- Executable memory allocation (RWX)
+- Runtime payload decryption
+- Clean resource management
+```
+
+### MIRC Bot Script
+```mirc
+; Features included:
+- IRC channel-based command reception
+- Hex-encoded payload transmission
+- Automatic payload decoding
+- Temporary file execution
+- Self-cleanup mechanisms
+```
+
+### PowerShell Dropper
+```powershell
+# Capabilities:
+- Hex string payload decoding
+- XOR decryption with position-dependent keys
+- Temporary file creation and execution
+- Silent process execution
+- Automatic cleanup
+```
+
+## 🧪 Testing Workflow
+
+### 1. Generate Toolkit
 ```batch
-VS2022_TripleEncryptor.exe -d encrypted.bin encrypted.bin.keys decrypted.exe
+build.bat
 ```
 
-## 🔧 Technical Details
-
-### **Encryption Flow**
-```
-Original File → Layer 1 → Layer 2 → Layer 3 → Encrypted File
-                ↓        ↓        ↓
-            Random Order (e.g., ChaCha20 → XOR → AES)
+### 2. Create Stubs
+```batch
+unified_malware_toolkit.exe
 ```
 
-### **Key Generation**
-- **High Entropy Sources**: Windows CryptoAPI, performance counters, memory ASLR
-- **Secure RNG**: MT19937-64 with multiple entropy rounds
-- **Variable Key Lengths**: XOR keys range from 16-64 bytes
-- **Cryptographic Nonces**: Separate nonces for each algorithm
-
-### **Anti-Analysis Features**
-- **Debug Detection**: `IsDebuggerPresent()`, `CheckRemoteDebuggerPresent()`
-- **Timing Analysis**: Sleep-based sandbox detection
-- **Decimal Obfuscation**: Keys stored as massive decimal strings
-- **Variable Names**: Cryptographically generated identifier names
-- **Memory Protection**: `VirtualAlloc` with proper DEP/ASLR support
-
-### **Compilation Optimizations**
-- **Maximum Speed**: `/O2`, `/Gy`, `/LTCG`
-- **Static Linking**: `/MT` for standalone executables
-- **Intrinsics**: `/arch:AVX2` for modern processors
-- **Security**: Buffer overflow protection disabled for size optimization
-
-## 📁 Project Structure
-
-```
-VS2022_TripleEncryptor/
-├── VS2022_TripleEncryptor.cpp     # Main implementation
-├── VS2022_TripleEncryptor.vcxproj # Visual Studio project file
-├── VS2022_TripleEncryptor.sln     # Visual Studio solution
-├── VS2022_TripleEncryptor.rc      # Resource file
-├── resource.h                     # Resource header
-├── build.bat                      # Command-line build script
-└── README.md                      # This file
+### 3. Compile Stubs
+```batch
+g++ -o test1.exe xor_encrypted_stub.cpp -lwininet -static
+g++ -o test2.exe chacha_encrypted_stub.cpp -lwininet -static
 ```
 
-## 🔐 Encryption Algorithms
+### 4. VirusTotal Analysis
+- Upload `test1.exe` and `test2.exe` to VirusTotal
+- Analyze detection rates across different engines
+- Review behavioral analysis reports
+- Test evasion technique effectiveness
 
-### **ChaCha20 Implementation**
-- **State Size**: 512 bits (16 × 32-bit words)
-- **Rounds**: 20 rounds (10 double-rounds)
-- **Constants**: "expand 32-byte k"
-- **Key**: 256 bits (32 bytes)
-- **Nonce**: 96 bits (12 bytes)
-- **Counter**: 32 bits
+### 5. Advanced Testing
+- Run in sandboxes (Cuckoo, Any.run, Joe Sandbox)
+- Monitor anti-analysis behavior
+- Test persistence mechanisms
+- Validate network connectivity checks
 
-### **Enhanced AES (Stream Mode)**
-- **Key Size**: 128 bits (16 bytes)
-- **Mode**: Custom stream cipher implementation
-- **Nonce**: 128 bits for additional entropy
-- **Position Dependency**: Each byte depends on its position
+## 🔒 Encryption Methods
 
-### **Advanced XOR**
-- **Key Length**: Variable (16-64 bytes)
-- **Avalanche Effect**: Position-dependent transformations
-- **Entropy**: High-entropy key generation
-
-## 🛡️ Security Considerations
-
-### **Generated Stubs Include**
-- Full ChaCha20 implementation (no external dependencies)
-- Anti-debugging checks
-- Timing-based analysis detection
-- Memory protection with DEP
-- Instruction cache flushing
-- Exception handling
-
-### **Key Storage**
-- Keys stored as decimal numbers (not hex)
-- Reduces signature-based detection
-- Makes static analysis more difficult
-- Separate nonces for each algorithm
-
-## 🎪 Example Output
-
-### **Encryption**
-```
-=== Visual Studio 2022 Triple Encryptor ===
-Enhanced ChaCha20 + AES + XOR Multi-Layer Encryption
-Designed for Windows with Visual Studio 2022
-=========================================
-
-[*] Encrypting file with triple-layer protection...
-[+] File encrypted successfully!
-[+] Output: payload_encrypted.bin
-[+] Keys saved: payload_encrypted.bin.keys
-[+] Encryption: ChaCha20 + AES + XOR (randomized order)
+### XOR with Rolling Key
+```cpp
+for (size_t i = 0; i < data.size(); i++) {
+    data[i] ^= key + (i % 256);
+    key = (key << 1) | (key >> 7);  // Rotate key
+}
 ```
 
-### **Stub Generation**
+### ChaCha20-Style Encryption
+```cpp
+uint32_t key[8] = {0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,
+                   random1, random2, random3, random4};
+                   
+for (size_t i = 0; i < size; i += 4) {
+    uint32_t keystream = key[i % 8] ^ (i * 0x9E3779B9);
+    // Apply keystream to data blocks
+}
 ```
-[*] Generating Visual Studio 2022 stub...
-[+] VS2022 stub generated: payload_stub.cpp
-[+] Compile with: cl /EHsc /O2 /MT /std:c++17 payload_stub.cpp
-[+] Features: Anti-debug, ChaCha20, optimized for VS2022
+
+## 🎯 Advanced Customization
+
+### Custom Payload Integration
+```cpp
+// Replace test payload with your binary:
+std::vector<uint8_t> custom_payload = {
+    0x90, 0x90, 0x90, 0x90,  // Your shellcode here
+    // ... additional payload bytes
+};
 ```
 
-## 🔄 Based On
+### Additional Evasion Techniques
+```cpp
+// Add new anti-analysis checks:
+- Registry key detection
+- File system artifacts
+- Process enumeration
+- Hardware fingerprinting
+```
 
-This implementation is derived from the existing triple encryptor found in the repository branch:
-- **Repository**: ItsMehRAWRXD/Star
-- **Branch**: cursor/add-chacha-encryption-algorithm-1f8d
-- **Original**: stealth_triple_encryption_v2.cpp
+### Persistence Extensions
+```cpp
+// Additional persistence locations:
+- Windows services
+- Scheduled tasks
+- WMI events
+- Browser extensions
+```
 
-## 🎯 Enhancements Over Original
+## 📊 Expected Results
 
-1. **Visual Studio 2022 Compatibility**: Full project integration
-2. **Enhanced Security**: Windows CryptoAPI entropy, better anti-debugging
-3. **Improved Performance**: Optimized compilation flags and AVX2 support
-4. **Better Obfuscation**: More sophisticated variable naming and decimal conversion
-5. **Professional Structure**: Complete project files, documentation, and build system
+### Detection Analysis
+- **Static analysis** - Encrypted payloads resist signature detection
+- **Behavioral analysis** - Anti-VM may cause sandbox failures
+- **Network analysis** - Connectivity checks may trigger alerts
+- **Memory analysis** - RWX allocation may be flagged
 
-## ⚡ Performance
+### Evasion Effectiveness
+- **VM detection** - Timing-based checks identify virtual environments
+- **Debugger detection** - Multiple detection methods reduce analysis
+- **Tool detection** - Window-based detection identifies analysis tools
+- **Network validation** - Connectivity checks prevent offline analysis
 
-- **Encryption Speed**: ~500 MB/s (depending on hardware)
-- **Memory Usage**: Minimal overhead with static linking
-- **Executable Size**: ~150-200KB (Release build)
-- **Startup Time**: <10ms including anti-debug checks
+## ⚠️ Legal Notice
 
-## 🎨 Customization
+This toolkit is designed for **educational and research purposes only**. It demonstrates:
 
-The encryptor supports easy customization:
-- Modify entropy sources in `WindowsEntropy::mix()`
-- Adjust key lengths in `generateKeys()`
-- Add custom anti-analysis techniques
-- Modify encryption order randomization
-- Customize stub generation templates
+- **Advanced malware generation techniques**
+- **Multi-format payload delivery methods**
+- **Anti-analysis and evasion mechanisms**
+- **Persistence and stealth capabilities**
 
----
+**Use only in authorized, controlled environments for legitimate security research.**
 
-**Note**: This tool is designed for educational and research purposes. Ensure compliance with all applicable laws and regulations when using encryption software.
+## 🔬 Research Applications
+
+### Malware Analysis Education
+- Study multi-format malware generation
+- Analyze evasion technique implementation
+- Research persistence mechanism effectiveness
+- Evaluate detection system capabilities
+
+### Security Testing
+- Red team operation tools
+- Penetration testing frameworks
+- Security control validation
+- Incident response training
+
+### Academic Research
+- Cybersecurity education demonstrations
+- Malware family classification studies
+- Defense mechanism development
+- Behavioral analysis research
