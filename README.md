@@ -1,201 +1,150 @@
-# VS2022 Triple Encryptor
+# VScore.dev Scroll Wheel PoC
 
-A sophisticated command-line encryption tool designed for Visual Studio 2022, featuring triple-layer encryption with ChaCha20, AES, and XOR algorithms.
+A modern, interactive scroll wheel proof of concept for VScore.dev. This component demonstrates advanced web interaction patterns with smooth animations, responsive design, and multiple input methods.
 
-## 🎯 Features
+## Features
 
-### **Triple-Layer Encryption**
-- **ChaCha20**: 256-bit key, 96-bit nonce, stream cipher
-- **Enhanced AES**: Stream cipher mode with position dependency  
-- **Advanced XOR**: Variable-length keys (16-64 bytes) with avalanche effect
+### 🎯 Core Functionality
+- **Interactive Scroll Wheel**: Rotate using mouse wheel, touch gestures, or keyboard
+- **Dynamic Segments**: Configurable number of segments (4-12)
+- **Real-time Controls**: Adjust wheel size, rotation speed, and segment count
+- **Visual Feedback**: Active segment highlighting and rotation indicator
+- **Smooth Animations**: CSS transitions and JavaScript animations for fluid interactions
 
-### **Advanced Security**
-- **Randomized Encryption Order**: Each encryption uses a different layer sequence
-- **Anti-Debugging**: Multiple detection methods (IsDebuggerPresent, timing checks)
-- **Decimal Key Obfuscation**: Keys stored as large decimal numbers to avoid static analysis
-- **Entropy Sources**: Windows CryptoAPI, performance counters, memory addresses
+### 🎮 Input Methods
+- **Mouse Wheel**: Scroll up/down to rotate the wheel
+- **Touch Gestures**: Swipe up/down on mobile devices
+- **Keyboard Controls**: Arrow keys for precise rotation
+- **Mouse Drag**: Click and drag for manual rotation
+- **Segment Click**: Click any segment to jump to it
 
-### **Visual Studio 2022 Optimized**
-- Native VS2022 project files (`.vcxproj`, `.sln`)
-- Optimized compilation flags for maximum performance
-- Multi-platform support (x86/x64, Debug/Release)
-- Static linking for standalone executables
+### 🎨 Visual Design
+- **Modern UI**: Clean, gradient-based design with glassmorphism effects
+- **Responsive Layout**: Adapts to different screen sizes
+- **Smooth Transitions**: CSS animations for all interactive elements
+- **Custom Styling**: Gradient backgrounds, custom scrollbars, and hover effects
 
-## 🛠️ Building
+### ⚙️ Interactive Controls
+- **Segment Count Slider**: 4-12 segments
+- **Wheel Size Slider**: 200-400px diameter
+- **Rotation Speed Slider**: 0.1x to 2.0x multiplier
+- **Reset Button**: Return to default state
+- **Spin Toggle**: Continuous rotation animation
 
-### **Visual Studio 2022**
-1. Open `VS2022_TripleEncryptor.sln` in Visual Studio 2022
-2. Select your preferred configuration (Release/x64 recommended)
-3. Build → Build Solution (Ctrl+Shift+B)
+## Usage
 
-### **Command Line**
-```batch
-# From VS2022 Developer Command Prompt
-build.bat
-```
+### Basic Controls
+- **Mouse Wheel**: Scroll to rotate the wheel
+- **Arrow Keys**: Up/Down arrows for rotation
+- **Spacebar**: Toggle spinning animation
+- **R Key**: Reset wheel to default position
+- **Click Segments**: Jump directly to any segment
+- **Drag**: Click and drag for manual rotation
 
-### **Manual Command Line**
-```batch
-cl /EHsc /O2 /MT /DWIN32_LEAN_AND_MEAN /std:c++17 VS2022_TripleEncryptor.cpp /link advapi32.lib
-```
+### Advanced Features
+- **Touch Support**: Works on mobile devices with swipe gestures
+- **Keyboard Shortcuts**: Full keyboard navigation support
+- **Real-time Feedback**: Live display of rotation angle, active segment, and scroll direction
+- **Smooth Animations**: Easing functions for natural movement
 
-## 📖 Usage
+## Technical Implementation
 
-### **File Encryption**
-```batch
-VS2022_TripleEncryptor.exe -e input.exe encrypted.bin
-```
-- Encrypts `input.exe` using triple-layer encryption
-- Outputs `encrypted.bin` and `encrypted.bin.keys`
-- Keys are saved in decimal format for obfuscation
+### Architecture
+- **Vanilla JavaScript**: No external dependencies
+- **ES6 Classes**: Object-oriented design pattern
+- **CSS Grid/Flexbox**: Modern layout techniques
+- **CSS Custom Properties**: Dynamic styling capabilities
 
-### **Stub Generation**
-```batch
-VS2022_TripleEncryptor.exe -s payload.exe output_stub.cpp
-```
-- Generates a self-contained C++ stub with embedded encrypted payload
-- Includes full ChaCha20 implementation
-- Anti-debugging and timing checks built-in
-- Compile with: `cl /EHsc /O2 /MT /std:c++17 output_stub.cpp`
+### Key Components
+1. **ScrollWheel Class**: Main controller for all wheel functionality
+2. **Event Listeners**: Comprehensive input handling
+3. **Animation System**: Smooth transitions and easing
+4. **State Management**: Real-time updates and synchronization
 
-### **File Decryption** (Verification)
-```batch
-VS2022_TripleEncryptor.exe -d encrypted.bin encrypted.bin.keys decrypted.exe
-```
+### Browser Support
+- **Modern Browsers**: Chrome, Firefox, Safari, Edge
+- **Mobile Support**: iOS Safari, Chrome Mobile
+- **Touch Events**: Full touch gesture support
+- **CSS Features**: Grid, Flexbox, Custom Properties
 
-## 🔧 Technical Details
-
-### **Encryption Flow**
-```
-Original File → Layer 1 → Layer 2 → Layer 3 → Encrypted File
-                ↓        ↓        ↓
-            Random Order (e.g., ChaCha20 → XOR → AES)
-```
-
-### **Key Generation**
-- **High Entropy Sources**: Windows CryptoAPI, performance counters, memory ASLR
-- **Secure RNG**: MT19937-64 with multiple entropy rounds
-- **Variable Key Lengths**: XOR keys range from 16-64 bytes
-- **Cryptographic Nonces**: Separate nonces for each algorithm
-
-### **Anti-Analysis Features**
-- **Debug Detection**: `IsDebuggerPresent()`, `CheckRemoteDebuggerPresent()`
-- **Timing Analysis**: Sleep-based sandbox detection
-- **Decimal Obfuscation**: Keys stored as massive decimal strings
-- **Variable Names**: Cryptographically generated identifier names
-- **Memory Protection**: `VirtualAlloc` with proper DEP/ASLR support
-
-### **Compilation Optimizations**
-- **Maximum Speed**: `/O2`, `/Gy`, `/LTCG`
-- **Static Linking**: `/MT` for standalone executables
-- **Intrinsics**: `/arch:AVX2` for modern processors
-- **Security**: Buffer overflow protection disabled for size optimization
-
-## 📁 Project Structure
+## File Structure
 
 ```
-VS2022_TripleEncryptor/
-├── VS2022_TripleEncryptor.cpp     # Main implementation
-├── VS2022_TripleEncryptor.vcxproj # Visual Studio project file
-├── VS2022_TripleEncryptor.sln     # Visual Studio solution
-├── VS2022_TripleEncryptor.rc      # Resource file
-├── resource.h                     # Resource header
-├── build.bat                      # Command-line build script
-└── README.md                      # This file
+├── index.html          # Main HTML structure
+├── styles.css          # CSS styling and animations
+├── script.js           # JavaScript functionality
+└── README.md           # This documentation
 ```
 
-## 🔐 Encryption Algorithms
+## Customization
 
-### **ChaCha20 Implementation**
-- **State Size**: 512 bits (16 × 32-bit words)
-- **Rounds**: 20 rounds (10 double-rounds)
-- **Constants**: "expand 32-byte k"
-- **Key**: 256 bits (32 bytes)
-- **Nonce**: 96 bits (12 bytes)
-- **Counter**: 32 bits
+### Styling
+The wheel can be customized by modifying the CSS variables and classes:
+- Color schemes in `styles.css`
+- Animation durations and easing functions
+- Responsive breakpoints
+- Visual effects and shadows
 
-### **Enhanced AES (Stream Mode)**
-- **Key Size**: 128 bits (16 bytes)
-- **Mode**: Custom stream cipher implementation
-- **Nonce**: 128 bits for additional entropy
-- **Position Dependency**: Each byte depends on its position
+### Functionality
+Extend the JavaScript class to add new features:
+- Custom segment behaviors
+- Additional input methods
+- Integration with external APIs
+- Data binding and state management
 
-### **Advanced XOR**
-- **Key Length**: Variable (16-64 bytes)
-- **Avalanche Effect**: Position-dependent transformations
-- **Entropy**: High-entropy key generation
+## Development
 
-## 🛡️ Security Considerations
+### Local Development
+1. Clone or download the files
+2. Open `index.html` in a web browser
+3. No build process required - pure HTML/CSS/JS
 
-### **Generated Stubs Include**
-- Full ChaCha20 implementation (no external dependencies)
-- Anti-debugging checks
-- Timing-based analysis detection
-- Memory protection with DEP
-- Instruction cache flushing
-- Exception handling
-
-### **Key Storage**
-- Keys stored as decimal numbers (not hex)
-- Reduces signature-based detection
-- Makes static analysis more difficult
-- Separate nonces for each algorithm
-
-## 🎪 Example Output
-
-### **Encryption**
+### Browser Console
+Open the browser console to see helpful instructions and debug information:
 ```
-=== Visual Studio 2022 Triple Encryptor ===
-Enhanced ChaCha20 + AES + XOR Multi-Layer Encryption
-Designed for Windows with Visual Studio 2022
-=========================================
-
-[*] Encrypting file with triple-layer protection...
-[+] File encrypted successfully!
-[+] Output: payload_encrypted.bin
-[+] Keys saved: payload_encrypted.bin.keys
-[+] Encryption: ChaCha20 + AES + XOR (randomized order)
+VScore.dev Scroll Wheel PoC Loaded!
+Controls:
+- Mouse wheel: Rotate wheel
+- Arrow keys: Rotate wheel
+- Spacebar: Toggle spinning animation
+- R key: Reset wheel
+- Click segments: Jump to segment
+- Drag wheel: Manual rotation
 ```
 
-### **Stub Generation**
-```
-[*] Generating Visual Studio 2022 stub...
-[+] VS2022 stub generated: payload_stub.cpp
-[+] Compile with: cl /EHsc /O2 /MT /std:c++17 payload_stub.cpp
-[+] Features: Anti-debug, ChaCha20, optimized for VS2022
-```
+## Performance
 
-## 🔄 Based On
+### Optimizations
+- **RequestAnimationFrame**: Smooth animations without blocking
+- **CSS Transforms**: Hardware-accelerated animations
+- **Event Throttling**: Efficient input handling
+- **Memory Management**: Clean event listener management
 
-This implementation is derived from the existing triple encryptor found in the repository branch:
-- **Repository**: ItsMehRAWRXD/Star
-- **Branch**: cursor/add-chacha-encryption-algorithm-1f8d
-- **Original**: stealth_triple_encryption_v2.cpp
+### Metrics
+- **Initial Load**: < 50KB total size
+- **Animation Performance**: 60fps target
+- **Memory Usage**: Minimal footprint
+- **Touch Responsiveness**: < 16ms latency
 
-## 🎯 Enhancements Over Original
+## Future Enhancements
 
-1. **Visual Studio 2022 Compatibility**: Full project integration
-2. **Enhanced Security**: Windows CryptoAPI entropy, better anti-debugging
-3. **Improved Performance**: Optimized compilation flags and AVX2 support
-4. **Better Obfuscation**: More sophisticated variable naming and decimal conversion
-5. **Professional Structure**: Complete project files, documentation, and build system
+### Potential Features
+- **Data Integration**: Connect to external data sources
+- **Custom Themes**: Multiple visual themes
+- **Accessibility**: ARIA labels and screen reader support
+- **Export/Import**: Save and load wheel configurations
+- **API Integration**: RESTful endpoints for dynamic content
 
-## ⚡ Performance
+### Technical Improvements
+- **Web Components**: Modular component architecture
+- **TypeScript**: Type safety and better development experience
+- **Testing**: Unit and integration tests
+- **Build System**: Modern bundling and optimization
 
-- **Encryption Speed**: ~500 MB/s (depending on hardware)
-- **Memory Usage**: Minimal overhead with static linking
-- **Executable Size**: ~150-200KB (Release build)
-- **Startup Time**: <10ms including anti-debug checks
+## License
 
-## 🎨 Customization
-
-The encryptor supports easy customization:
-- Modify entropy sources in `WindowsEntropy::mix()`
-- Adjust key lengths in `generateKeys()`
-- Add custom anti-analysis techniques
-- Modify encryption order randomization
-- Customize stub generation templates
+This proof of concept is created for VScore.dev demonstration purposes.
 
 ---
 
-**Note**: This tool is designed for educational and research purposes. Ensure compliance with all applicable laws and regulations when using encryption software.
+**VScore.dev Scroll Wheel PoC** - Interactive and Responsive Web Component
