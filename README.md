@@ -1,201 +1,209 @@
-# VS2022 Triple Encryptor
+# VSCode.dev Scroll Wheel PoC
 
-A sophisticated command-line encryption tool designed for Visual Studio 2022, featuring triple-layer encryption with ChaCha20, AES, and XOR algorithms.
+A modern, interactive scroll wheel component designed for vscore.dev with smooth animations, multiple interaction methods, and responsive design.
 
-## 🎯 Features
+## Features
 
-### **Triple-Layer Encryption**
-- **ChaCha20**: 256-bit key, 96-bit nonce, stream cipher
-- **Enhanced AES**: Stream cipher mode with position dependency  
-- **Advanced XOR**: Variable-length keys (16-64 bytes) with avalanche effect
+### 🎯 Core Functionality
+- **Mouse Wheel Navigation**: Smooth scrolling through options using mouse wheel
+- **Keyboard Navigation**: Arrow keys, Home, End, Enter, and Space support
+- **Touch Support**: Swipe gestures for mobile devices
+- **Click Interaction**: Direct selection by clicking on wheel items
 
-### **Advanced Security**
-- **Randomized Encryption Order**: Each encryption uses a different layer sequence
-- **Anti-Debugging**: Multiple detection methods (IsDebuggerPresent, timing checks)
-- **Decimal Key Obfuscation**: Keys stored as large decimal numbers to avoid static analysis
-- **Entropy Sources**: Windows CryptoAPI, performance counters, memory addresses
+### 🎨 Visual Design
+- **VSCode-inspired Theme**: Dark theme with blue accents matching VSCode aesthetic
+- **Smooth Animations**: CSS3 transitions and keyframe animations
+- **Responsive Design**: Adapts to different screen sizes
+- **Visual Feedback**: Hover effects, active states, and interaction feedback
 
-### **Visual Studio 2022 Optimized**
-- Native VS2022 project files (`.vcxproj`, `.sln`)
-- Optimized compilation flags for maximum performance
-- Multi-platform support (x86/x64, Debug/Release)
-- Static linking for standalone executables
+### ⚡ Advanced Features
+- **Performance Monitoring**: Built-in FPS tracking for development
+- **Demo Mode**: Automatic rotation (Ctrl+Shift+D to toggle)
+- **Haptic Feedback**: Vibration on supported mobile devices
+- **Accessibility**: Focus states and keyboard navigation support
+- **Custom Events**: Extensible event system for integration
 
-## 🛠️ Building
-
-### **Visual Studio 2022**
-1. Open `VS2022_TripleEncryptor.sln` in Visual Studio 2022
-2. Select your preferred configuration (Release/x64 recommended)
-3. Build → Build Solution (Ctrl+Shift+B)
-
-### **Command Line**
-```batch
-# From VS2022 Developer Command Prompt
-build.bat
-```
-
-### **Manual Command Line**
-```batch
-cl /EHsc /O2 /MT /DWIN32_LEAN_AND_MEAN /std:c++17 VS2022_TripleEncryptor.cpp /link advapi32.lib
-```
-
-## 📖 Usage
-
-### **File Encryption**
-```batch
-VS2022_TripleEncryptor.exe -e input.exe encrypted.bin
-```
-- Encrypts `input.exe` using triple-layer encryption
-- Outputs `encrypted.bin` and `encrypted.bin.keys`
-- Keys are saved in decimal format for obfuscation
-
-### **Stub Generation**
-```batch
-VS2022_TripleEncryptor.exe -s payload.exe output_stub.cpp
-```
-- Generates a self-contained C++ stub with embedded encrypted payload
-- Includes full ChaCha20 implementation
-- Anti-debugging and timing checks built-in
-- Compile with: `cl /EHsc /O2 /MT /std:c++17 output_stub.cpp`
-
-### **File Decryption** (Verification)
-```batch
-VS2022_TripleEncryptor.exe -d encrypted.bin encrypted.bin.keys decrypted.exe
-```
-
-## 🔧 Technical Details
-
-### **Encryption Flow**
-```
-Original File → Layer 1 → Layer 2 → Layer 3 → Encrypted File
-                ↓        ↓        ↓
-            Random Order (e.g., ChaCha20 → XOR → AES)
-```
-
-### **Key Generation**
-- **High Entropy Sources**: Windows CryptoAPI, performance counters, memory ASLR
-- **Secure RNG**: MT19937-64 with multiple entropy rounds
-- **Variable Key Lengths**: XOR keys range from 16-64 bytes
-- **Cryptographic Nonces**: Separate nonces for each algorithm
-
-### **Anti-Analysis Features**
-- **Debug Detection**: `IsDebuggerPresent()`, `CheckRemoteDebuggerPresent()`
-- **Timing Analysis**: Sleep-based sandbox detection
-- **Decimal Obfuscation**: Keys stored as massive decimal strings
-- **Variable Names**: Cryptographically generated identifier names
-- **Memory Protection**: `VirtualAlloc` with proper DEP/ASLR support
-
-### **Compilation Optimizations**
-- **Maximum Speed**: `/O2`, `/Gy`, `/LTCG`
-- **Static Linking**: `/MT` for standalone executables
-- **Intrinsics**: `/arch:AVX2` for modern processors
-- **Security**: Buffer overflow protection disabled for size optimization
-
-## 📁 Project Structure
+## Files Structure
 
 ```
-VS2022_TripleEncryptor/
-├── VS2022_TripleEncryptor.cpp     # Main implementation
-├── VS2022_TripleEncryptor.vcxproj # Visual Studio project file
-├── VS2022_TripleEncryptor.sln     # Visual Studio solution
-├── VS2022_TripleEncryptor.rc      # Resource file
-├── resource.h                     # Resource header
-├── build.bat                      # Command-line build script
-└── README.md                      # This file
+/workspace/
+├── scroll-wheel-poc.html    # Main HTML file
+├── scroll-wheel.css         # Comprehensive styling
+├── scroll-wheel.js          # Interactive functionality
+└── README.md               # This documentation
 ```
 
-## 🔐 Encryption Algorithms
+## Installation & Usage
 
-### **ChaCha20 Implementation**
-- **State Size**: 512 bits (16 × 32-bit words)
-- **Rounds**: 20 rounds (10 double-rounds)
-- **Constants**: "expand 32-byte k"
-- **Key**: 256 bits (32 bytes)
-- **Nonce**: 96 bits (12 bytes)
-- **Counter**: 32 bits
+### Quick Start
 
-### **Enhanced AES (Stream Mode)**
-- **Key Size**: 128 bits (16 bytes)
-- **Mode**: Custom stream cipher implementation
-- **Nonce**: 128 bits for additional entropy
-- **Position Dependency**: Each byte depends on its position
+1. **Open the demo**: Simply open `scroll-wheel-poc.html` in a modern web browser
+2. **Interact with the wheel**: Use any of the supported interaction methods:
+   - Mouse wheel scrolling
+   - Arrow keys (when focused)
+   - Click on items
+   - Touch/swipe on mobile
 
-### **Advanced XOR**
-- **Key Length**: Variable (16-64 bytes)
-- **Avalanche Effect**: Position-dependent transformations
-- **Entropy**: High-entropy key generation
+### Integration into vscore.dev
 
-## 🛡️ Security Considerations
+To integrate this scroll wheel into your vscore.dev project:
 
-### **Generated Stubs Include**
-- Full ChaCha20 implementation (no external dependencies)
-- Anti-debugging checks
-- Timing-based analysis detection
-- Memory protection with DEP
-- Instruction cache flushing
-- Exception handling
+1. **Copy the files**: Add the CSS and JS files to your project
+2. **Include the HTML structure**:
+   ```html
+   <div class="scroll-wheel" id="scrollWheel">
+       <!-- Wheel items will be generated by JavaScript -->
+   </div>
+   ```
+3. **Initialize the component**:
+   ```javascript
+   const scrollWheel = new ScrollWheel('scrollWheel');
+   ```
 
-### **Key Storage**
-- Keys stored as decimal numbers (not hex)
-- Reduces signature-based detection
-- Makes static analysis more difficult
-- Separate nonces for each algorithm
+### Customization
 
-## 🎪 Example Output
-
-### **Encryption**
-```
-=== Visual Studio 2022 Triple Encryptor ===
-Enhanced ChaCha20 + AES + XOR Multi-Layer Encryption
-Designed for Windows with Visual Studio 2022
-=========================================
-
-[*] Encrypting file with triple-layer protection...
-[+] File encrypted successfully!
-[+] Output: payload_encrypted.bin
-[+] Keys saved: payload_encrypted.bin.keys
-[+] Encryption: ChaCha20 + AES + XOR (randomized order)
+#### Adding Custom Items
+```javascript
+const customItems = [
+    { label: 'Custom', description: 'Your custom functionality', icon: '🚀' },
+    // Add more items...
+];
+scrollWheel.setItems(customItems);
 ```
 
-### **Stub Generation**
+#### Event Handling
+```javascript
+document.getElementById('scrollWheel').addEventListener('wheelItemActivated', (e) => {
+    console.log('Selected:', e.detail.item);
+    // Handle selection...
+});
 ```
-[*] Generating Visual Studio 2022 stub...
-[+] VS2022 stub generated: payload_stub.cpp
-[+] Compile with: cl /EHsc /O2 /MT /std:c++17 payload_stub.cpp
-[+] Features: Anti-debug, ChaCha20, optimized for VS2022
+
+## Browser Compatibility
+
+- ✅ Chrome 70+
+- ✅ Firefox 65+
+- ✅ Safari 12+
+- ✅ Edge 79+
+- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+
+## API Reference
+
+### ScrollWheel Class
+
+#### Constructor
+```javascript
+new ScrollWheel(containerId)
 ```
 
-## 🔄 Based On
+#### Methods
+- `next()` - Navigate to next item
+- `previous()` - Navigate to previous item
+- `selectItem(index)` - Select specific item by index
+- `getCurrentItem()` - Get currently selected item
+- `setItems(items)` - Update wheel items
+- `reset()` - Reset to initial state
 
-This implementation is derived from the existing triple encryptor found in the repository branch:
-- **Repository**: ItsMehRAWRXD/Star
-- **Branch**: cursor/add-chacha-encryption-algorithm-1f8d
-- **Original**: stealth_triple_encryption_v2.cpp
+#### Events
+- `wheelItemActivated` - Fired when an item is activated (Enter/Space/Double-click)
 
-## 🎯 Enhancements Over Original
+## Interaction Methods
 
-1. **Visual Studio 2022 Compatibility**: Full project integration
-2. **Enhanced Security**: Windows CryptoAPI entropy, better anti-debugging
-3. **Improved Performance**: Optimized compilation flags and AVX2 support
-4. **Better Obfuscation**: More sophisticated variable naming and decimal conversion
-5. **Professional Structure**: Complete project files, documentation, and build system
+### Mouse Wheel
+- Scroll up/down to navigate through items
+- Visual feedback with rotation animation
 
-## ⚡ Performance
+### Keyboard Navigation
+- **Arrow Keys**: Navigate up/down/left/right
+- **Home/End**: Jump to first/last item
+- **Enter/Space**: Activate current item
+- **Tab**: Focus the wheel for keyboard navigation
 
-- **Encryption Speed**: ~500 MB/s (depending on hardware)
-- **Memory Usage**: Minimal overhead with static linking
-- **Executable Size**: ~150-200KB (Release build)
-- **Startup Time**: <10ms including anti-debug checks
+### Touch Gestures
+- **Vertical Swipe**: Navigate through items
+- **Tap**: Select specific item
 
-## 🎨 Customization
+### Control Buttons
+- Previous/Next buttons for manual navigation
 
-The encryptor supports easy customization:
-- Modify entropy sources in `WindowsEntropy::mix()`
-- Adjust key lengths in `generateKeys()`
-- Add custom anti-analysis techniques
-- Modify encryption order randomization
-- Customize stub generation templates
+## Performance Features
 
----
+- Optimized CSS animations using `transform` and `opacity`
+- Debounced scroll events to prevent overwhelming
+- Efficient DOM manipulation
+- Minimal reflows and repaints
 
-**Note**: This tool is designed for educational and research purposes. Ensure compliance with all applicable laws and regulations when using encryption software.
+## Development Features
+
+### Debug Mode
+Access the scroll wheel instance globally:
+```javascript
+window.scrollWheel.getCurrentItem()
+window.scrollWheel.selectItem(3)
+```
+
+### Demo Mode
+Press `Ctrl+Shift+D` to enable automatic rotation every 2 seconds.
+
+### Performance Monitoring
+FPS tracking is automatically enabled on localhost for development.
+
+## Styling Customization
+
+The component uses CSS custom properties for easy theming:
+
+```css
+.scroll-wheel {
+    --primary-color: #007acc;
+    --background-color: #1e1e1e;
+    --text-color: #cccccc;
+    /* Customize colors here */
+}
+```
+
+## Mobile Optimization
+
+- Touch-friendly sizing (minimum 44px touch targets)
+- Responsive layout that stacks on mobile
+- Optimized animations for mobile performance
+- Haptic feedback where supported
+
+## Accessibility
+
+- **ARIA labels**: Screen reader support
+- **Keyboard navigation**: Full keyboard accessibility
+- **Focus indicators**: Clear visual focus states
+- **High contrast**: Sufficient color contrast ratios
+
+## Implementation Notes
+
+### VSCode.dev Integration
+This scroll wheel is designed to integrate seamlessly with vscore.dev's existing design system:
+
+- Uses VSCode's color palette (#007acc blue, dark grays)
+- Follows VSCode's typography patterns
+- Implements similar interaction patterns to VSCode's interface
+- Supports both light and dark themes (currently dark-focused)
+
+### Extensibility
+The component is built with extensibility in mind:
+
+- Modular CSS classes for easy styling
+- Event-driven architecture for easy integration
+- Configurable item data structure
+- Plugin-ready design for additional features
+
+## License
+
+This PoC is created for vscore.dev demonstration purposes.
+
+## Contributing
+
+To extend this scroll wheel:
+
+1. Fork the component files
+2. Modify the `items` array in the JavaScript for your use case
+3. Adjust CSS variables for custom theming
+4. Add event listeners for your application's specific needs
+
+For questions or improvements, please refer to the vscore.dev development team.

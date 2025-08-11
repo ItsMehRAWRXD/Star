@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSCode.dev - Scroll Wheel PoC</title>
+    <link rel="stylesheet" href="scroll-wheel.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VSCode.dev Scroll Wheel PoC</h1>
+            <p>Interactive scroll wheel component demonstration</p>
+        </header>
+
+        <main>
+            <div class="scroll-wheel-container">
+                <div class="scroll-wheel" id="scrollWheel">
+                    <div class="wheel-center">
+                        <div class="wheel-indicator"></div>
+                    </div>
+                    <div class="wheel-items">
+                        <div class="wheel-item" data-value="0">
+                            <span class="item-icon">📁</span>
+                            <span class="item-label">Files</span>
+                        </div>
+                        <div class="wheel-item" data-value="1">
+                            <span class="item-icon">🔍</span>
+                            <span class="item-label">Search</span>
+                        </div>
+                        <div class="wheel-item" data-value="2">
+                            <span class="item-icon">🔧</span>
+                            <span class="item-label">Debug</span>
+                        </div>
+                        <div class="wheel-item" data-value="3">
+                            <span class="item-icon">⚙️</span>
+                            <span class="item-label">Settings</span>
+                        </div>
+                        <div class="wheel-item" data-value="4">
+                            <span class="item-icon">📊</span>
+                            <span class="item-label">Analytics</span>
+                        </div>
+                        <div class="wheel-item" data-value="5">
+                            <span class="item-icon">🎨</span>
+                            <span class="item-label">Themes</span>
+                        </div>
+                        <div class="wheel-item" data-value="6">
+                            <span class="item-icon">🧩</span>
+                            <span class="item-label">Extensions</span>
+                        </div>
+                        <div class="wheel-item" data-value="7">
+                            <span class="item-icon">💡</span>
+                            <span class="item-label">Tips</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="wheel-controls">
+                    <button id="prevBtn" class="control-btn">←</button>
+                    <button id="nextBtn" class="control-btn">→</button>
+                </div>
+            </div>
+
+            <div class="demo-content">
+                <div class="selected-item-display">
+                    <h3>Selected: <span id="selectedItem">Files</span></h3>
+                    <div class="item-description" id="itemDescription">
+                        Manage your project files and folder structure
+                    </div>
+                </div>
+
+                <div class="interaction-info">
+                    <h4>How to interact:</h4>
+                    <ul>
+                        <li>Use mouse wheel to scroll through options</li>
+                        <li>Click on any item to select it</li>
+                        <li>Use arrow buttons for navigation</li>
+                        <li>Keyboard arrows also work when focused</li>
+                    </ul>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Current Position:</span>
+                        <span class="stat-value" id="currentPosition">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Items:</span>
+                        <span class="stat-value" id="totalItems">8</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Scroll Events:</span>
+                        <span class="stat-value" id="scrollEvents">0</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="scroll-wheel.js"></script>
+</body>
+</html>

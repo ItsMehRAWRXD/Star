@@ -1,0 +1,348 @@
+/* VSCode.dev Scroll Wheel PoC Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+    color: #cccccc;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    color: #007acc;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 122, 204, 0.3);
+}
+
+header p {
+    font-size: 1.1rem;
+    color: #a6a6a6;
+}
+
+main {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.scroll-wheel-container {
+    position: relative;
+    min-width: 400px;
+    flex: 1;
+}
+
+.scroll-wheel {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, #252526 0%, #1e1e1e 70%);
+    border: 3px solid #007acc;
+    box-shadow: 
+        0 0 20px rgba(0, 122, 204, 0.3),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    cursor: grab;
+}
+
+.scroll-wheel:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+.wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #007acc, #005a9e);
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wheel-indicator {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.wheel-items {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wheel-item {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.wheel-item:hover {
+    background: rgba(0, 122, 204, 0.2);
+    border-color: #007acc;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+}
+
+.wheel-item.active {
+    background: rgba(0, 122, 204, 0.3);
+    border-color: #007acc;
+    transform: scale(1.15);
+    box-shadow: 0 6px 16px rgba(0, 122, 204, 0.4);
+}
+
+.item-icon {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.item-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Position wheel items in a circle */
+.wheel-item[data-value="0"] { top: 20px; left: 50%; transform: translateX(-50%); }
+.wheel-item[data-value="1"] { top: 45px; right: 45px; }
+.wheel-item[data-value="2"] { top: 50%; right: 20px; transform: translateY(-50%); }
+.wheel-item[data-value="3"] { bottom: 45px; right: 45px; }
+.wheel-item[data-value="4"] { bottom: 20px; left: 50%; transform: translateX(-50%); }
+.wheel-item[data-value="5"] { bottom: 45px; left: 45px; }
+.wheel-item[data-value="6"] { top: 50%; left: 20px; transform: translateY(-50%); }
+.wheel-item[data-value="7"] { top: 45px; left: 45px; }
+
+.wheel-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #007acc, #005a9e);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.control-btn:hover {
+    background: linear-gradient(45deg, #1e88e5, #1565c0);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.demo-content {
+    flex: 1;
+    min-width: 300px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selected-item-display {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(0, 122, 204, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #007acc;
+}
+
+.selected-item-display h3 {
+    color: #007acc;
+    margin-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+.item-description {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #cccccc;
+}
+
+.interaction-info {
+    margin-bottom: 30px;
+}
+
+.interaction-info h4 {
+    color: #007acc;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.interaction-info ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.interaction-info li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+    line-height: 1.4;
+}
+
+.interaction-info li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #007acc;
+    font-weight: bold;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #a6a6a6;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #007acc;
+    font-size: 1.1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    main {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .scroll-wheel {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .wheel-item {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .item-icon {
+        font-size: 1.4rem;
+    }
+    
+    .item-label {
+        font-size: 0.6rem;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Animation keyframes */
+@keyframes wheelRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.wheel-indicator.active {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* Smooth scroll behavior */
+.scroll-wheel.scrolling {
+    animation: wheelRotate 0.6s ease-out;
+}
+
+/* Focus styles for accessibility */
+.scroll-wheel:focus,
+.wheel-item:focus,
+.control-btn:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 2px;
+}
+
+/* Selection highlight */
+::selection {
+    background: rgba(0, 122, 204, 0.3);
+    color: white;
+}
