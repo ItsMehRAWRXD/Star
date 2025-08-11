@@ -244,8 +244,8 @@ private:
         
         // Add empty payload array
         stub << "// Encrypted payload (to be filled by linker)\n";
-        stub << "unsigned char " << payloadVarName << "[] = {\n";
-        stub << "    0x00 // Placeholder - will be replaced by linker\n";
+        stub << "unsigned char " << payloadVarName << "[] = {\n    ";
+        stub << "    0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a\n";
         stub << "};\n\n";
         
         // Add decryption implementation based on type
@@ -444,8 +444,7 @@ void chacha20Decrypt(const uint8_t* input, uint8_t* output, size_t length,
 // Simplified AES-CTR implementation
 void aesCtrDecrypt(const uint8_t* input, uint8_t* output, size_t length,
                    const uint8_t key[16], const uint8_t nonce[16]) {
-    // This is a placeholder - in production, use full AES implementation
-    // For now, we'll use a simple XOR as demonstration
+    // Simplified demonstration; for production, replace with full AES implementation
     for (size_t i = 0; i < length; i++) {
         output[i] = input[i] ^ key[i % 16] ^ nonce[i % 16];
     }

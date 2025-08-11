@@ -147,7 +147,7 @@ int main() {
     vBmGweZgF(vCxZkHTjp, nonce);
 
     // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
+    const uint8_t embeddedData[] = {0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a};
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data
