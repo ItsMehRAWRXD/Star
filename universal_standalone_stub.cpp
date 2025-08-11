@@ -201,13 +201,19 @@ int main() {
         return 1; // Exit if debugger detected
     }
     
-    // Standalone stub - no embedded data
-    // Standalone stub - no embedded data}
-    
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
     hexToBytes(KEY_e__EEYAB, key);
     hexToBytes(NONCE_B0cZPjen, nonce);
+    
+    // Sample encrypted data (replace with actual payload)
+    uint8_t embeddedData[] = {
+        0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a, 0x00,
+        0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61, 0x20, 0x73, 0x61, 0x6d, 0x70,
+        0x6c, 0x65, 0x20, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x20, 0x66, 0x6f, 0x72,
+        0x20, 0x64, 0x65, 0x6d, 0x6f, 0x6e, 0x73, 0x74, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e
+    };
+    const size_t embeddedDataSize = sizeof(embeddedData);
     
     // Polymorphic mutation/demutation
     uint32_t seed = std::time(nullptr);
@@ -215,18 +221,16 @@ int main() {
     PolymorphicEngine::mutateArray(nonce, 16, seed);
     
     // Decrypt the data using AES-128-CTR
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
     // Demutate the key and nonce
     PolymorphicEngine::demutateArray(key, 16, seed);
     PolymorphicEngine::demutateArray(nonce, 16, seed);
     
     // Write decrypted data to file
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    // if (outFile.is_open()) {
-    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
         std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
     } else {

@@ -106,8 +106,9 @@ public:
         stub << "\n\n";
         
         stub << "payload:\n";
-        stub << "    ; Encrypted payload goes here (added by encryptor)\n";
-        stub << "    db 0x90  ; NOP placeholder\n";
+        stub << "    ; Sample encrypted payload (replace with actual data)\n";
+        stub << "    db 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f  ; 'Hello Wo'\n";
+        stub << "    db 0x72, 0x6c, 0x64, 0x21, 0x0a, 0x00              ; 'rld!\\n\\0'\n";
         
         return stub.str();
     }

