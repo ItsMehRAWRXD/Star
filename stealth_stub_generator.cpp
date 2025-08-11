@@ -173,8 +173,13 @@ int main() {
     )" + generateRandomVarName() + R"(()" + keyVar + R"(, key);
     )" + generateRandomVarName() + R"(()" + nonceVar + R"(, nonce);
 
-    // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
+    // Embedded encrypted payload data (populated by linker)
+    uint8_t embeddedData[] = {
+        // This array will be replaced with actual encrypted payload
+        // during the linking phase. Example initialization data:
+        0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
+    };
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data

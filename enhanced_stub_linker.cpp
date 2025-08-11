@@ -242,10 +242,13 @@ private:
         }
         stub << "\n";
         
-        // Add empty payload array
+        // Add payload array with example data
         stub << "// Encrypted payload (to be filled by linker)\n";
         stub << "unsigned char " << payloadVarName << "[] = {\n";
-        stub << "    0x00 // Placeholder - will be replaced by linker\n";
+        stub << "    // This array will be populated with actual encrypted payload data\n";
+        stub << "    // during the linking process. Example initialization:\n";
+        stub << "    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,\n";
+        stub << "    0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52\n";
         stub << "};\n\n";
         
         // Add decryption implementation based on type
