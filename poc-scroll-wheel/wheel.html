@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scroll Wheel PoC — Single File</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0b0c10;
+        --bg-elev: #0f1116;
+        --text: #e6e8ef;
+        --muted: #98a2b3;
+        --accent-1: #7c3aed; /* violet */
+        --accent-2: #14b8a6; /* teal */
+        --ring: rgba(124, 58, 237, 0.35);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--text);
+        background:
+          radial-gradient(1200px 600px at 80% -10%, rgba(20, 184, 166, 0.25), transparent 40%),
+          radial-gradient(800px 500px at -10% 20%, rgba(124, 58, 237, 0.3), transparent 35%),
+          var(--bg);
+      }
+      .page {
+        min-height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .header { padding: 28px 28px 0 28px; }
+      .brand { font-weight: 800; letter-spacing: 0.4px; }
+      .subtitle { margin-top: 4px; color: var(--muted); }
+      .wheel-section { display: grid; place-items: center; gap: 28px; padding: 28px; }
+      .wheel-wrapper {
+        position: relative;
+        width: min(72vmin, 560px);
+        aspect-ratio: 1 / 1;
+        display: grid;
+        place-items: center;
+        filter: drop-shadow(0 10px 30px rgba(0,0,0,0.35));
+      }
+      .wheel {
+        position: absolute; inset: 0; border-radius: 999px;
+        background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), rgba(255,255,255,0.01) 50%, transparent 65%),
+                    conic-gradient(from 0deg, rgba(124, 58, 237, 0.15), rgba(20, 184, 166, 0.15), rgba(124, 58, 237, 0.15));
+        backdrop-filter: blur(2px);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.03);
+        overflow: hidden;
+      }
+      .segment {
+        position: absolute; left: 50%; top: 50%; transform-origin: 0 0;
+        color: var(--text); font-weight: 600; font-size: clamp(12px, 2.2vmin, 18px);
+        letter-spacing: 0.3px; opacity: 0.82; transition: opacity 160ms ease; user-select: none; white-space: nowrap;
+      }
+      .segment.is-active { opacity: 1; text-shadow: 0 0 18px rgba(124, 58, 237, 0.55); }
+      .center-dot { position: absolute; width: 14px; height: 14px; border-radius: 999px; background: linear-gradient(180deg, var(--accent-2), var(--accent-1)); box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.15), 0 0 0 12px rgba(20, 184, 166, 0.12); }
+      .selection-indicator { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 2px; height: 24px; background: var(--ring); border-radius: 2px; }
+      .selection-readout { display: grid; place-items: center; gap: 8px; }
+      .selection-readout .label { color: var(--muted); font-size: 12px; }
+      .selection-readout .value { font-size: 28px; font-weight: 700; letter-spacing: 0.3px; }
+      .footer { color: var(--muted); padding: 0 28px 28px 28px; text-align: center; }
+      .wheel-wrapper:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); border-radius: 999px; }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <div class="brand">Scroll Wheel PoC</div>
+        <div class="subtitle">No framework — single HTML file</div>
+      </header>
+
+      <section class="wheel-section">
+        <div class="wheel-wrapper" id="wheel-wrapper" aria-label="Scroll selection wheel">
+          <div class="wheel" id="wheel"></div>
+          <div class="center-dot" aria-hidden="true"></div>
+          <div class="selection-indicator" aria-hidden="true"></div>
+        </div>
+        <div class="selection-readout">
+          <div class="label">Selected</div>
+          <div class="value" id="selected-value">—</div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div>Scroll/drag or use arrow keys. Snaps to nearest item.</div>
+      </footer>
+    </main>
+
+    <script>
+      const labels = [
+        "Overview",
+        "Features",
+        "Docs",
+        "Playground",
+        "Pricing",
+        "Changelog",
+        "Careers",
+        "Contact",
+      ];
+
+      const wheelElement = document.getElementById("wheel");
+      const wrapperElement = document.getElementById("wheel-wrapper");
+      const selectedValueElement = document.getElementById("selected-value");
+
+      labels.forEach((label) => {
+        const segment = document.createElement("div");
+        segment.className = "segment";
+        segment.textContent = label;
+        wheelElement.appendChild(segment);
+      });
+
+      const state = {
+        currentAngleDeg: 0,
+        targetAngleDeg: 0,
+        lastWheelAt: 0,
+        isPointerDown: false,
+        pointerStartAngleDeg: 0,
+        angleAtPointerStartDeg: 0,
+      };
+
+      const totalItems = labels.length;
+      const degPerItem = 360 / totalItems;
+
+      function normalizeAngleDeg(angle) {
+        let a = angle % 360;
+        if (a < 0) a += 360;
+        return a;
+      }
+
+      function getActiveIndexFromAngle(angleDeg) {
+        const normalized = normalizeAngleDeg(angleDeg);
+        const index = Math.round(normalized / degPerItem) % totalItems;
+        return (totalItems - index) % totalItems;
+      }
+
+      function snapTargetToNearestItem() {
+        const normalized = normalizeAngleDeg(state.targetAngleDeg);
+        const snappedSteps = Math.round(normalized / degPerItem);
+        const snapped = snappedSteps * degPerItem;
+        const currentTurns = Math.round((state.targetAngleDeg - normalized) / 360);
+        state.targetAngleDeg = snapped + currentTurns * 360;
+      }
+
+      function updateSelectedReadout() {
+        const activeIndex = getActiveIndexFromAngle(state.currentAngleDeg);
+        selectedValueElement.textContent = labels[activeIndex] ?? "—";
+        const segmentNodes = wheelElement.querySelectorAll(".segment");
+        segmentNodes.forEach((node, idx) => node.classList.toggle("is-active", idx === activeIndex));
+      }
+
+      function layoutSegments() {
+        const radiusPx = wrapperElement.clientWidth / 2 - 48;
+        const segmentNodes = wheelElement.querySelectorAll(".segment");
+        segmentNodes.forEach((node, idx) => {
+          const theta = (idx / totalItems) * Math.PI * 2;
+          const x = Math.sin(theta) * radiusPx;
+          const y = -Math.cos(theta) * radiusPx;
+          node.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+        });
+      }
+
+      function applyRotation() {
+        wheelElement.style.transform = `rotate(${state.currentAngleDeg}deg)`;
+      }
+
+      let rafId = 0;
+      function tick() {
+        const stiffness = 0.12;
+        const delta = state.targetAngleDeg - state.currentAngleDeg;
+        const step = delta * stiffness;
+        state.currentAngleDeg += step;
+        if (Math.abs(delta) < 0.05) state.currentAngleDeg = state.targetAngleDeg;
+        applyRotation();
+        updateSelectedReadout();
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function onWheel(event) {
+        event.preventDefault();
+        const sensitivity = 0.25;
+        state.targetAngleDeg += event.deltaY * sensitivity;
+        state.lastWheelAt = performance.now();
+      }
+
+      function angleFromCenter(clientX, clientY) {
+        const rect = wrapperElement.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const rad = Math.atan2(dy, dx);
+        const deg = (rad * 180) / Math.PI + 90;
+        return deg;
+      }
+
+      function onPointerDown(event) {
+        wrapperElement.setPointerCapture(event.pointerId);
+        state.isPointerDown = true;
+        state.pointerStartAngleDeg = angleFromCenter(event.clientX, event.clientY);
+        state.angleAtPointerStartDeg = state.targetAngleDeg;
+      }
+
+      function onPointerMove(event) {
+        if (!state.isPointerDown) return;
+        const currentPointerAngle = angleFromCenter(event.clientX, event.clientY);
+        let delta = currentPointerAngle - state.pointerStartAngleDeg;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        state.targetAngleDeg = state.angleAtPointerStartDeg + delta;
+      }
+
+      function onPointerUp() {
+        state.isPointerDown = false;
+        snapTargetToNearestItem();
+      }
+
+      function onKeyDown(event) {
+        if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+          state.targetAngleDeg += degPerItem;
+          snapTargetToNearestItem();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+          state.targetAngleDeg -= degPerItem;
+          snapTargetToNearestItem();
+        }
+      }
+
+      setInterval(() => {
+        const now = performance.now();
+        if (!state.isPointerDown && now - state.lastWheelAt > 180 && Math.abs(state.targetAngleDeg - state.currentAngleDeg) < 2) {
+          snapTargetToNearestItem();
+        }
+      }, 120);
+
+      layoutSegments();
+      applyRotation();
+      updateSelectedReadout();
+      rafId = requestAnimationFrame(tick);
+
+      const wheelWrapper = document.getElementById("wheel-wrapper");
+      wheelWrapper.addEventListener("wheel", onWheel, { passive: false });
+      wheelWrapper.addEventListener("pointerdown", onPointerDown);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("resize", layoutSegments);
+      wheelWrapper.tabIndex = 0;
+      wheelWrapper.addEventListener("keydown", onKeyDown);
+    </script>
+  </body>
+</html>

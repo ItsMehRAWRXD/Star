@@ -4,8 +4,9 @@ A minimal, framework-free proof-of-concept for a circular scroll wheel component
 
 ## Run locally
 
-- Option 1: Open `index.html` directly in a browser.
-- Option 2: Serve the folder (recommended for correct fonts):
+- Option 1: Open `index-inline.html` directly in a browser (single file, no server needed).
+- Option 2: Open `index.html` directly in a browser.
+- Option 3: Serve the folder (recommended for correct fonts):
 
 ```bash
 npx --yes serve /workspace/poc-scroll-wheel -l 5173
