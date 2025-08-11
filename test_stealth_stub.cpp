@@ -188,14 +188,12 @@ int main() {
     hexToBytes(NONCE_bwx2HrY_, nonce);
     
     // Decrypt the data using AES-128-CTR
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
     
     // Write decrypted data to file (silent)
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    // if (outFile.is_open()) {
-    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    std::ofstream outFile("decrypted_output.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
         outFile.close();
     }
     
