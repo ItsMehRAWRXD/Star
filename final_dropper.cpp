@@ -214,8 +214,8 @@ const size_t embeddedDataSize = sizeof(embeddedData);ta};
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes({KEY_VAR}, key);
-    hexToBytes({NONCE_VAR}, nonce);
+    hexToBytes("KEY_finalDropper123", key);
+    hexToBytes("NONCE_finalDropper456", nonce);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
