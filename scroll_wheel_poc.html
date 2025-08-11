@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vscore.dev – Scroll Wheel PoC</title>
+  <style>
+    /* Basic reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      color: #fafafa;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    }
+
+    /* Wheel container */
+    .wheel-wrapper {
+      position: relative;
+      width: 300px;
+      height: 300px;
+    }
+
+    /* The visible wheel */
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 12px solid #333;
+      background: radial-gradient(circle at center, #1d1d1d 0%, #1d1d1d 55%, transparent 56% 100%),
+                  conic-gradient(from 0deg, #444 0deg, #444 90deg, #666 90deg, #666 180deg, #888 180deg, #888 270deg, #aaa 270deg 360deg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+      user-select: none; /* Prevent accidental text selection */
+    }
+
+    /* Decorative center circle */
+    .wheel::after {
+      content: "";
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #fafafa;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5) inset;
+    }
+
+    /* Label showing current angle */
+    .angle-label {
+      position: absolute;
+      bottom: -2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1rem;
+      opacity: 0.75;
+    }
+
+    /* Instruction text */
+    .instructions {
+      position: absolute;
+      top: -2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      opacity: 0.55;
+    }
+  </style>
+</head>
+<body>
+  <div class="wheel-wrapper">
+    <div class="instructions">Scroll to Rotate</div>
+    <div class="wheel" id="wheel"></div>
+    <div class="angle-label" id="angleLabel">0°</div>
+  </div>
+
+  <script>
+    (function () {
+      const wheel = document.getElementById("wheel");
+      const label = document.getElementById("angleLabel");
+      let angle = 0;
+
+      // Normalize wheel delta across browsers
+      function getDelta(event) {
+        if (event.deltaY) return event.deltaY;
+        if (event.wheelDelta) return -event.wheelDelta;
+        if (event.detail) return event.detail;
+        return 0;
+      }
+
+      function updateWheel(delta) {
+        // Adjust sensitivity here (smaller = more sensitive)
+        const SENSITIVITY = 4;
+        angle += delta / SENSITIVITY;
+        angle = angle % 360; // Keep angle within 0-359
+        wheel.style.transform = `rotate(${angle}deg)`;
+        label.textContent = `${Math.round(angle)}°`;
+      }
+
+      function wheelHandler(event) {
+        event.preventDefault();
+        const delta = getDelta(event);
+        updateWheel(delta);
+      }
+
+      // Attach wheel event
+      window.addEventListener("wheel", wheelHandler, { passive: false });
+
+      /* Optional: add touch support for mobile */
+      let touchStartY = null;
+      window.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          touchStartY = e.touches[0].clientY;
+        }
+      });
+      window.addEventListener("touchmove", (e) => {
+        if (touchStartY === null) return;
+        const deltaY = touchStartY - e.touches[0].clientY;
+        updateWheel(deltaY);
+        touchStartY = e.touches[0].clientY;
+      }, { passive: false });
+    })();
+  </script>
+</body>
+</html>
