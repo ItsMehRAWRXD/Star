@@ -143,8 +143,7 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
 }
 
 int main() {
-    // Standalone stub - no embedded data
-    // Standalone stub - no embedded data}
+    // Real embedded data for PE executable
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
