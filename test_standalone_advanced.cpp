@@ -194,8 +194,8 @@ int main() {
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes({KEY_VAR}, key);
-    hexToBytes({NONCE_VAR}, nonce);
+    hexToBytes(KEY_ccaRCBJg, key);
+    hexToBytes(NONCE_cY8LNU6Y, nonce);
     
     // Polymorphic mutation/demutation
     uint32_t seed = std::time(nullptr);

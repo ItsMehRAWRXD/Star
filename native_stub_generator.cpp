@@ -672,8 +672,8 @@ int main() {
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes({KEY_VAR}, key);
-    hexToBytes({NONCE_VAR}, nonce);
+    hexToBytes("KEY_nativeStubGen123", key);
+    hexToBytes("NONCE_nativeStubGen456", nonce);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
@@ -980,8 +980,8 @@ int main() {
     size_t dataSize = sizeof(encryptedData);
     
     // Key and nonce
-    std::string keyHex = {KEY_VAR};
-    std::string nonceHex = {NONCE_VAR};
+    std::string keyHex = "KEY_nativeStubGen789";
+    std::string nonceHex = "NONCE_nativeStubGen012";
     uint8_t key[16], nonce[16];
     hexToBytes(keyHex, key);
     hexToBytes(nonceHex, nonce);
@@ -1112,7 +1112,7 @@ int main() {
     
     // Simple XOR decryption
     for (size_t i = 0; i < size; i++) {
-        data[i] ^= {KEY_VAR}[i % 16] ^ {NONCE_VAR}[i % 16];
+        data[i] ^= "KEY_nativeStubGen345"[i % 16] ^ "NONCE_nativeStubGen678"[i % 16];
     }
     
     std::ofstream out("output.bin", std::ios::binary);

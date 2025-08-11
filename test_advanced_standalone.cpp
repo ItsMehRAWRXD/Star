@@ -203,8 +203,8 @@ int main() {
     size_t dataSize = sizeof(encryptedData);
     
     // Key and nonce
-    std::string keyHex = {KEY_VAR};
-    std::string nonceHex = {NONCE_VAR};
+    std::string keyHex = "KEY_testAdvancedStandalone123";
+    std::string nonceHex = "NONCE_testAdvancedStandalone456";
     uint8_t key[16], nonce[16];
     hexToBytes(keyHex, key);
     hexToBytes(nonceHex, nonce);

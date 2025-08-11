@@ -212,8 +212,8 @@ int main() {
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
-    hexToBytes({KEY_VAR}, key);
-    hexToBytes({NONCE_VAR}, nonce);
+    hexToBytes(KEY_Hd0w2Sl5, key);
+    hexToBytes(NONCE_gQoufcQ8, nonce);
     
     // Decrypt the data using AES-128-CTR
     aesCtrCrypt(encryptedData, encryptedData, dataSize, key, nonce);
