@@ -1,0 +1,322 @@
+/* CSS Variables for easy customization */
+:root {
+    --primary-color: #0066ff;
+    --secondary-color: #00a8ff;
+    --dark-bg: #1a1a1a;
+    --light-bg: #2a2a2a;
+    --text-color: #ffffff;
+    --text-secondary: #b0b0b0;
+    --wheel-width: 60px;
+    --track-width: 8px;
+    --thumb-size: 40px;
+    --border-radius: 12px;
+    --transition-speed: 0.3s;
+}
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+/* Scroll Wheel Container */
+.scroll-wheel-container {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Scroll Wheel Component */
+.scroll-wheel {
+    width: var(--wheel-width);
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+}
+
+.wheel-track {
+    width: var(--track-width);
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--track-width);
+    position: relative;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.wheel-track:hover {
+    background: rgba(255, 255, 255, 0.15);
+    width: calc(var(--track-width) + 4px);
+}
+
+.wheel-thumb {
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: grab;
+    box-shadow: 0 4px 20px rgba(0, 102, 255, 0.5);
+    transition: all var(--transition-speed);
+}
+
+.wheel-thumb:active {
+    cursor: grabbing;
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 6px 30px rgba(0, 102, 255, 0.8);
+}
+
+.wheel-thumb.dragging {
+    transition: none;
+}
+
+/* Wheel Indicators */
+.wheel-indicators {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.indicator {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: all var(--transition-speed);
+    opacity: 0.5;
+}
+
+.indicator.top {
+    top: -30px;
+}
+
+.indicator.bottom {
+    bottom: -30px;
+}
+
+.indicator.active {
+    color: var(--primary-color);
+    opacity: 1;
+    transform: translateX(-50%) scale(1.2);
+}
+
+/* Content Area */
+.content-area {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+}
+
+.content-wrapper {
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.content-section {
+    margin-bottom: 3rem;
+    opacity: 0.8;
+    transform: translateY(20px);
+    transition: all 0.5s;
+}
+
+.content-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.content-section h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.content-section p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.content-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.content-section li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.content-section li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+.content-section code {
+    display: block;
+    background: var(--dark-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    margin-top: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Stats Display */
+.stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* Scroll Progress Indicator */
+.scroll-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
+}
+
+.wheel-thumb.pulsing {
+    animation: pulse 1s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .scroll-wheel-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .scroll-wheel {
+        width: 100%;
+        height: var(--wheel-width);
+        flex-direction: row;
+    }
+    
+    .wheel-track {
+        width: 100%;
+        height: var(--track-width);
+    }
+    
+    .wheel-thumb {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .wheel-thumb:active {
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .indicator {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .indicator.top {
+        top: 50%;
+        left: -30px;
+    }
+    
+    .indicator.bottom {
+        top: 50%;
+        left: auto;
+        right: -30px;
+    }
+}

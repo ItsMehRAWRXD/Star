@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSCore Scroll Wheel PoC</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>VSCore Scroll Wheel Component</h1>
+        <p class="subtitle">A modern, smooth scroll wheel implementation</p>
+        
+        <div class="scroll-wheel-container">
+            <!-- Main scroll wheel component -->
+            <div class="scroll-wheel" id="scrollWheel">
+                <div class="wheel-track">
+                    <div class="wheel-thumb" id="wheelThumb"></div>
+                </div>
+                <div class="wheel-indicators">
+                    <div class="indicator top">▲</div>
+                    <div class="indicator bottom">▼</div>
+                </div>
+            </div>
+            
+            <!-- Content area that scrolls -->
+            <div class="content-area" id="contentArea">
+                <div class="content-wrapper" id="contentWrapper">
+                    <section class="content-section">
+                        <h2>Section 1: Introduction</h2>
+                        <p>Welcome to the VSCore scroll wheel demonstration. This component provides a smooth, intuitive scrolling experience with visual feedback.</p>
+                        <p>The scroll wheel responds to mouse wheel events, click and drag interactions, and provides visual indicators for scroll position.</p>
+                    </section>
+                    
+                    <section class="content-section">
+                        <h2>Section 2: Features</h2>
+                        <ul>
+                            <li>Smooth scrolling animations</li>
+                            <li>Visual position indicators</li>
+                            <li>Click and drag support</li>
+                            <li>Mouse wheel support</li>
+                            <li>Responsive design</li>
+                            <li>Customizable appearance</li>
+                        </ul>
+                    </section>
+                    
+                    <section class="content-section">
+                        <h2>Section 3: Technical Details</h2>
+                        <p>The scroll wheel is built using vanilla JavaScript for maximum compatibility and performance. It uses CSS transforms for smooth animations and provides a clean API for integration.</p>
+                        <p>The component is fully responsive and adapts to different screen sizes while maintaining a consistent user experience.</p>
+                    </section>
+                    
+                    <section class="content-section">
+                        <h2>Section 4: Integration</h2>
+                        <p>To integrate this scroll wheel into your project, simply include the HTML structure, CSS styles, and JavaScript code. The component is designed to be modular and easy to customize.</p>
+                        <code>
+                            &lt;div class="scroll-wheel" id="scrollWheel"&gt;<br>
+                            &nbsp;&nbsp;&lt;div class="wheel-track"&gt;<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&lt;div class="wheel-thumb"&gt;&lt;/div&gt;<br>
+                            &nbsp;&nbsp;&lt;/div&gt;<br>
+                            &lt;/div&gt;
+                        </code>
+                    </section>
+                    
+                    <section class="content-section">
+                        <h2>Section 5: Customization</h2>
+                        <p>The scroll wheel can be customized through CSS variables and JavaScript options. You can change colors, sizes, animation speeds, and behavior to match your design requirements.</p>
+                        <p>The component supports themes and can be styled to match your brand identity.</p>
+                    </section>
+                    
+                    <section class="content-section">
+                        <h2>Section 6: Performance</h2>
+                        <p>The scroll wheel is optimized for performance using requestAnimationFrame for smooth animations and efficient event handling. It provides a 60fps scrolling experience on modern devices.</p>
+                        <p>Memory usage is minimal and the component is designed to handle large amounts of content without performance degradation.</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats display -->
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Scroll Position:</span>
+                <span class="stat-value" id="scrollPosition">0%</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Velocity:</span>
+                <span class="stat-value" id="scrollVelocity">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Direction:</span>
+                <span class="stat-value" id="scrollDirection">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
